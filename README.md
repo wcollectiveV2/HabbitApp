@@ -10,6 +10,8 @@ A modern, intuitive habit tracking application designed to help you build and ma
 -   **Gamification**: Earn XP and level up as you complete your habits.
 -   **Social**: Connect with friends and challenge each other.
 
+
+
 ## Tech Stack
 
 -   **Frontend**: React, TypeScript, Vite
