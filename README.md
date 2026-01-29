@@ -1,20 +1,60 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Habit Tracker App
 
-# Run and deploy your AI Studio app
+A modern, intuitive habit tracking application designed to help you build and maintain positive habits.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/temp/1
+-   **Dashboard**: Visualize your daily progress, streaks, and upcoming tasks.
+-   **Habit Management**: Create, edit, and track various habits.
+-   **Habit Coach**: An interactive assistant to help keep you motivated (Mocked for demo).
+-   **Gamification**: Earn XP and level up as you complete your habits.
+-   **Social**: Connect with friends and challenge each other.
 
-## Run Locally
+## Tech Stack
 
-**Prerequisites:**  Node.js
+-   **Frontend**: React, TypeScript, Vite
+-   **UI**: Tailwind CSS, Material Symbols
+-   **State Management**: React Hooks
 
+## Getting Started
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### Prerequisites
+
+-   Node.js (v18 or higher)
+-   npm or yarn
+
+### Installation
+
+1.  Clone the repository:
+    ```bash
+    git clone https://github.com/wcollectiveV2/HabbitApp.git
+    ```
+2.  Navigate to the project directory:
+    ```bash
+    cd HabbitApp
+    ```
+3.  Install dependencies:
+    ```bash
+    npm install
+    ```
+
+### Running the App
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Open your browser and navigate to `http://localhost:5173` (or the port shown in the terminal).
+
+## Project Structure
+
+-   `/src`: Main source code
+    -   `/components`: Reusable UI components and Views
+    -   `/lib`: Utility functions
+    -   `App.tsx`: Main application entry point
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.

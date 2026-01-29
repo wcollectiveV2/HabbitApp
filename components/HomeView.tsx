@@ -1,6 +1,4 @@
-
 import React, { useState, useEffect } from 'react';
-import { generateHabitTip } from '../lib/gemini';
 import { Task } from '../types';
 
 interface HomeViewProps {
@@ -14,9 +12,20 @@ const HomeView: React.FC<HomeViewProps> = ({ tasks }) => {
   useEffect(() => {
     const fetchTip = async () => {
       setIsLoadingTip(true);
-      const activeTaskTitles = tasks.map(t => t.title);
-      const aiTip = await generateHabitTip(activeTaskTitles);
-      setTip(aiTip);
+      // Mocking the AI tip generation
+      const tips = [
+        "Consistency is key! Even small steps forward are progress.",
+        "Don't forget to hydrate and take breaks.",
+        "Reflect on your achievements from last week.",
+        "Great job on keeping up with your habits!",
+        "Every day is a new opportunity to succeed."
+      ];
+      const randomTip = tips[Math.floor(Math.random() * tips.length)];
+      
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setTip(randomTip);
       setIsLoadingTip(false);
     };
     fetchTip();
@@ -76,7 +85,7 @@ const HomeView: React.FC<HomeViewProps> = ({ tasks }) => {
           <span className="material-symbols-outlined">auto_awesome</span>
         </div>
         <div>
-          <h4 className="font-bold text-blue-900 dark:text-blue-300 text-sm uppercase tracking-tighter">AI Pulse Insight</h4>
+          <h4 className="font-bold text-blue-900 dark:text-blue-300 text-sm uppercase tracking-tighter">Habit Insight</h4>
           <p className="text-sm text-blue-700 dark:text-blue-400/80 leading-snug">
             {tip}
           </p>

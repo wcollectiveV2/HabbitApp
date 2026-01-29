@@ -1,6 +1,5 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { getCoachResponse } from '../lib/gemini';
 
 interface Message {
   role: 'user' | 'model';
@@ -30,9 +29,12 @@ const HabitCoach: React.FC = () => {
     setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
     setIsTyping(true);
 
-    const response = await getCoachResponse(messages, userMessage);
-    setMessages(prev => [...prev, { role: 'model', text: response }]);
-    setIsTyping(false);
+    // Mock response instead of Gemini
+    setTimeout(() => {
+        const response = "That sounds like a great plan! Keep pushing forward.";
+        setMessages(prev => [...prev, { role: 'model', text: response }]);
+        setIsTyping(false);
+    }, 1000);
   };
 
   return (
@@ -99,7 +101,7 @@ const HabitCoach: React.FC = () => {
                 disabled={!input.trim()}
                 className="w-12 h-12 bg-primary text-white rounded-2xl flex items-center justify-center disabled:opacity-50"
               >
-                <span className="material-symbols-outlined">send</span>
+                 <span className="material-symbols-outlined">send</span>
               </button>
             </div>
           </div>
