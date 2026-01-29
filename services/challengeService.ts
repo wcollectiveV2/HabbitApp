@@ -57,7 +57,7 @@ export interface ChallengeProgress {
 
 export const challengeService = {
   async getActiveChallenges(): Promise<Challenge[]> {
-    return api.get<Challenge[]>('/challenges/active');
+    return api.get<Challenge[]>('/api/challenges/active');
   },
 
   async discoverChallenges(filters?: {
@@ -72,7 +72,7 @@ export const challengeService = {
     if (filters?.limit) params.append('limit', String(filters.limit));
     if (filters?.offset) params.append('offset', String(filters.offset));
     const query = params.toString() ? `?${params.toString()}` : '';
-    return api.get(`/challenges/discover${query}`);
+    return api.get(`/api/challenges/discover${query}`);
   },
 
   async getChallenge(challengeId: number): Promise<{
@@ -80,23 +80,23 @@ export const challengeService = {
     participants: ChallengeParticipant[];
     isJoined: boolean;
   }> {
-    return api.get(`/challenges/${challengeId}`);
+    return api.get(`/api/challenges/${challengeId}`);
   },
 
   async createChallenge(data: Partial<Challenge>): Promise<Challenge> {
-    return api.post<Challenge>('/challenges', data);
+    return api.post<Challenge>('/api/challenges', data);
   },
 
   async joinChallenge(challengeId: number): Promise<{ success: boolean; participant: ChallengeParticipant }> {
-    return api.post(`/challenges/${challengeId}/join`);
+    return api.post(`/api/challenges/${challengeId}/join`);
   },
 
   async leaveChallenge(challengeId: number): Promise<{ success: boolean }> {
-    return api.delete(`/challenges/${challengeId}/leave`);
+    return api.delete(`/api/challenges/${challengeId}/leave`);
   },
 
   async getProgress(challengeId: number): Promise<ChallengeProgress> {
-    return api.get(`/challenges/${challengeId}/progress`);
+    return api.get(`/api/challenges/${challengeId}/progress`);
   },
 
   async logProgress(challengeId: number, data: { completed: boolean; value?: number }): Promise<{
@@ -104,10 +104,10 @@ export const challengeService = {
     progress: number;
     completedDays: number;
   }> {
-    return api.post(`/challenges/${challengeId}/log`, data);
+    return api.post(`/api/challenges/${challengeId}/log`, data);
   },
 
   async getLeaderboard(challengeId: number): Promise<ChallengeParticipant[]> {
-    return api.get(`/challenges/${challengeId}/leaderboard`);
+    return api.get(`/api/challenges/${challengeId}/leaderboard`);
   }
 };

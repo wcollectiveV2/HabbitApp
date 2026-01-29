@@ -37,14 +37,14 @@ export interface Conversation {
 
 export const aiService = {
   async getDailyTip(): Promise<DailyTip> {
-    return api.get<DailyTip>('/ai/daily-tip');
+    return api.get<DailyTip>('/api/ai/daily-tip');
   },
 
   async chat(message: string, conversationId?: number): Promise<{
     message: CoachMessage;
     conversationId: number;
   }> {
-    return api.post('/ai/coach/chat', { message, conversationId });
+    return api.post('/api/ai/coach/chat', { message, conversationId });
   },
 
   async getHistory(conversationId: number, params?: {
@@ -55,10 +55,10 @@ export const aiService = {
     if (params?.limit) queryParams.append('limit', String(params.limit));
     if (params?.before) queryParams.append('before', params.before);
     const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
-    return api.get(`/ai/coach/history?conversationId=${conversationId}${query ? '&' + query.slice(1) : ''}`);
+    return api.get(`/api/ai/coach/history?conversationId=${conversationId}${query ? '&' + query.slice(1) : ''}`);
   },
 
   async getConversations(): Promise<Conversation[]> {
-    return api.get<Conversation[]>('/ai/coach/conversations');
+    return api.get<Conversation[]>('/api/ai/coach/conversations');
   }
 };

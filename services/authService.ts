@@ -47,16 +47,16 @@ export interface UserProfile {
 
 export const authService = {
   async login(data: LoginRequest): Promise<AuthResponse> {
-    return authApi.post<AuthResponse>('/auth/login', data);
+    return authApi.post<AuthResponse>('/api/auth/login', data);
   },
 
   async register(data: RegisterRequest): Promise<AuthResponse> {
-    return authApi.post<AuthResponse>('/auth/register', data);
+    return authApi.post<AuthResponse>('/api/auth/register', data);
   },
 
   async logout(): Promise<void> {
     try {
-      await authApi.post('/auth/logout');
+      await authApi.post('/api/auth/logout');
     } catch (e) {
       // Ignore logout errors
     }
@@ -87,19 +87,19 @@ export const authService = {
 
 export const userService = {
   async getProfile(): Promise<UserProfile> {
-    return api.get<UserProfile>('/user/profile');
+    return api.get<UserProfile>('/api/user/profile');
   },
 
   async updateProfile(data: Partial<UserProfile>): Promise<UserProfile> {
-    return api.patch<UserProfile>('/user/profile', data);
+    return api.patch<UserProfile>('/api/user/profile', data);
   },
 
   async syncUser(data: { externalId: string; name: string; email: string; avatarUrl?: string }): Promise<UserProfile> {
-    return api.post<UserProfile>('/user/sync', data);
+    return api.post<UserProfile>('/api/user/sync', data);
   },
 
   async getActivity(): Promise<{ date: string; count: number }[]> {
-    return api.get('/user/activity');
+    return api.get('/api/user/activity');
   },
 
   async getStats(): Promise<{
@@ -110,6 +110,6 @@ export const userService = {
     completedToday: number;
     totalToday: number;
   }> {
-    return api.get('/user/stats');
+    return api.get('/api/user/stats');
   }
 };

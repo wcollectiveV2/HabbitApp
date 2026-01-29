@@ -68,7 +68,7 @@ export const socialService = {
     if (params?.limit) queryParams.append('limit', String(params.limit));
     if (params?.offset) queryParams.append('offset', String(params.offset));
     const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
-    return api.get<Leaderboard>(`/social/leaderboard${query}`);
+    return api.get<Leaderboard>(`/api/social/leaderboard${query}`);
   },
 
   async getFeed(params?: {
@@ -81,22 +81,22 @@ export const socialService = {
     if (params?.limit) queryParams.append('limit', String(params.limit));
     if (params?.offset) queryParams.append('offset', String(params.offset));
     const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
-    return api.get(`/social/feed${query}`);
+    return api.get(`/api/social/feed${query}`);
   },
 
   async toggleFollow(userId: number): Promise<{ isFollowing: boolean }> {
-    return api.post(`/social/follow/${userId}`);
+    return api.post(`/api/social/follow/${userId}`);
   },
 
   async getFollowers(userId: number): Promise<FollowUser[]> {
-    return api.get(`/social/followers/${userId}`);
+    return api.get(`/api/social/followers/${userId}`);
   },
 
   async getFollowing(userId: number): Promise<FollowUser[]> {
-    return api.get(`/social/following/${userId}`);
+    return api.get(`/api/social/following/${userId}`);
   },
 
   async getFollowStats(userId: number): Promise<FollowStats> {
-    return api.get(`/social/stats/${userId}`);
+    return api.get(`/api/social/stats/${userId}`);
   }
 };

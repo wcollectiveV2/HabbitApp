@@ -3,7 +3,8 @@
  */
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
-const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:3001';
+// Auth API uses the same backend with /api prefix
+const AUTH_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
 
 class ApiClient {
   private baseUrl: string;
@@ -83,5 +84,7 @@ class ApiClient {
   }
 }
 
+// Main API client - endpoints should include /api prefix (e.g., /api/habits)
 export const api = new ApiClient(API_BASE_URL);
+// Auth API client - uses same base URL, endpoints should include /api prefix
 export const authApi = new ApiClient(AUTH_API_URL);

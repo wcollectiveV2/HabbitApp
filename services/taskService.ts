@@ -65,11 +65,11 @@ export interface Habit {
 
 export const taskService = {
   async getTodayTasks(): Promise<DailyTaskSummary> {
-    return api.get<DailyTaskSummary>('/tasks/today');
+    return api.get<DailyTaskSummary>('/api/tasks/today');
   },
 
   async updateTask(taskId: number, status: TaskStatus, value?: number): Promise<Task> {
-    return api.patch<Task>(`/tasks/${taskId}`, { status, value });
+    return api.patch<Task>(`/api/tasks/${taskId}`, { status, value });
   },
 
   async createTask(data: {
@@ -82,7 +82,7 @@ export const taskService = {
     step?: number;
     frequency?: 'daily' | 'weekly' | 'custom';
   }): Promise<Task> {
-    return api.post<Task>('/tasks', data);
+    return api.post<Task>('/api/tasks', data);
   },
 
   async getHistory(from?: string, to?: string): Promise<{ type: 'history'; data: TaskHistory[] }> {
@@ -90,16 +90,16 @@ export const taskService = {
     if (from) params.append('from', from);
     if (to) params.append('to', to);
     const query = params.toString() ? `?${params.toString()}` : '';
-    return api.get(`/tasks/history${query}`);
+    return api.get(`/api/tasks/history${query}`);
   },
 
   async getHeatmapData(year?: number): Promise<{ type: 'heatmap'; data: HeatmapData[] }> {
     const targetYear = year || new Date().getFullYear();
-    return api.get(`/tasks/history?year=${targetYear}`);
+    return api.get(`/api/tasks/history?year=${targetYear}`);
   },
 
   async deleteTask(taskId: number): Promise<{ success: boolean }> {
-    return api.delete(`/tasks/${taskId}`);
+    return api.delete(`/api/tasks/${taskId}`);
   },
 
   async toggleComplete(task: Task): Promise<Task> {
@@ -119,7 +119,7 @@ export const taskService = {
 
   // Habit Templates
   async getHabits(): Promise<Habit[]> {
-    return api.get<Habit[]>('/tasks/habits');
+    return api.get<Habit[]>('/api/tasks/habits');
   },
 
   async createHabit(data: {
@@ -130,14 +130,14 @@ export const taskService = {
     frequency: 'daily' | 'weekly' | 'custom';
     scheduledDays?: number[];
   }): Promise<Habit> {
-    return api.post<Habit>('/tasks/habits', data);
+    return api.post<Habit>('/api/tasks/habits', data);
   },
 
   async updateHabit(habitId: string, data: Partial<Habit>): Promise<Habit> {
-    return api.put<Habit>(`/tasks/habits/${habitId}`, data);
+    return api.put<Habit>(`/api/tasks/habits/${habitId}`, data);
   },
 
   async deleteHabit(habitId: string): Promise<{ success: boolean }> {
-    return api.delete(`/tasks/habits/${habitId}`);
+    return api.delete(`/api/tasks/habits/${habitId}`);
   }
 };
