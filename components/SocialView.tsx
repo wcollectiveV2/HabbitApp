@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { socialService } from '../services';
-import { MOCK_LEADERBOARD, MOCK_FEED } from '../constants';
 
 interface LeaderboardEntry {
   rank: number;
@@ -23,8 +22,8 @@ interface FeedItem {
 }
 
 const SocialView: React.FC = () => {
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>(MOCK_LEADERBOARD);
-  const [feed, setFeed] = useState<FeedItem[]>(MOCK_FEED);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [feed, setFeed] = useState<FeedItem[]>([]);
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(true);
   const [isLoadingFeed, setIsLoadingFeed] = useState(true);
   const [leaderboardType, setLeaderboardType] = useState<'global' | 'friends'>('global');
@@ -33,19 +32,19 @@ const SocialView: React.FC = () => {
     const fetchLeaderboard = async () => {
       setIsLoadingLeaderboard(true);
       try {
-        const data = await socialService.getLeaderboard(leaderboardType, 10);
+        const data = await socialService.getLeaderboard({ scope: leaderboardType, limit: 10 });
         const mapped = data.entries?.map((entry: any, index: number) => ({
-          rank: index + 1,
-          userId: entry.userId,
-          name: entry.name || entry.userName || 'Anonymous',
-          avatar: entry.avatar || `https://i.pravatar.cc/150?u=${entry.userId}`,
+          rank: entry.rank || index + 1,
+          userId: entry.userId || entry.user_id,
+          name: entry.name || entry.userName || entry.user_name || 'Anonymous',
+          avatar: entry.avatar || entry.userAvatar || entry.user_avatar || `https://i.pravatar.cc/150?u=${entry.userId || entry.user_id}`,
           points: entry.points || entry.totalPoints || 0,
-          isCurrentUser: entry.isCurrentUser || false
-        })) || MOCK_LEADERBOARD;
+          isCurrentUser: entry.isCurrentUser || entry.is_current_user || false
+        })) || [];
         setLeaderboard(mapped);
       } catch (err) {
         console.error('Failed to fetch leaderboard:', err);
-        setLeaderboard(MOCK_LEADERBOARD);
+        setLeaderboard([]);
       }
       setIsLoadingLeaderboard(false);
     };
@@ -56,20 +55,20 @@ const SocialView: React.FC = () => {
     const fetchFeed = async () => {
       setIsLoadingFeed(true);
       try {
-        const data = await socialService.getFeed(20);
+        const data = await socialService.getFeed({ limit: 20 });
         const mapped = data.items?.map((item: any) => ({
-          id: item.id,
-          userId: item.userId,
-          userName: item.userName || item.user?.name || 'Someone',
-          userAvatar: item.userAvatar || item.user?.avatar || `https://i.pravatar.cc/150?u=${item.userId}`,
-          action: item.action || 'completed',
-          target: item.target || item.habitName || 'a habit',
-          timestamp: formatTimestamp(item.createdAt || item.timestamp)
-        })) || MOCK_FEED;
+          id: String(item.id),
+          userId: item.userId || item.user_id,
+          userName: item.userName || item.user_name || item.user?.name || 'Someone',
+          userAvatar: item.userAvatar || item.user_avatar || item.user?.avatar || `https://i.pravatar.cc/150?u=${item.userId || item.user_id}`,
+          action: item.action || getActionFromType(item.type),
+          target: item.target || getTargetFromData(item),
+          timestamp: formatTimestamp(item.createdAt || item.created_at || item.timestamp)
+        })) || [];
         setFeed(mapped);
       } catch (err) {
         console.error('Failed to fetch feed:', err);
-        setFeed(MOCK_FEED);
+        setFeed([]);
       }
       setIsLoadingFeed(false);
     };
@@ -154,6 +153,26 @@ function formatTimestamp(dateStr: string): string {
   if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays < 7) return `${diffDays}d ago`;
   return date.toLocaleDateString();
+}
+
+function getActionFromType(type: string): string {
+  switch (type) {
+    case 'challenge_joined': return 'joined';
+    case 'challenge_completed': return 'completed';
+    case 'streak_milestone': return 'reached';
+    case 'level_up': return 'reached';
+    case 'badge_earned': return 'earned';
+    default: return 'completed';
+  }
+}
+
+function getTargetFromData(item: any): string {
+  if (item.target) return item.target;
+  if (item.data?.challengeTitle) return `${item.data.challengeTitle} challenge`;
+  if (item.data?.streakDays) return `${item.data.streakDays} day streak!`;
+  if (item.data?.level) return `Level ${item.data.level}!`;
+  if (item.data?.badge) return `${item.data.badge} badge`;
+  return 'a habit';
 }
 
 export default SocialView;

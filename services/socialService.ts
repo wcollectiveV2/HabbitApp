@@ -61,12 +61,18 @@ export const socialService = {
     period?: 'daily' | 'weekly' | 'monthly' | 'allTime';
     limit?: number;
     offset?: number;
-  }): Promise<Leaderboard> {
+  } | 'global' | 'friends', limitParam?: number): Promise<Leaderboard> {
+    // Handle both old and new API signatures
     const queryParams = new URLSearchParams();
-    if (params?.scope) queryParams.append('scope', params.scope);
-    if (params?.period) queryParams.append('period', params.period);
-    if (params?.limit) queryParams.append('limit', String(params.limit));
-    if (params?.offset) queryParams.append('offset', String(params.offset));
+    if (typeof params === 'string') {
+      queryParams.append('scope', params);
+      if (limitParam) queryParams.append('limit', String(limitParam));
+    } else if (params) {
+      if (params.scope) queryParams.append('scope', params.scope);
+      if (params.period) queryParams.append('period', params.period);
+      if (params.limit) queryParams.append('limit', String(params.limit));
+      if (params.offset) queryParams.append('offset', String(params.offset));
+    }
     const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
     return api.get<Leaderboard>(`/api/social/leaderboard${query}`);
   },
@@ -75,11 +81,16 @@ export const socialService = {
     scope?: 'global' | 'following';
     limit?: number;
     offset?: number;
-  }): Promise<{ items: FeedItem[]; hasMore: boolean }> {
+  } | number): Promise<{ items: FeedItem[]; hasMore: boolean }> {
+    // Handle both old and new API signatures
     const queryParams = new URLSearchParams();
-    if (params?.scope) queryParams.append('scope', params.scope);
-    if (params?.limit) queryParams.append('limit', String(params.limit));
-    if (params?.offset) queryParams.append('offset', String(params.offset));
+    if (typeof params === 'number') {
+      queryParams.append('limit', String(params));
+    } else if (params) {
+      if (params.scope) queryParams.append('scope', params.scope);
+      if (params.limit) queryParams.append('limit', String(params.limit));
+      if (params.offset) queryParams.append('offset', String(params.offset));
+    }
     const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
     return api.get(`/api/social/feed${query}`);
   },
