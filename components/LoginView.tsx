@@ -1,22 +1,24 @@
 
 import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 interface LoginViewProps {
-  onLogin: () => void;
   onSwitchToSignup: () => void;
 }
 
-const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSwitchToSignup }) => {
-  const [loading, setLoading] = useState(false);
+const LoginView: React.FC<LoginViewProps> = ({ onSwitchToSignup }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const { login, isLoading, error, clearError } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    // Simulate API delay
-    setTimeout(() => {
-      setLoading(false);
-      onLogin();
-    }, 1500);
+    clearError();
+    try {
+      await login(email, password);
+    } catch (err) {
+      // Error handled by context
+    }
   };
 
   return (
@@ -30,13 +32,21 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSwitchToSignup }) => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 text-red-500 p-3 rounded-xl text-sm text-center">
+            {error}
+          </div>
+        )}
+        
         <div className="space-y-1">
           <label className="text-xs font-bold uppercase text-slate-400 ml-1">Email Address</label>
           <div className="relative">
             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl">mail</span>
             <input 
               required
-              type="email" 
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="alex@example.com"
               className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-2xl py-4 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary transition-all"
             />
@@ -52,7 +62,9 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSwitchToSignup }) => {
             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl">lock</span>
             <input 
               required
-              type="password" 
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-2xl py-4 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary transition-all"
             />
@@ -60,11 +72,11 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSwitchToSignup }) => {
         </div>
 
         <button 
-          disabled={loading}
+          disabled={isLoading}
           type="submit"
           className="w-full bg-primary text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-primary/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4"
         >
-          {loading ? (
+          {isLoading ? (
             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
           ) : (
             <>Log In <span className="material-symbols-outlined text-sm">arrow_forward</span></>

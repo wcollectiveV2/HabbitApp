@@ -1,54 +1,123 @@
 import React, { useState, useEffect } from 'react';
 import { Task } from '../types';
+import { aiService, userService } from '../services';
+import type { UserProfile } from '../services';
 
 interface HomeViewProps {
   tasks: Task[];
+  profile?: UserProfile | null;
 }
 
-const HomeView: React.FC<HomeViewProps> = ({ tasks }) => {
+const HomeView: React.FC<HomeViewProps> = ({ tasks, profile }) => {
   const [tip, setTip] = useState<string>("Loading your personalized tip...");
   const [isLoadingTip, setIsLoadingTip] = useState(true);
+  const [stats, setStats] = useState({
+    streakCount: 0,
+    totalPoints: 0,
+    completedPercent: 0
+  });
+  const [activity, setActivity] = useState<{ date: string; completed: boolean }[]>([]);
 
   useEffect(() => {
     const fetchTip = async () => {
       setIsLoadingTip(true);
-      // Mocking the AI tip generation
-      const tips = [
-        "Consistency is key! Even small steps forward are progress.",
-        "Don't forget to hydrate and take breaks.",
-        "Reflect on your achievements from last week.",
-        "Great job on keeping up with your habits!",
-        "Every day is a new opportunity to succeed."
-      ];
-      const randomTip = tips[Math.floor(Math.random() * tips.length)];
-      
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setTip(randomTip);
+      try {
+        const dailyTip = await aiService.getDailyTip();
+        setTip(dailyTip.content);
+      } catch (err) {
+        // Fallback tips
+        const tips = [
+          "Consistency is key! Even small steps forward are progress.",
+          "Don't forget to hydrate and take breaks.",
+          "Reflect on your achievements from last week.",
+          "Great job on keeping up with your habits!",
+          "Every day is a new opportunity to succeed."
+        ];
+        setTip(tips[Math.floor(Math.random() * tips.length)]);
+      }
       setIsLoadingTip(false);
     };
     fetchTip();
-  }, [tasks.length]);
+  }, []);
 
-  const stats = [
-    { label: 'Streak', value: '12', unit: 'Days', icon: 'local_fire_department', color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-900/20' },
-    { label: 'Points', value: '2.1k', unit: 'XP', icon: 'stars', color: 'text-yellow-500', bg: 'bg-yellow-50 dark:bg-yellow-900/20' },
-    { label: 'Completed', value: '85', unit: '%', icon: 'task_alt', color: 'text-green-500', bg: 'bg-green-50 dark:bg-green-900/20' },
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const userStats = await userService.getStats();
+        const completed = tasks.filter(t => t.completed).length;
+        const total = tasks.length || 1;
+        setStats({
+          streakCount: userStats.streakCount || profile?.streakCount || 0,
+          totalPoints: userStats.totalPoints || profile?.totalPoints || 0,
+          completedPercent: Math.round((completed / total) * 100)
+        });
+      } catch (err) {
+        // Use profile data as fallback
+        const completed = tasks.filter(t => t.completed).length;
+        const total = tasks.length || 1;
+        setStats({
+          streakCount: profile?.streakCount || 0,
+          totalPoints: profile?.totalPoints || 0,
+          completedPercent: Math.round((completed / total) * 100)
+        });
+      }
+    };
+    fetchStats();
+  }, [tasks, profile]);
+
+  useEffect(() => {
+    // Build weekly activity from tasks or fetch from API
+    const fetchActivity = async () => {
+      try {
+        const activityData = await userService.getActivity();
+        // Map to weekly format
+        const today = new Date();
+        const weekActivity = [];
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date(today);
+          date.setDate(date.getDate() - i);
+          const dateStr = date.toISOString().split('T')[0];
+          const dayData = activityData.find((a: any) => a.date === dateStr);
+          weekActivity.push({
+            date: dateStr,
+            completed: dayData ? dayData.count > 0 : false
+          });
+        }
+        setActivity(weekActivity);
+      } catch {
+        // Generate mock weekly data
+        const today = new Date().getDay();
+        setActivity(Array(7).fill(null).map((_, i) => ({
+          date: '',
+          completed: i < today
+        })));
+      }
+    };
+    fetchActivity();
+  }, []);
+
+  const displayStats = [
+    { label: 'Streak', value: String(stats.streakCount), unit: 'Days', icon: 'local_fire_department', color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-900/20' },
+    { label: 'Points', value: stats.totalPoints >= 1000 ? `${(stats.totalPoints / 1000).toFixed(1)}k` : String(stats.totalPoints), unit: 'XP', icon: 'stars', color: 'text-yellow-500', bg: 'bg-yellow-50 dark:bg-yellow-900/20' },
+    { label: 'Completed', value: String(stats.completedPercent), unit: '%', icon: 'task_alt', color: 'text-green-500', bg: 'bg-green-50 dark:bg-green-900/20' },
   ];
 
   const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-  const today = 3; // Wednesday
+  const today = new Date().getDay();
+
+  const firstName = profile?.name?.split(' ')[0] || 'there';
 
   return (
     <div className="px-6 space-y-8 animate-in fade-in duration-500 pb-10">
       <div>
-        <h2 className="text-3xl font-extrabold tracking-tight">Morning, <span className="text-primary">Alex</span></h2>
+        <h2 className="text-3xl font-extrabold tracking-tight">
+          {getGreeting()}, <span className="text-primary">{firstName}</span>
+        </h2>
         <p className="text-slate-400 font-medium">You're closer to your goal today!</p>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        {stats.map((stat, i) => (
+        {displayStats.map((stat, i) => (
           <div key={i} className="bg-white dark:bg-card-dark p-4 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col items-center">
             <div className={`w-10 h-10 rounded-2xl ${stat.bg} ${stat.color} flex items-center justify-center mb-3`}>
               <span className="material-symbols-outlined">{stat.icon}</span>
@@ -66,9 +135,13 @@ const HomeView: React.FC<HomeViewProps> = ({ tasks }) => {
             {days.map((day, i) => (
               <div key={i} className="flex flex-col items-center gap-3">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                  i === today ? 'bg-primary text-white' : i < today ? 'bg-primary/20 text-primary' : 'bg-white/10 text-white/40'
+                  i === today ? 'bg-primary text-white' : 
+                  activity[i]?.completed ? 'bg-primary/20 text-primary' : 
+                  'bg-white/10 text-white/40'
                 }`}>
-                  {i < today ? <span className="material-symbols-outlined text-sm">check</span> : day}
+                  {activity[i]?.completed && i !== today ? (
+                    <span className="material-symbols-outlined text-sm">check</span>
+                  ) : day}
                 </div>
                 <span className={`text-[10px] font-bold ${i === today ? 'text-white' : 'text-white/30'}`}>
                   {day}
@@ -94,5 +167,12 @@ const HomeView: React.FC<HomeViewProps> = ({ tasks }) => {
     </div>
   );
 };
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Morning';
+  if (hour < 17) return 'Afternoon';
+  return 'Evening';
+}
 
 export default HomeView;
