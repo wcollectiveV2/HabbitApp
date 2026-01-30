@@ -29,7 +29,7 @@ export interface AuthResponse {
 }
 
 export interface UserProfile {
-  id: number;
+  id: string;
   externalId: string;
   name: string;
   email: string;

@@ -11,7 +11,7 @@ export interface Challenge {
   status: 'upcoming' | 'active' | 'completed';
   icon?: string;
   coverImage?: string;
-  creatorId: number;
+  creatorId: string;
   startDate: string;
   endDate: string;
   targetDays: number;

@@ -7,9 +7,9 @@ export type TaskStatus = 'pending' | 'completed' | 'skipped';
 export type TaskType = 'check' | 'counter' | 'log';
 
 export interface Task {
-  id: number;
-  userId: number;
-  habitId: number;
+  id: string;
+  userId: string;
+  habitId: string;
   title: string;
   description?: string;
   icon: string;
@@ -36,7 +36,7 @@ export interface TaskHistory {
   completedCount: number;
   totalCount: number;
   tasks: {
-    taskId: number;
+    taskId: string;
     title: string;
     status: TaskStatus;
     value: number;
@@ -68,7 +68,7 @@ export const taskService = {
     return api.get<DailyTaskSummary>('/api/tasks/today');
   },
 
-  async updateTask(taskId: number, status: TaskStatus, value?: number): Promise<Task> {
+  async updateTask(taskId: string, status: TaskStatus, value?: number): Promise<Task> {
     return api.patch<Task>(`/api/tasks/${taskId}`, { status, value });
   },
 
@@ -98,7 +98,7 @@ export const taskService = {
     return api.get(`/api/tasks/history?year=${targetYear}`);
   },
 
-  async deleteTask(taskId: number): Promise<{ success: boolean }> {
+  async deleteTask(taskId: string): Promise<{ success: boolean }> {
     return api.delete(`/api/tasks/${taskId}`);
   },
 
@@ -119,7 +119,7 @@ export const taskService = {
 
   // Habit Templates
   async getHabits(): Promise<Habit[]> {
-    return api.get<Habit[]>('/api/tasks/habits');
+    return api.get<Habit[]>('/api/habits');
   },
 
   async createHabit(data: {
@@ -130,14 +130,14 @@ export const taskService = {
     frequency: 'daily' | 'weekly' | 'custom';
     scheduledDays?: number[];
   }): Promise<Habit> {
-    return api.post<Habit>('/api/tasks/habits', data);
+    return api.post<Habit>('/api/habits', data);
   },
 
   async updateHabit(habitId: string, data: Partial<Habit>): Promise<Habit> {
-    return api.put<Habit>(`/api/tasks/habits/${habitId}`, data);
+    return api.put<Habit>(`/api/habits/${habitId}`, data);
   },
 
   async deleteHabit(habitId: string): Promise<{ success: boolean }> {
-    return api.delete(`/api/tasks/habits/${habitId}`);
+    return api.delete(`/api/habits/${habitId}`);
   }
 };
