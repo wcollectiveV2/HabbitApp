@@ -5,7 +5,7 @@ import { api } from './api';
 
 export interface DailyTip {
   id: number;
-  userId: number;
+  userId: string;
   content: string;
   category: 'motivation' | 'suggestion' | 'insight' | 'reminder';
   relatedHabits?: number[];
@@ -28,7 +28,7 @@ export interface CoachMessage {
 
 export interface Conversation {
   id: number;
-  userId: number;
+  userId: string;
   title: string;
   lastMessageAt: string;
   messageCount: number;
