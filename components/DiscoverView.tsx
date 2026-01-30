@@ -4,9 +4,10 @@ import type { Challenge } from '../services/challengeService';
 
 interface DiscoverViewProps {
   onClose?: () => void;
+  onJoin?: () => void;
 }
 
-const DiscoverView: React.FC<DiscoverViewProps> = ({ onClose }) => {
+const DiscoverView: React.FC<DiscoverViewProps> = ({ onClose, onJoin }) => {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -51,6 +52,8 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ onClose }) => {
       setChallenges(prev => 
         prev.map(c => c.id === challengeId ? { ...c, isJoined: true } : c)
       );
+      // Notify parent that a challenge was joined
+      onJoin?.();
     } catch (err) {
       console.error('Failed to join challenge:', err);
     }

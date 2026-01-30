@@ -134,28 +134,28 @@ const AppContent: React.FC = () => {
   const [selectedChallengeId, setSelectedChallengeId] = useState<number | null>(null);
 
   // Fetch tasks and challenges from API
-  useEffect(() => {
+  const fetchData = useCallback(async () => {
     if (!user) return;
-
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const [taskData, challengeData] = await Promise.all([
-          taskService.getTodayTasks().catch(() => ({ tasks: [] })),
-          challengeService.getActiveChallenges().catch(() => [])
-        ]);
-        
-        setTasks((taskData.tasks || []).map(transformTask));
-        setChallenges((challengeData || []).map(transformChallenge));
-      } catch (err) {
-        console.error('Failed to fetch data:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    
+    setLoading(true);
+    try {
+      const [taskData, challengeData] = await Promise.all([
+        taskService.getTodayTasks().catch(() => ({ tasks: [] })),
+        challengeService.getActiveChallenges().catch(() => [])
+      ]);
+      
+      setTasks((taskData.tasks || []).map(transformTask));
+      setChallenges((challengeData || []).map(transformChallenge));
+    } catch (err) {
+      console.error('Failed to fetch data:', err);
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleToggleTask = useCallback(async (id: string) => {
     const task = tasks.find(t => t.id === id);
@@ -238,7 +238,7 @@ const AppContent: React.FC = () => {
             </button>
             <h1 className="text-xl font-bold">Discover Challenges</h1>
           </div>
-          <DiscoverView onClose={() => setShowDiscover(false)} />
+          <DiscoverView onClose={() => setShowDiscover(false)} onJoin={() => { setShowDiscover(false); fetchData(); }} />
         </div>
       )}
 
@@ -247,7 +247,8 @@ const AppContent: React.FC = () => {
         <div className="fixed inset-0 z-[100] bg-white dark:bg-slate-900 overflow-auto">
           <ChallengeDetailView 
             challengeId={selectedChallengeId} 
-            onBack={() => setSelectedChallengeId(null)} 
+            onBack={() => setSelectedChallengeId(null)}
+            onUpdate={fetchData}
           />
         </div>
       )}
