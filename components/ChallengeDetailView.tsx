@@ -5,6 +5,7 @@ import type { Challenge, ChallengeParticipant } from '../services/challengeServi
 interface ChallengeDetailViewProps {
   challengeId: number;
   onBack: () => void;
+  onUpdate?: () => void;
 }
 
 interface LeaderboardEntry {
@@ -17,14 +18,26 @@ interface LeaderboardEntry {
   isCurrentUser?: boolean;
 }
 
-const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, onBack }) => {
+interface DailyLog {
+  date: string;
+  completed: boolean;
+  value?: number;
+}
+
+const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, onBack, onUpdate }) => {
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [participants, setParticipants] = useState<ChallengeParticipant[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [isJoined, setIsJoined] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'progress' | 'leaderboard'>('leaderboard');
+  const [activeTab, setActiveTab] = useState<'progress' | 'leaderboard'>('progress');
   const [joining, setJoining] = useState(false);
+  
+  // Progress tracking state
+  const [myProgress, setMyProgress] = useState({ progress: 0, completedDays: 0, currentStreak: 0 });
+  const [dailyLogs, setDailyLogs] = useState<DailyLog[]>([]);
+  const [todayCompleted, setTodayCompleted] = useState(false);
+  const [isLogging, setIsLogging] = useState(false);
 
   useEffect(() => {
     const fetchChallengeDetails = async () => {
