@@ -18,6 +18,7 @@ export interface Challenge {
   isPublic: boolean;
   maxParticipants?: number;
   participantCount: number;
+  daily_action?: string;
   habitTemplate?: {
     title: string;
     type: 'check' | 'counter' | 'log';

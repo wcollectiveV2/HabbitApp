@@ -394,11 +394,14 @@ const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, 
                   </div>
                   <div className="text-left">
                     <h3 className="font-bold text-lg">
-                      {todayCompleted ? "Today's Goal Completed!" : "Complete Today's Goal"}
+                      {todayCompleted ? "Completed!" : "Today's Action"}
                     </h3>
-                    <p className={`text-sm ${todayCompleted ? 'text-white/70' : 'text-slate-400'}`}>
-                      {todayCompleted ? 'Great job! Tap to undo' : 'Tap to mark as done'}
+                    <p className={`text-sm ${todayCompleted ? 'text-white/70' : 'text-slate-500'}`}>
+                      {challenge?.daily_action || challenge?.habitTemplate || 'Complete your daily goal'}
                     </p>
+                    {todayCompleted && (
+                      <p className="text-xs text-white/50 mt-1">Tap to undo</p>
+                    )}
                   </div>
                 </div>
                 {isLogging && (
