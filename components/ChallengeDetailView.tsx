@@ -5,7 +5,6 @@ import type { Challenge, ChallengeParticipant } from '../services/challengeServi
 interface ChallengeDetailViewProps {
   challengeId: number;
   onBack: () => void;
-  onUpdate?: () => void;
 }
 
 interface LeaderboardEntry {
@@ -18,26 +17,14 @@ interface LeaderboardEntry {
   isCurrentUser?: boolean;
 }
 
-interface DailyLog {
-  date: string;
-  completed: boolean;
-  value?: number;
-}
-
-const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, onBack, onUpdate }) => {
+const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, onBack }) => {
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [participants, setParticipants] = useState<ChallengeParticipant[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [isJoined, setIsJoined] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'progress' | 'leaderboard'>('progress');
+  const [activeTab, setActiveTab] = useState<'progress' | 'leaderboard'>('leaderboard');
   const [joining, setJoining] = useState(false);
-  
-  // Progress tracking state
-  const [myProgress, setMyProgress] = useState({ progress: 0, completedDays: 0, currentStreak: 0 });
-  const [dailyLogs, setDailyLogs] = useState<DailyLog[]>([]);
-  const [todayCompleted, setTodayCompleted] = useState(false);
-  const [isLogging, setIsLogging] = useState(false);
 
   useEffect(() => {
     const fetchChallengeDetails = async () => {
@@ -61,11 +48,6 @@ const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, 
             isCurrentUser: false // Will be determined by comparing with current user
           }));
         setLeaderboard(leaderboardData);
-
-        // If joined, fetch personal progress
-        if (data.isJoined) {
-          await fetchMyProgress();
-        }
       } catch (err) {
         console.error('Failed to fetch challenge details:', err);
       }
@@ -74,74 +56,6 @@ const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, 
 
     fetchChallengeDetails();
   }, [challengeId]);
-
-  const fetchMyProgress = async () => {
-    try {
-      const progressData = await challengeService.getProgress(challengeId);
-      setMyProgress({
-        progress: progressData.participant?.progress || 0,
-        completedDays: progressData.participant?.completed_days || progressData.participant?.completedDays || 0,
-        currentStreak: progressData.participant?.current_streak || progressData.participant?.currentStreak || 0
-      });
-      setDailyLogs(progressData.dailyLogs || []);
-      
-      // Check if today is completed
-      const today = new Date().toISOString().split('T')[0];
-      const todayLog = (progressData.dailyLogs || []).find((log: DailyLog) => log.date === today);
-      setTodayCompleted(todayLog?.completed || false);
-    } catch (err) {
-      console.error('Failed to fetch progress:', err);
-    }
-  };
-
-  const handleLogToday = async () => {
-    if (!isJoined) return;
-    
-    setIsLogging(true);
-    try {
-      const result = await challengeService.logProgress(challengeId, { 
-        completed: !todayCompleted 
-      });
-      setTodayCompleted(!todayCompleted);
-      setMyProgress(prev => ({
-        ...prev,
-        progress: result.progress,
-        completedDays: result.completedDays
-      }));
-      
-      // Update daily logs
-      const today = new Date().toISOString().split('T')[0];
-      setDailyLogs(prev => {
-        const filtered = prev.filter(l => l.date !== today);
-        return [...filtered, { date: today, completed: !todayCompleted }];
-      });
-      
-      onUpdate?.();
-    } catch (err) {
-      console.error('Failed to log progress:', err);
-    }
-    setIsLogging(false);
-  };
-
-  // Generate last 7 days for weekly view
-  const getLast7Days = () => {
-    const days = [];
-    const today = new Date();
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
-      const log = dailyLogs.find(l => l.date === dateStr);
-      days.push({
-        date: dateStr,
-        dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
-        dayNum: date.getDate(),
-        completed: log?.completed || false,
-        isToday: i === 0
-      });
-    }
-    return days;
-  };
 
   const handleJoin = async () => {
     setJoining(true);
@@ -152,9 +66,6 @@ const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, 
       const data = await challengeService.getChallenge(challengeId);
       setChallenge(data.challenge);
       setParticipants(data.participants || []);
-      // Fetch progress for newly joined challenge
-      await fetchMyProgress();
-      onUpdate?.();
     } catch (err) {
       console.error('Failed to join challenge:', err);
     }
@@ -165,9 +76,6 @@ const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, 
     try {
       await challengeService.leaveChallenge(challengeId);
       setIsJoined(false);
-      setMyProgress({ progress: 0, completedDays: 0, currentStreak: 0 });
-      setDailyLogs([]);
-      onUpdate?.();
     } catch (err) {
       console.error('Failed to leave challenge:', err);
     }
@@ -363,74 +271,6 @@ const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, 
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Today's Action Button */}
-            {isJoined && (
-              <button
-                onClick={handleLogToday}
-                disabled={isLogging}
-                className={`w-full p-5 rounded-3xl shadow-lg flex items-center justify-between transition-all active:scale-[0.98] ${
-                  todayCompleted 
-                    ? 'bg-green-500 text-white' 
-                    : 'bg-white dark:bg-card-dark text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700'
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                    todayCompleted ? 'bg-white/20' : 'bg-primary/10'
-                  }`}>
-                    <span className={`material-symbols-outlined text-2xl ${
-                      todayCompleted ? 'text-white' : 'text-primary'
-                    }`}>
-                      {todayCompleted ? 'check_circle' : 'radio_button_unchecked'}
-                    </span>
-                  </div>
-                  <div className="text-left">
-                    <h3 className="font-bold text-lg">
-                      {todayCompleted ? "Completed!" : "Today's Action"}
-                    </h3>
-                    <p className={`text-sm ${todayCompleted ? 'text-white/70' : 'text-slate-500'}`}>
-                      {challenge?.daily_action || challenge?.habitTemplate || 'Complete your daily goal'}
-                    </p>
-                    {todayCompleted && (
-                      <p className="text-xs text-white/50 mt-1">Tap to undo</p>
-                    )}
-                  </div>
-                </div>
-                {isLogging && (
-                  <div className="w-6 h-6 border-2 border-current/30 border-t-current rounded-full animate-spin"></div>
-                )}
-              </button>
-            )}
-
-            {/* Weekly Progress */}
-            {isJoined && (
-              <div className="bg-white dark:bg-card-dark rounded-3xl p-4 border border-slate-100 dark:border-slate-700 shadow-sm">
-                <h4 className="text-xs font-bold uppercase text-slate-400 mb-4">This Week</h4>
-                <div className="flex justify-between">
-                  {getLast7Days().map((day) => (
-                    <div key={day.date} className="flex flex-col items-center gap-2">
-                      <span className={`text-xs font-bold ${day.isToday ? 'text-primary' : 'text-slate-400'}`}>
-                        {day.dayName}
-                      </span>
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
-                        day.completed 
-                          ? 'bg-green-500 text-white' 
-                          : day.isToday 
-                            ? 'bg-primary/10 text-primary border-2 border-primary' 
-                            : 'bg-slate-100 dark:bg-slate-700 text-slate-400'
-                      }`}>
-                        {day.completed ? (
-                          <span className="material-symbols-outlined text-lg">check</span>
-                        ) : (
-                          day.dayNum
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Progress Stats */}
             {isJoined ? (
               <>
@@ -449,17 +289,17 @@ const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, 
                           cx="40" cy="40" fill="transparent" r="32" 
                           stroke="currentColor" strokeWidth="8" 
                           strokeDasharray={2 * Math.PI * 32}
-                          strokeDashoffset={2 * Math.PI * 32 * (1 - myProgress.progress / 100)}
+                          strokeDashoffset={2 * Math.PI * 32 * (1 - 0.75)}
                           strokeLinecap="round"
                           style={{ transition: 'stroke-dashoffset 0.5s ease' }}
                         />
                       </svg>
                       <span className="absolute inset-0 flex items-center justify-center text-lg font-black text-primary">
-                        {myProgress.progress}%
+                        75%
                       </span>
                     </div>
                     <div className="flex-1">
-                      <p className="text-2xl font-black">{myProgress.completedDays} / {challenge?.targetDays || 30}</p>
+                      <p className="text-2xl font-black">18 / 24</p>
                       <p className="text-sm text-slate-400">Days Completed</p>
                     </div>
                   </div>
@@ -468,12 +308,12 @@ const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-white dark:bg-card-dark rounded-2xl border border-slate-100 dark:border-slate-800 p-4 shadow-sm">
                     <span className="material-symbols-outlined text-orange-500 text-2xl">local_fire_department</span>
-                    <p className="text-2xl font-black mt-2">{myProgress.currentStreak}</p>
+                    <p className="text-2xl font-black mt-2">7</p>
                     <p className="text-xs text-slate-400 font-medium">Current Streak</p>
                   </div>
                   <div className="bg-white dark:bg-card-dark rounded-2xl border border-slate-100 dark:border-slate-800 p-4 shadow-sm">
                     <span className="material-symbols-outlined text-yellow-500 text-2xl">stars</span>
-                    <p className="text-2xl font-black mt-2">{Math.round(myProgress.progress * 25)}</p>
+                    <p className="text-2xl font-black mt-2">1.8k</p>
                     <p className="text-xs text-slate-400 font-medium">Points Earned</p>
                   </div>
                 </div>

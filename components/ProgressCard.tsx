@@ -22,21 +22,15 @@ const ProgressCard: React.FC<ProgressCardProps> = ({ challenge, onClick }) => {
     >
       <div className="relative z-10 flex flex-col h-full justify-between">
         <div className="flex justify-between items-start">
-          <div className="flex-1 pr-4">
-            <h3 className="font-bold text-xl leading-tight">
-              {challenge.title}
+          <div>
+            <h3 className="font-bold text-xl leading-tight whitespace-pre-line">
+              {challenge.title.replace(' ', '\n')}
             </h3>
-            {challenge.daily_action && (
-              <p className={`text-xs mt-2 font-semibold flex items-center gap-1 ${isDark ? 'text-primary' : 'text-white/90'}`}>
-                <span className="material-symbols-outlined text-sm">task_alt</span>
-                {challenge.daily_action}
-              </p>
-            )}
             <p className={`text-xs mt-1 font-medium ${isDark ? 'text-white/50' : 'text-white/70'}`}>
               {challenge.timeLeft}
             </p>
           </div>
-          <div className="relative w-16 h-16 flex-shrink-0">
+          <div className="relative w-16 h-16">
             <svg className="w-full h-full transform -rotate-90">
               <circle 
                 className={isDark ? 'text-white/10' : 'text-white/20'} 
@@ -59,7 +53,7 @@ const ProgressCard: React.FC<ProgressCardProps> = ({ challenge, onClick }) => {
           </div>
         </div>
         
-        <div className="mt-4 flex items-center gap-2">
+        <div className="mt-6 flex items-center gap-2">
           <div className="flex -space-x-2">
             {challenge.participants.map((p, i) => (
               <img 
