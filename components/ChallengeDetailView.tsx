@@ -293,17 +293,17 @@ const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, 
                           cx="40" cy="40" fill="transparent" r="32" 
                           stroke="currentColor" strokeWidth="8" 
                           strokeDasharray={2 * Math.PI * 32}
-                          strokeDashoffset={2 * Math.PI * 32 * (1 - 0.75)}
+                          strokeDashoffset={2 * Math.PI * 32 * (1 - ((currentUserProgress?.progress || 0) / 100))}
                           strokeLinecap="round"
                           style={{ transition: 'stroke-dashoffset 0.5s ease' }}
                         />
                       </svg>
                       <span className="absolute inset-0 flex items-center justify-center text-lg font-black text-primary">
-                        75%
+                        {currentUserProgress?.progress || 0}%
                       </span>
                     </div>
                     <div className="flex-1">
-                      <p className="text-2xl font-black">18 / 24</p>
+                      <p className="text-2xl font-black">{currentUserProgress?.completedDays || 0} / {challenge.targetDays}</p>
                       <p className="text-sm text-slate-400">Days Completed</p>
                     </div>
                   </div>
@@ -312,15 +312,57 @@ const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-white dark:bg-card-dark rounded-2xl border border-slate-100 dark:border-slate-800 p-4 shadow-sm">
                     <span className="material-symbols-outlined text-orange-500 text-2xl">local_fire_department</span>
-                    <p className="text-2xl font-black mt-2">7</p>
+                    <p className="text-2xl font-black mt-2">{currentUserProgress?.currentStreak || 0}</p>
                     <p className="text-xs text-slate-400 font-medium">Current Streak</p>
                   </div>
                   <div className="bg-white dark:bg-card-dark rounded-2xl border border-slate-100 dark:border-slate-800 p-4 shadow-sm">
                     <span className="material-symbols-outlined text-yellow-500 text-2xl">stars</span>
-                    <p className="text-2xl font-black mt-2">1.8k</p>
+                    <p className="text-2xl font-black mt-2">{(Math.round((currentUserProgress?.progress || 0) * 10)).toLocaleString()}</p>
                     <p className="text-xs text-slate-400 font-medium">Points Earned</p>
                   </div>
                 </div>
+                
+                {/* Tasks List */}
+                <div className="bg-white dark:bg-card-dark rounded-3xl border border-slate-100 dark:border-slate-800 p-5 shadow-sm">
+                  <h3 className="font-bold text-sm uppercase text-slate-400 mb-4">Daily Tasks</h3>
+                  {challenge.tasks && challenge.tasks.length > 0 ? (
+                    <div className="space-y-3">
+                      {challenge.tasks.map(task => (
+                        <div key={task.id} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl">
+                          <button className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                            task.current_value && task.current_value >= task.target_value
+                              ? 'bg-primary border-primary text-white'
+                              : 'border-slate-300 dark:border-slate-600'
+                          }`}>
+                            {(task.current_value && task.current_value >= task.target_value) && (
+                              <span className="material-symbols-outlined text-sm font-bold">check</span>
+                            )}
+                          </button>
+                          <div className="flex-1">
+                            <p className="font-bold text-sm">{task.title}</p>
+                            {task.description && <p className="text-xs text-slate-400">{task.description}</p>}
+                          </div>
+                          <div className="text-xs font-medium text-slate-400">
+                             {task.type === 'numeric' 
+                                ? `${task.current_value || 0}/${task.target_value} ${task.unit || ''}`
+                                : (task.current_value ? 'Completed' : 'Pending')
+                             }
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                        <p className="text-slate-400 text-sm">No specific tasks defined.</p>
+                        {challenge.dailyAction && (
+                            <div className="mt-2 p-3 bg-primary/5 rounded-xl text-primary font-medium text-sm">
+                                {challenge.dailyAction}
+                            </div>
+                        )}
+                    </div>
+                  )}
+                </div>
+
               </>
             ) : (
               <div className="bg-slate-50 dark:bg-slate-900/50 rounded-3xl p-8 text-center">
@@ -343,7 +385,7 @@ const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, 
             </div>
             <div>
               <p className="text-xs text-slate-400 font-medium">Created by</p>
-              <p className="font-bold">HabitPulse Team</p>
+              <p className="font-bold">{challenge.creatorName || 'HabitPulse Team'}</p>
             </div>
           </div>
           
@@ -363,7 +405,7 @@ const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, 
             </div>
             <div>
               <p className="text-xs text-slate-400 font-medium">Rewards</p>
-              <p className="font-bold">{challenge.rewards?.xp || 500} XP + Badge</p>
+              <p className="font-bold">{challenge.rewards ? `${challenge.rewards.xp} XP${challenge.rewards.badge ? ` + ${challenge.rewards.badge}` : ''}` : '500 XP + Badge'}</p>
             </div>
           </div>
 
