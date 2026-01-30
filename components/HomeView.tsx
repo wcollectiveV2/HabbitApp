@@ -25,15 +25,8 @@ const HomeView: React.FC<HomeViewProps> = ({ tasks, profile }) => {
         const dailyTip = await aiService.getDailyTip();
         setTip(dailyTip.content);
       } catch (err) {
-        // Fallback tips
-        const tips = [
-          "Consistency is key! Even small steps forward are progress.",
-          "Don't forget to hydrate and take breaks.",
-          "Reflect on your achievements from last week.",
-          "Great job on keeping up with your habits!",
-          "Every day is a new opportunity to succeed."
-        ];
-        setTip(tips[Math.floor(Math.random() * tips.length)]);
+        console.error('Failed to fetch daily tip:', err);
+        setTip("Stay focused on your goals today!");
       }
       setIsLoadingTip(false);
     };

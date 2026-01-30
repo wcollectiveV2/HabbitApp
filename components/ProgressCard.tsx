@@ -4,18 +4,22 @@ import { Challenge } from '../types';
 
 interface ProgressCardProps {
   challenge: Challenge;
+  onClick?: () => void;
 }
 
-const ProgressCard: React.FC<ProgressCardProps> = ({ challenge }) => {
+const ProgressCard: React.FC<ProgressCardProps> = ({ challenge, onClick }) => {
   const isDark = challenge.theme === 'dark';
   const radius = 24;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (challenge.progress / 100) * circumference;
 
   return (
-    <div className={`min-w-[280px] snap-center p-5 rounded-3xl relative overflow-hidden shadow-xl ${
-      isDark ? 'bg-slate-900 text-white shadow-slate-900/20' : 'bg-primary text-white shadow-primary/30'
-    }`}>
+    <div 
+      onClick={onClick}
+      className={`min-w-[280px] snap-center p-5 rounded-3xl relative overflow-hidden shadow-xl cursor-pointer transition-all active:scale-[0.98] hover:shadow-2xl ${
+        isDark ? 'bg-slate-900 text-white shadow-slate-900/20' : 'bg-primary text-white shadow-primary/30'
+      }`}
+    >
       <div className="relative z-10 flex flex-col h-full justify-between">
         <div className="flex justify-between items-start">
           <div>

@@ -7,9 +7,11 @@ import BottomNav from './components/BottomNav';
 import HomeView from './components/HomeView';
 import SocialView from './components/SocialView';
 import ProfileView from './components/ProfileView';
+import DiscoverView from './components/DiscoverView';
 import HabitCoach from './components/HabitCoach';
 import LoginView from './components/LoginView';
 import SignupView from './components/SignupView';
+import ChallengeDetailView from './components/ChallengeDetailView';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { taskService, challengeService } from './services';
 import { Tab, AuthMode } from './types';
@@ -46,11 +48,27 @@ const ActiveView: React.FC<{
   tasks: UITask[], 
   challenges: UIChallenge[],
   onToggle: (id: string) => void,
-  loading: boolean 
-}> = ({ tasks, challenges, onToggle, loading }) => (
+  loading: boolean,
+  onOpenDiscover: () => void,
+  onChallengeClick: (challengeId: string) => void
+}> = ({ tasks, challenges, onToggle, loading, onOpenDiscover, onChallengeClick }) => (
   <div className="animate-in fade-in duration-500">
+    {/* Discover Button */}
+    <div className="px-6 mt-4">
+      <button 
+        onClick={onOpenDiscover}
+        className="w-full p-4 bg-gradient-to-r from-primary to-purple-500 text-white rounded-2xl flex items-center justify-between shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform"
+      >
+        <div className="flex items-center gap-3">
+          <span className="material-symbols-outlined">explore</span>
+          <span className="font-bold">Discover New Challenges</span>
+        </div>
+        <span className="material-symbols-outlined">arrow_forward</span>
+      </button>
+    </div>
+
     {/* Progress Section */}
-    <section className="mt-4">
+    <section className="mt-6">
       <div className="px-6 flex justify-between items-center mb-4">
         <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">Current Progress</h2>
         <button className="text-primary text-xs font-bold uppercase tracking-widest active:opacity-50 transition-opacity">
@@ -63,7 +81,11 @@ const ActiveView: React.FC<{
           <div className="min-w-[280px] h-40 bg-slate-100 dark:bg-slate-800 rounded-3xl animate-pulse"></div>
         ) : challenges.length > 0 ? (
           challenges.map((challenge) => (
-            <ProgressCard key={challenge.id} challenge={challenge} />
+            <ProgressCard 
+              key={challenge.id} 
+              challenge={challenge} 
+              onClick={() => onChallengeClick(challenge.id)}
+            />
           ))
         ) : (
           <div className="min-w-[280px] p-6 bg-slate-100 dark:bg-slate-800 rounded-3xl text-center text-slate-400">
@@ -108,6 +130,8 @@ const AppContent: React.FC = () => {
   const [tasks, setTasks] = useState<UITask[]>([]);
   const [challenges, setChallenges] = useState<UIChallenge[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showDiscover, setShowDiscover] = useState(false);
+  const [selectedChallengeId, setSelectedChallengeId] = useState<number | null>(null);
 
   // Fetch tasks and challenges from API
   useEffect(() => {
@@ -158,6 +182,10 @@ const AppContent: React.FC = () => {
     await logout();
   };
 
+  const handleChallengeClick = (challengeId: string) => {
+    setSelectedChallengeId(parseInt(challengeId));
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
@@ -168,7 +196,7 @@ const AppContent: React.FC = () => {
         return <ProfileView onLogout={handleLogout} profile={profile} />;
       case 'active':
       default:
-        return <ActiveView tasks={tasks} challenges={challenges} onToggle={handleToggleTask} loading={loading} />;
+        return <ActiveView tasks={tasks} challenges={challenges} onToggle={handleToggleTask} loading={loading} onOpenDiscover={() => setShowDiscover(true)} onChallengeClick={handleChallengeClick} />;
     }
   };
 
@@ -197,6 +225,32 @@ const AppContent: React.FC = () => {
       
       <HabitCoach />
       <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+      
+      {/* Discover Modal */}
+      {showDiscover && (
+        <div className="fixed inset-0 z-[100] bg-white dark:bg-slate-900 overflow-auto">
+          <div className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-4 flex items-center gap-4 border-b border-slate-100 dark:border-slate-800">
+            <button 
+              onClick={() => setShowDiscover(false)}
+              className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center"
+            >
+              <span className="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h1 className="text-xl font-bold">Discover Challenges</h1>
+          </div>
+          <DiscoverView onClose={() => setShowDiscover(false)} />
+        </div>
+      )}
+
+      {/* Challenge Detail Modal */}
+      {selectedChallengeId && (
+        <div className="fixed inset-0 z-[100] bg-white dark:bg-slate-900 overflow-auto">
+          <ChallengeDetailView 
+            challengeId={selectedChallengeId} 
+            onBack={() => setSelectedChallengeId(null)} 
+          />
+        </div>
+      )}
     </div>
   );
 };
