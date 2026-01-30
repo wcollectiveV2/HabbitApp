@@ -83,12 +83,8 @@ const HomeView: React.FC<HomeViewProps> = ({ tasks, profile }) => {
         }
         setActivity(weekActivity);
       } catch {
-        // Generate mock weekly data
-        const today = new Date().getDay();
-        setActivity(Array(7).fill(null).map((_, i) => ({
-          date: '',
-          completed: i < today
-        })));
+        // Fallback to empty activity if API fails - NO MOCK DATA
+        setActivity([]);
       }
     };
     fetchActivity();
