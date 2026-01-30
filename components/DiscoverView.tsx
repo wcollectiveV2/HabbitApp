@@ -152,6 +152,12 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ onClose, onJoin }) => {
                       </span>
                     </div>
                     <h3 className="font-bold text-lg">{challenge.title}</h3>
+                    {challenge.daily_action && (
+                      <p className="text-primary text-sm font-semibold mt-1 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-sm">task_alt</span>
+                        {challenge.daily_action}
+                      </p>
+                    )}
                     <p className="text-slate-400 text-sm mt-1 line-clamp-2">{challenge.description}</p>
                   </div>
                   <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">

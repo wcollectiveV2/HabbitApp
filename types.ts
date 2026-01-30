@@ -8,6 +8,9 @@ export interface Challenge {
   theme: 'primary' | 'dark';
   participants: string[];
   extraParticipants: number;
+  daily_action?: string;
+  icon?: string;
+  targetDays?: number;
 }
 
 export interface Task {

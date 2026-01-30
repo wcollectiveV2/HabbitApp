@@ -36,12 +36,30 @@ const transformTask = (apiTask: any): UITask => ({
 const transformChallenge = (apiChallenge: any): UIChallenge => ({
   id: String(apiChallenge.id),
   title: apiChallenge.title,
-  timeLeft: `${apiChallenge.daysRemaining || 0} days left`,
+  timeLeft: `${apiChallenge.daysRemaining || apiChallenge.days_remaining || 0} days left`,
   progress: apiChallenge.progress || 0,
   joinedText: 'JOINED',
   theme: apiChallenge.id % 2 === 0 ? 'dark' : 'primary',
   participants: [],
-  extraParticipants: apiChallenge.participantCount || 0
+  extraParticipants: apiChallenge.participantCount || apiChallenge.participant_count || 0,
+  daily_action: apiChallenge.daily_action,
+  icon: apiChallenge.icon,
+  targetDays: apiChallenge.targetDays || apiChallenge.target_days
+});
+
+// Create a task from a challenge's daily action
+const challengeToTask = (challenge: UIChallenge, index: number): UITask => ({
+  id: `challenge-${challenge.id}`,
+  title: challenge.daily_action || 'Complete daily goal',
+  challengeName: challenge.title,
+  icon: challenge.icon || 'flag',
+  iconBg: challenge.theme === 'dark' ? 'bg-slate-900/10' : 'bg-primary/10',
+  iconColor: challenge.theme === 'dark' ? 'text-slate-700' : 'text-primary',
+  completed: false,
+  currentProgress: challenge.progress,
+  totalProgress: 100,
+  progressBlocks: 4,
+  activeBlocks: Math.min(4, Math.ceil((challenge.progress / 100) * 4))
 });
 
 const ActiveView: React.FC<{ 
@@ -51,77 +69,86 @@ const ActiveView: React.FC<{
   loading: boolean,
   onOpenDiscover: () => void,
   onChallengeClick: (challengeId: string) => void
-}> = ({ tasks, challenges, onToggle, loading, onOpenDiscover, onChallengeClick }) => (
-  <div className="animate-in fade-in duration-500">
-    {/* Discover Button */}
-    <div className="px-6 mt-4">
-      <button 
-        onClick={onOpenDiscover}
-        className="w-full p-4 bg-gradient-to-r from-primary to-purple-500 text-white rounded-2xl flex items-center justify-between shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform"
-      >
-        <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined">explore</span>
-          <span className="font-bold">Discover New Challenges</span>
-        </div>
-        <span className="material-symbols-outlined">arrow_forward</span>
-      </button>
-    </div>
+}> = ({ tasks, challenges, onToggle, loading, onOpenDiscover, onChallengeClick }) => {
+  // Combine regular tasks with challenge daily actions
+  const challengeTasks = challenges.map((c, i) => challengeToTask(c, i));
+  const allTasks = [...challengeTasks, ...tasks];
 
-    {/* Progress Section */}
-    <section className="mt-6">
-      <div className="px-6 flex justify-between items-center mb-4">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">Current Progress</h2>
-        <button className="text-primary text-xs font-bold uppercase tracking-widest active:opacity-50 transition-opacity">
-          View All
+  return (
+    <div className="animate-in fade-in duration-500">
+      {/* Discover Button */}
+      <div className="px-6 mt-4">
+        <button 
+          onClick={onOpenDiscover}
+          className="w-full p-4 bg-gradient-to-r from-primary to-purple-500 text-white rounded-2xl flex items-center justify-between shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform"
+        >
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined">explore</span>
+            <span className="font-bold">Discover New Challenges</span>
+          </div>
+          <span className="material-symbols-outlined">arrow_forward</span>
         </button>
       </div>
-      
-      <div className="flex overflow-x-auto gap-4 px-6 no-scrollbar snap-x pb-4">
-        {loading ? (
-          <div className="min-w-[280px] h-40 bg-slate-100 dark:bg-slate-800 rounded-3xl animate-pulse"></div>
-        ) : challenges.length > 0 ? (
-          challenges.map((challenge) => (
-            <ProgressCard 
-              key={challenge.id} 
-              challenge={challenge} 
-              onClick={() => onChallengeClick(challenge.id)}
-            />
-          ))
-        ) : (
-          <div className="min-w-[280px] p-6 bg-slate-100 dark:bg-slate-800 rounded-3xl text-center text-slate-400">
-            No active challenges. Join one!
-          </div>
-        )}
-        <div className="min-w-[1px] h-full" />
-      </div>
-    </section>
 
-    {/* Tasks Section */}
-    <section className="mt-8 px-6">
-      <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Today's Tasks</h2>
-      <div className="space-y-4">
-        {loading ? (
-          <>
-            <div className="h-24 bg-slate-100 dark:bg-slate-800 rounded-3xl animate-pulse"></div>
-            <div className="h-24 bg-slate-100 dark:bg-slate-800 rounded-3xl animate-pulse"></div>
-          </>
-        ) : tasks.length > 0 ? (
-          tasks.map((task) => (
-            <TaskCard 
-              key={task.id} 
-              task={task} 
-              onToggle={onToggle} 
-            />
-          ))
-        ) : (
-          <div className="p-6 bg-slate-100 dark:bg-slate-800 rounded-3xl text-center text-slate-400">
-            No tasks for today. Create some habits!
-          </div>
-        )}
-      </div>
-    </section>
-  </div>
-);
+      {/* Progress Section */}
+      <section className="mt-6">
+        <div className="px-6 flex justify-between items-center mb-4">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">Current Progress</h2>
+          <button className="text-primary text-xs font-bold uppercase tracking-widest active:opacity-50 transition-opacity">
+            View All
+          </button>
+        </div>
+        
+        <div className="flex overflow-x-auto gap-4 px-6 no-scrollbar snap-x pb-4">
+          {loading ? (
+            <div className="min-w-[280px] h-40 bg-slate-100 dark:bg-slate-800 rounded-3xl animate-pulse"></div>
+          ) : challenges.length > 0 ? (
+            challenges.map((challenge) => (
+              <ProgressCard 
+                key={challenge.id} 
+                challenge={challenge} 
+                onClick={() => onChallengeClick(challenge.id)}
+              />
+            ))
+          ) : (
+            <div className="min-w-[280px] p-6 bg-slate-100 dark:bg-slate-800 rounded-3xl text-center text-slate-400">
+              No active challenges. Join one!
+            </div>
+          )}
+          <div className="min-w-[1px] h-full" />
+        </div>
+      </section>
+
+      {/* Today's Actions Section */}
+      <section className="mt-8 px-6">
+        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Today's Actions</h2>
+        <div className="space-y-4">
+          {loading ? (
+            <>
+              <div className="h-24 bg-slate-100 dark:bg-slate-800 rounded-3xl animate-pulse"></div>
+              <div className="h-24 bg-slate-100 dark:bg-slate-800 rounded-3xl animate-pulse"></div>
+            </>
+          ) : allTasks.length > 0 ? (
+            allTasks.map((task) => (
+              <TaskCard 
+                key={task.id} 
+                task={task} 
+                onToggle={task.id.startsWith('challenge-') ? 
+                  () => onChallengeClick(task.id.replace('challenge-', '')) : 
+                  onToggle
+                } 
+              />
+            ))
+          ) : (
+            <div className="p-6 bg-slate-100 dark:bg-slate-800 rounded-3xl text-center text-slate-400">
+              No actions for today. Join a challenge!
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+};
 
 const AppContent: React.FC = () => {
   const { user, profile, isLoading: authLoading, logout } = useAuth();
