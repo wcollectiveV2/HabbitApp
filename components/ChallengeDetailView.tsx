@@ -142,14 +142,6 @@ const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, 
     }
     return days;
   };
-      } catch (err) {
-        console.error('Failed to fetch challenge details:', err);
-      }
-      setLoading(false);
-    };
-
-    fetchChallengeDetails();
-  }, [challengeId]);
 
   const handleJoin = async () => {
     setJoining(true);
