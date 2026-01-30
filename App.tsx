@@ -223,7 +223,7 @@ const AppContent: React.FC = () => {
         {renderContent()}
       </main>
       
-      <HabitCoach />
+      {/* <HabitCoach /> AI feature disabled */}
       <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
       
       {/* Discover Modal */}

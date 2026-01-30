@@ -19,6 +19,10 @@ const HomeView: React.FC<HomeViewProps> = ({ tasks, profile }) => {
   const [activity, setActivity] = useState<{ date: string; completed: boolean }[]>([]);
 
   useEffect(() => {
+    // AI Feature disabled
+    setTip("Stay focused on your goals today!");
+    setIsLoadingTip(false);
+    /*
     const fetchTip = async () => {
       setIsLoadingTip(true);
       try {
@@ -31,6 +35,7 @@ const HomeView: React.FC<HomeViewProps> = ({ tasks, profile }) => {
       setIsLoadingTip(false);
     };
     fetchTip();
+    */
   }, []);
 
   useEffect(() => {
