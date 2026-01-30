@@ -29,6 +29,16 @@ export interface Challenge {
     xp: number;
     badge?: string;
   };
+  creatorName?: string;
+  tasks?: Array<{
+    id: number;
+    title: string;
+    description?: string;
+    type: 'boolean' | 'numeric';
+    target_value: number;
+    unit?: string;
+    current_value?: number;
+  }>;
   createdAt: string;
 }
 

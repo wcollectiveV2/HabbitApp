@@ -20,6 +20,7 @@ interface LeaderboardEntry {
 const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, onBack }) => {
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [participants, setParticipants] = useState<ChallengeParticipant[]>([]);
+  const [currentUserProgress, setCurrentUserProgress] = useState<ChallengeParticipant | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [isJoined, setIsJoined] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -34,6 +35,9 @@ const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, 
         setChallenge(data.challenge);
         setParticipants(data.participants || []);
         setIsJoined(data.isJoined);
+        if (data.currentUserProgress) {
+            setCurrentUserProgress(data.currentUserProgress);
+        }
 
         // Map participants to leaderboard entries
         const leaderboardData = (data.participants || [])
@@ -44,7 +48,7 @@ const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, 
             name: p.userName || 'Anonymous',
             avatar: p.userAvatar || `https://i.pravatar.cc/150?u=${p.userId}`,
             progress: p.progress || 0,
-            points: Math.round((p.progress || 0) * 25), // Estimate points from progress
+            points: Math.round((p.progress || 0) * 10), // Estimate points from progress
             isCurrentUser: false // Will be determined by comparing with current user
           }));
         setLeaderboard(leaderboardData);
