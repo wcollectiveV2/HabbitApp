@@ -46,3 +46,14 @@ export interface FeedItem {
 
 export type Tab = 'home' | 'active' | 'social' | 'me';
 export type AuthMode = 'login' | 'signup';
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: 'friend_request' | 'challenge_invite' | 'system' | 'reminder' | 'achievement';
+  title: string;
+  message?: string;
+  data?: any;
+  is_read: boolean;
+  created_at: string;
+}

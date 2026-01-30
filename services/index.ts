@@ -5,3 +5,4 @@ export * from './taskService';
 export * from './challengeService';
 export * from './socialService';
 export * from './aiService';
+export * from './notificationService';
