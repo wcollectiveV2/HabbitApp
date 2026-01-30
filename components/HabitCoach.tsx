@@ -28,32 +28,15 @@ const HabitCoach: React.FC<HabitCoachProps> = ({ userName }) => {
   useEffect(() => {
     if (isOpen && messages.length === 0) {
       setMessages([
-        { role: 'model', text: `Hey ${displayName}! I'm Pulse, your AI habit coach. How can I help you reach your goals today?` }
+        { role: 'model', text: `Hey ${displayName}! I'm Pulse, your AI habit coach. \n\n⚠️ **Note**: My brain is currently being upgraded! The full AI chat features will be available in the next update. For now, I can only offer basic encouragement.` }
       ]);
-      loadChatHistory();
+      // loadChatHistory(); // Disable history for now
     }
   }, [isOpen, displayName]);
 
   // Load previous chat history
   const loadChatHistory = async () => {
-    try {
-      const conversations = await aiService.getConversations();
-      if (conversations && conversations.length > 0) {
-        const latestConvo = conversations[0];
-        setConversationId(latestConvo.id);
-        const history = await aiService.getHistory(latestConvo.id);
-        if (history && history.messages && history.messages.length > 0) {
-          const mappedMessages = history.messages.map((msg: any) => ({
-            role: msg.role === 'assistant' ? 'model' : msg.role,
-            text: msg.content
-          }));
-          setMessages(prev => [...prev, ...mappedMessages.slice(-10)]); // Last 10 messages
-        }
-      }
-    } catch (err) {
-      // Silent fail - just start fresh
-      console.log('No chat history found, starting fresh');
-    }
+    // Disabled during maintenance
   };
 
   useEffect(() => {
@@ -71,34 +54,20 @@ const HabitCoach: React.FC<HabitCoachProps> = ({ userName }) => {
     setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
     setIsTyping(true);
 
-    try {
-      const response = await aiService.chat(userMessage, conversationId || undefined);
-      
-      if (response.conversationId && !conversationId) {
-        setConversationId(response.conversationId);
-      }
+    // AI Service Temporarily Disabled
+    // Artificial delay for realism
+    await new Promise(resolve => setTimeout(resolve, 800));
 
-      const aiResponse = response.message || response.content || response.response || 
-        "I'm here to help! Could you tell me more about what you'd like to work on?";
-      
-      setMessages(prev => [...prev, { role: 'model', text: aiResponse }]);
-    } catch (err: any) {
-      console.error('Chat error:', err);
-      // Fallback responses for when API is unavailable
-      const fallbackResponses = [
-        "That sounds like a great plan! Keep pushing forward.",
-        "I love your enthusiasm! Small steps lead to big changes.",
-        "Remember, consistency is more important than perfection.",
-        "You're making great progress! What else can I help with?",
-        "That's a wonderful goal to work towards!"
-      ];
-      const fallback = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
-      setMessages(prev => [...prev, { role: 'model', text: fallback }]);
-      
-      if (err.message?.includes('401') || err.message?.includes('auth')) {
-        setError('Please log in to use the AI coach');
-      }
-    }
+    const comingSoonResponses = [
+      "I'm currently undergoing maintenance to serve you better! Check back soon for full AI coaching.",
+      "My AI systems are getting an upgrade. I'll be fully operational in the next release!",
+      "I can't process complex queries just yet, but keep up the great work on your habits!",
+      "Feature coming soon! Our team is hard at work making me smarter."
+    ];
+    
+    const aiResponse = comingSoonResponses[Math.floor(Math.random() * comingSoonResponses.length)];
+    
+    setMessages(prev => [...prev, { role: 'model', text: aiResponse }]);
     setIsTyping(false);
   };
 
