@@ -43,6 +43,8 @@ export interface UserProfile {
   privacyShowLeaderboard: boolean;
   privacyShowActivity: boolean;
   privacyAllowFollowers: boolean;
+  privacyPublicLeaderboard?: 'visible' | 'anonymous' | 'hidden';
+  privacyChallengeLeaderboard?: 'visible' | 'anonymous' | 'hidden';
 }
 
 export const authService = {

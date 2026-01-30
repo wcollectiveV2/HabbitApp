@@ -13,6 +13,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: propProfile, onLogou
   const { user, profile: contextProfile, logout } = useAuth();
   const [stats, setStats] = useState({ totalRewards: 0, activeChallenges: 0 });
   const [isLoading, setIsLoading] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
 
   const profile = propProfile || contextProfile;
 
@@ -45,13 +46,35 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: propProfile, onLogou
     onLogout?.();
   };
 
+  const handleUpdateProfile = async (data: Partial<UserProfile>) => {
+    try {
+      await userService.updateProfile(data);
+      setShowSettings(false);
+      // Force reload to update context/profile
+      window.location.reload(); 
+    } catch (err) {
+      console.error('Failed to update profile:', err);
+      alert('Failed to update profile');
+    }
+  };
+
   const settings = [
-    { icon: 'person_outline', label: 'Edit Profile', color: 'text-blue-500', action: () => {} },
+    { icon: 'person_outline', label: 'Edit Profile & Privacy', color: 'text-blue-500', action: () => setShowSettings(true) },
     { icon: 'notifications_active', label: 'Notifications', color: 'text-purple-500', action: () => {} },
     { icon: 'dark_mode', label: 'Appearance', color: 'text-orange-500', action: () => {} },
-    { icon: 'security', label: 'Privacy & Security', color: 'text-green-500', action: () => {} },
+    { icon: 'security', label: 'Security', color: 'text-green-500', action: () => {} },
     { icon: 'help_outline', label: 'Help Center', color: 'text-slate-500', action: () => {} },
   ];
+
+  if (showSettings && profile) {
+    return (
+      <EditProfileModal 
+        profile={profile} 
+        onClose={() => setShowSettings(false)} 
+        onSave={handleUpdateProfile} 
+      />
+    );
+  }
 
   const displayName = profile?.name || user?.name || 'User';
   const displayBio = profile?.bio || 'Habit Builder';
@@ -120,6 +143,100 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: propProfile, onLogou
         <span className="material-symbols-outlined text-sm">logout</span>
         Log Out
       </button>
+    </div>
+  );
+};
+
+
+const EditProfileModal = ({ profile, onClose, onSave }: { profile: UserProfile, onClose: () => void, onSave: (data: Partial<UserProfile>) => Promise<void> }) => {
+  const [formData, setFormData] = useState({
+    name: profile.name,
+    bio: profile.bio || '',
+    privacyPublicLeaderboard: profile.privacyPublicLeaderboard || 'visible',
+    privacyChallengeLeaderboard: profile.privacyChallengeLeaderboard || 'visible'
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    await onSave(formData);
+    setLoading(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-white dark:bg-slate-950 flex flex-col animate-in slide-in-from-bottom-10">
+      <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+        <button onClick={onClose} className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+          <span className="material-symbols-outlined">arrow_back</span>
+        </button>
+        <h2 className="font-bold text-lg">Edit Profile</h2>
+        <button 
+          onClick={handleSubmit} 
+          disabled={loading}
+          className="text-primary font-bold text-sm disabled:opacity-50"
+        >
+          {loading ? 'Saving...' : 'Save'}
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="space-y-4">
+          <label className="block">
+            <span className="text-sm font-bold text-slate-500 mb-1 block">Display Name</span>
+            <input 
+              type="text" 
+              value={formData.name}
+              onChange={e => setFormData({...formData, name: e.target.value})}
+              className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-2xl p-4 font-semibold focus:ring-2 focus:ring-primary outline-none"
+            />
+          </label>
+          
+          <label className="block">
+            <span className="text-sm font-bold text-slate-500 mb-1 block">Bio</span>
+            <textarea 
+              value={formData.bio}
+              onChange={e => setFormData({...formData, bio: e.target.value})}
+              className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-2xl p-4 font-medium focus:ring-2 focus:ring-primary outline-none min-h-[100px]"
+              placeholder="Tell us about yourself..."
+            />
+          </label>
+        </div>
+
+        <div className="border-t border-slate-100 dark:border-slate-800 pt-6 space-y-4">
+          <h3 className="font-black text-lg">Privacy Settings</h3>
+          
+          <div className="space-y-4">
+            <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl">
+              <label className="block mb-2 text-sm font-bold">Public Leaderboard</label>
+              <select 
+                value={formData.privacyPublicLeaderboard}
+                onChange={e => setFormData({...formData, privacyPublicLeaderboard: e.target.value as any})}
+                className="w-full bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700"
+              >
+                <option value="visible">Visible (Everyone sees you)</option>
+                <option value="anonymous">Anonymous (Hidden name/avatar)</option>
+                <option value="hidden">Hidden (Not on leaderboard)</option>
+              </select>
+              <p className="text-xs text-slate-400 mt-2">Controls your appearance on the global leaderboard.</p>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl">
+              <label className="block mb-2 text-sm font-bold">Challenge Leaderboards</label>
+              <select 
+                value={formData.privacyChallengeLeaderboard}
+                onChange={e => setFormData({...formData, privacyChallengeLeaderboard: e.target.value as any})}
+                className="w-full bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700"
+              >
+                <option value="visible">Visible</option>
+                <option value="anonymous">Anonymous inside challenges</option>
+                <option value="hidden">Completely Hidden</option>
+              </select>
+              <p className="text-xs text-slate-400 mt-2">Controls how you appear in challenge rankings.</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
