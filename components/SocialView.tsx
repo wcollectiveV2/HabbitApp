@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { socialService } from '../services';
+import { LeaderboardSkeleton, FeedItemSkeleton } from './ui/Skeleton';
+import EmptyState from './ui/EmptyState';
 
 interface LeaderboardEntry {
   rank: number;
@@ -80,60 +82,122 @@ const SocialView: React.FC = () => {
   };
 
   return (
-    <div className="px-6 space-y-8 animate-in slide-in-from-right-4 duration-500">
+    <div className="px-6 space-y-8 animate-in slide-in-from-right-4 duration-500 pb-10">
       <section>
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">Leaderboard</h2>
+          {/* Fixed contrast: text-slate-400 -> text-slate-600 */}
+          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Leaderboard</h2>
           <button 
             onClick={toggleLeaderboardType}
-            className="text-primary text-xs font-bold uppercase tracking-widest"
+            className="text-primary text-xs font-bold uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-2 py-1"
+            aria-label={`Switch to ${leaderboardType === 'global' ? 'friends' : 'global'} leaderboard`}
           >
             {leaderboardType === 'global' ? 'Global' : 'Friends'}
           </button>
         </div>
         
-        <div className={`bg-white dark:bg-card-dark rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm divide-y divide-slate-50 dark:divide-slate-800 overflow-hidden ${isLoadingLeaderboard ? 'animate-pulse opacity-70' : ''}`}>
-          {leaderboard.map((user) => (
-            <div key={user.rank} className={`p-4 flex items-center justify-between ${user.isCurrentUser ? 'bg-primary/5' : ''}`}>
-              <div className="flex items-center gap-4">
-                <div className={`w-8 h-8 flex items-center justify-center font-black text-sm rounded-full ${
-                  user.rank === 1 ? 'bg-yellow-400 text-white' : 
-                  user.rank === 2 ? 'bg-slate-300 text-slate-600' :
-                  user.rank === 3 ? 'bg-orange-300 text-white' : 'text-slate-400'
-                }`}>
-                  {user.rank}
+        {isLoadingLeaderboard ? (
+          <LeaderboardSkeleton />
+        ) : leaderboard.length > 0 ? (
+          <div 
+            className="bg-white dark:bg-card-dark rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden"
+            role="list"
+            aria-label="Leaderboard rankings"
+          >
+            {leaderboard.map((user) => (
+              <div 
+                key={user.rank} 
+                className={`p-4 flex items-center justify-between ${user.isCurrentUser ? 'bg-primary/5' : ''}`}
+                role="listitem"
+              >
+                <div className="flex items-center gap-4">
+                  <div 
+                    className={`w-8 h-8 flex items-center justify-center font-black text-sm rounded-full ${
+                      user.rank === 1 ? 'bg-yellow-400 text-white' : 
+                      user.rank === 2 ? 'bg-slate-300 text-slate-700' :
+                      user.rank === 3 ? 'bg-orange-400 text-white' : 'text-slate-500 dark:text-slate-400'
+                    }`}
+                    aria-label={`Rank ${user.rank}`}
+                  >
+                    {user.rank}
+                  </div>
+                  <img 
+                    src={user.avatar} 
+                    className="w-10 h-10 rounded-full bg-slate-100 object-cover" 
+                    alt={`${user.name}'s avatar`}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = `https://i.pravatar.cc/100?u=${user.userId}`;
+                    }}
+                  />
+                  <div>
+                    <h4 className="font-bold text-sm text-slate-900 dark:text-white">{user.name}</h4>
+                    {/* Fixed contrast: text-slate-400 -> text-slate-600 */}
+                    <p className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase">{user.points.toLocaleString()} Points</p>
+                  </div>
                 </div>
-                <img src={user.avatar} className="w-10 h-10 rounded-full bg-slate-100" alt={user.name} />
-                <div>
-                  <h4 className="font-bold text-sm">{user.name}</h4>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">{user.points.toLocaleString()} Points</p>
-                </div>
+                {user.isCurrentUser && (
+                  <span className="bg-primary/20 text-primary text-[8px] font-black px-2 py-1 rounded-full uppercase">You</span>
+                )}
               </div>
-              {user.isCurrentUser && (
-                <span className="bg-primary/20 text-primary text-[8px] font-black px-2 py-1 rounded-full uppercase">You</span>
-              )}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            icon="leaderboard"
+            title="No rankings yet"
+            description="Be the first to climb the leaderboard! Complete challenges and earn points."
+            illustration="social"
+          />
+        )}
       </section>
 
       <section>
-        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Recent Activity</h2>
-        <div className={`space-y-4 ${isLoadingFeed ? 'animate-pulse opacity-70' : ''}`}>
-          {feed.map((item) => (
-            <div key={item.id} className="flex gap-4 p-4 rounded-3xl bg-slate-50 dark:bg-slate-900/50">
-              <img src={item.userAvatar} className="w-10 h-10 rounded-full" alt="" />
-              <div>
-                <p className="text-sm leading-snug">
-                  <span className="font-bold">{item.userName}</span>{' '}
-                  <span className="text-slate-500">{item.action}</span>{' '}
-                  <span className="font-semibold text-primary">{item.target}</span>
-                </p>
-                <span className="text-[10px] text-slate-400 font-medium">{item.timestamp}</span>
-              </div>
-            </div>
-          ))}
-        </div>
+        {/* Fixed contrast: text-slate-400 -> text-slate-600 */}
+        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-4">Recent Activity</h2>
+        {isLoadingFeed ? (
+          <div className="space-y-4">
+            <FeedItemSkeleton />
+            <FeedItemSkeleton />
+            <FeedItemSkeleton />
+          </div>
+        ) : feed.length > 0 ? (
+          <div className="space-y-4" role="feed" aria-label="Activity feed">
+            {feed.map((item) => (
+              <article 
+                key={item.id} 
+                className="flex gap-4 p-4 rounded-3xl bg-slate-50 dark:bg-slate-900/50"
+                aria-label={`${item.userName} ${item.action} ${item.target}`}
+              >
+                <img 
+                  src={item.userAvatar} 
+                  className="w-10 h-10 rounded-full object-cover bg-slate-200" 
+                  alt=""
+                  aria-hidden="true"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = `https://i.pravatar.cc/100?u=${item.userId}`;
+                  }}
+                />
+                <div>
+                  <p className="text-sm leading-snug">
+                    <span className="font-bold text-slate-900 dark:text-white">{item.userName}</span>{' '}
+                    {/* Fixed contrast: text-slate-500 -> text-slate-600 */}
+                    <span className="text-slate-600 dark:text-slate-400">{item.action}</span>{' '}
+                    <span className="font-semibold text-primary">{item.target}</span>
+                  </p>
+                  {/* Fixed contrast: text-slate-400 -> text-slate-500 */}
+                  <span className="text-[10px] text-slate-500 dark:text-slate-500 font-medium">{item.timestamp}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            icon="forum"
+            title="No activity yet"
+            description="When you and others complete challenges, the activity will show up here."
+            illustration="social"
+          />
+        )}
       </section>
     </div>
   );

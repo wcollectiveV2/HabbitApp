@@ -1,8 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { userService, challengeService } from '../services';
 import type { UserProfile } from '../services';
+import Skeleton from './ui/Skeleton';
+import { 
+  ConfirmModal, 
+  AvatarUpload, 
+  ChangeEmailModal, 
+  ChangePasswordModal, 
+  DeleteAccountModal,
+  ExportDataModal,
+  BlockedUsersModal
+} from './ui';
 
 interface ProfileViewProps {
   profile?: UserProfile | null;
@@ -14,6 +25,9 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: propProfile, onLogou
   const [stats, setStats] = useState({ totalRewards: 0, activeChallenges: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showSecuritySettings, setShowSecuritySettings] = useState(false);
+  const [showAppearanceSettings, setShowAppearanceSettings] = useState(false);
 
   const profile = propProfile || contextProfile;
 
@@ -42,6 +56,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: propProfile, onLogou
   }, [profile]);
 
   const handleLogout = async () => {
+    setShowLogoutConfirm(false);
     await logout();
     onLogout?.();
   };
@@ -61,8 +76,8 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: propProfile, onLogou
   const settings = [
     { icon: 'person_outline', label: 'Edit Profile & Privacy', color: 'text-blue-500', action: () => setShowSettings(true) },
     { icon: 'notifications_active', label: 'Notifications', color: 'text-purple-500', action: () => {} },
-    { icon: 'dark_mode', label: 'Appearance', color: 'text-orange-500', action: () => {} },
-    { icon: 'security', label: 'Security', color: 'text-green-500', action: () => {} },
+    { icon: 'dark_mode', label: 'Appearance', color: 'text-orange-500', action: () => setShowAppearanceSettings(true) },
+    { icon: 'security', label: 'Security & Account', color: 'text-green-500', action: () => setShowSecuritySettings(true) },
     { icon: 'help_outline', label: 'Help Center', color: 'text-slate-500', action: () => {} },
   ];
 
@@ -70,8 +85,28 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: propProfile, onLogou
     return (
       <EditProfileModal 
         profile={profile} 
+        email={user?.email || ''}
         onClose={() => setShowSettings(false)} 
         onSave={handleUpdateProfile} 
+      />
+    );
+  }
+
+  if (showSecuritySettings && profile) {
+    return (
+      <SecuritySettingsModal 
+        profile={profile}
+        email={user?.email || ''}
+        onClose={() => setShowSecuritySettings(false)}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
+  if (showAppearanceSettings) {
+    return (
+      <AppearanceSettingsModal 
+        onClose={() => setShowAppearanceSettings(false)}
       />
     );
   }
@@ -87,81 +122,124 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: propProfile, onLogou
           <div className="w-28 h-28 rounded-full border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden mb-4">
             <img 
               src={avatarUrl} 
-              alt="Profile" 
+              alt={`${displayName}'s profile picture`}
               className="w-full h-full object-cover"
               onError={(e) => {
                 (e.target as HTMLImageElement).src = 'https://picsum.photos/seed/user/200/200';
               }}
             />
           </div>
-          <button className="absolute bottom-4 right-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center border-4 border-white dark:border-slate-800 shadow-lg">
-            <span className="material-symbols-outlined text-sm">edit</span>
+          <button 
+            className="absolute bottom-4 right-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center border-4 border-white dark:border-slate-800 shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            aria-label="Edit profile picture"
+            onClick={() => setShowSettings(true)}
+          >
+            <span className="material-symbols-outlined text-sm" aria-hidden="true">edit</span>
           </button>
         </div>
-        <h2 className="text-2xl font-black">{displayName}</h2>
-        <p className="text-slate-400 font-medium text-sm">{displayBio}</p>
+        <h2 className="text-2xl font-black text-slate-900 dark:text-white">{displayName}</h2>
+        {/* Fixed contrast: text-slate-400 -> text-slate-600 */}
+        <p className="text-slate-600 dark:text-slate-400 font-medium text-sm">{displayBio}</p>
         {user?.email && (
-          <p className="text-slate-300 text-xs mt-1">{user.email}</p>
+          <p className="text-slate-500 dark:text-slate-500 text-xs mt-1">{user.email}</p>
         )}
       </div>
 
-      <div className={`grid grid-cols-3 gap-4 ${isLoading ? 'animate-pulse opacity-70' : ''}`}>
-        <div className="bg-white dark:bg-card-dark p-4 rounded-3xl text-center border border-slate-100 dark:border-slate-800">
-          <span className="block text-2xl font-black text-orange-500">{profile?.streakCount || 0}</span>
-          <span className="text-[10px] font-bold uppercase text-slate-400">Day Streak</span>
-        </div>
-        <div className="bg-white dark:bg-card-dark p-4 rounded-3xl text-center border border-slate-100 dark:border-slate-800">
-          <span className="block text-2xl font-black text-primary">{(profile?.totalPoints || 0).toLocaleString()}</span>
-          <span className="text-[10px] font-bold uppercase text-slate-400">Points</span>
-        </div>
-        <div className="bg-white dark:bg-card-dark p-4 rounded-3xl text-center border border-slate-100 dark:border-slate-800">
-          <span className="block text-2xl font-black text-green-500">{stats.activeChallenges}</span>
-          <span className="text-[10px] font-bold uppercase text-slate-400">Challenges</span>
-        </div>
+      <div className="grid grid-cols-3 gap-4" role="region" aria-label="Profile statistics">
+        {isLoading ? (
+          <>
+            <Skeleton variant="card" className="h-24" />
+            <Skeleton variant="card" className="h-24" />
+            <Skeleton variant="card" className="h-24" />
+          </>
+        ) : (
+          <>
+            <div className="bg-white dark:bg-card-dark p-4 rounded-3xl text-center border border-slate-100 dark:border-slate-800">
+              <span className="block text-2xl font-black text-orange-500">{profile?.streakCount || 0}</span>
+              {/* Fixed contrast */}
+              <span className="text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400">Day Streak</span>
+            </div>
+            <div className="bg-white dark:bg-card-dark p-4 rounded-3xl text-center border border-slate-100 dark:border-slate-800">
+              <span className="block text-2xl font-black text-primary">{(profile?.totalPoints || 0).toLocaleString()}</span>
+              <span className="text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400">Points</span>
+            </div>
+            <div className="bg-white dark:bg-card-dark p-4 rounded-3xl text-center border border-slate-100 dark:border-slate-800">
+              <span className="block text-2xl font-black text-green-500">{stats.activeChallenges}</span>
+              <span className="text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400">Challenges</span>
+            </div>
+          </>
+        )}
       </div>
 
-      <div className="space-y-2">
+      <nav className="space-y-2" aria-label="Settings menu">
         {settings.map((item, i) => (
           <button 
             key={i} 
             onClick={item.action}
-            className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors active:scale-[0.98]"
+            className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset"
+            aria-label={item.label}
           >
             <div className="flex items-center gap-4">
-              <span className={`material-symbols-outlined ${item.color}`}>{item.icon}</span>
-              <span className="font-bold text-sm">{item.label}</span>
+              <span className={`material-symbols-outlined ${item.color}`} aria-hidden="true">{item.icon}</span>
+              <span className="font-bold text-sm text-slate-900 dark:text-white">{item.label}</span>
             </div>
-            <span className="material-symbols-outlined text-slate-300">chevron_right</span>
+            {/* Right chevron for better tappable indication */}
+            <span className="material-symbols-outlined text-slate-400" aria-hidden="true">chevron_right</span>
           </button>
         ))}
-      </div>
+      </nav>
 
       <button 
-        onClick={handleLogout}
-        className="w-full p-4 rounded-2xl bg-red-50 dark:bg-red-900/10 text-red-500 font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
+        onClick={() => setShowLogoutConfirm(true)}
+        className="w-full p-4 rounded-2xl bg-red-50 dark:bg-red-900/10 text-red-500 font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
       >
-        <span className="material-symbols-outlined text-sm">logout</span>
+        <span className="material-symbols-outlined text-sm" aria-hidden="true">logout</span>
         Log Out
       </button>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showLogoutConfirm}
+        title="Log Out?"
+        message="Are you sure you want to log out? You'll need to sign in again to access your account."
+        confirmLabel="Log Out"
+        cancelLabel="Cancel"
+        confirmVariant="danger"
+        onConfirm={handleLogout}
+        onCancel={() => setShowLogoutConfirm(false)}
+      />
     </div>
   );
 };
 
 
-const EditProfileModal = ({ profile, onClose, onSave }: { profile: UserProfile, onClose: () => void, onSave: (data: Partial<UserProfile>) => Promise<void> }) => {
+const EditProfileModal = ({ profile, email, onClose, onSave }: { 
+  profile: UserProfile, 
+  email: string,
+  onClose: () => void, 
+  onSave: (data: Partial<UserProfile>) => Promise<void> 
+}) => {
   const [formData, setFormData] = useState({
     name: profile.name,
     bio: profile.bio || '',
+    avatarUrl: profile.avatarUrl || profile.avatar || '',
     privacyPublicLeaderboard: profile.privacyPublicLeaderboard || 'visible',
-    privacyChallengeLeaderboard: profile.privacyChallengeLeaderboard || 'visible'
+    privacyChallengeLeaderboard: profile.privacyChallengeLeaderboard || 'visible',
+    privacyProfileVisibility: 'public' as 'public' | 'friends' | 'private',
+    privacyActivityFeed: 'public' as 'public' | 'friends' | 'private',
   });
   const [loading, setLoading] = useState(false);
+  const [showBlockedUsers, setShowBlockedUsers] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     setLoading(true);
     await onSave(formData);
     setLoading(false);
+  };
+
+  const handleAvatarUpload = (url: string) => {
+    setFormData({ ...formData, avatarUrl: url });
   };
 
   return (
@@ -172,7 +250,7 @@ const EditProfileModal = ({ profile, onClose, onSave }: { profile: UserProfile, 
         </button>
         <h2 className="font-bold text-lg">Edit Profile</h2>
         <button 
-          onClick={handleSubmit} 
+          onClick={() => handleSubmit()} 
           disabled={loading}
           className="text-primary font-bold text-sm disabled:opacity-50"
         >
@@ -181,6 +259,15 @@ const EditProfileModal = ({ profile, onClose, onSave }: { profile: UserProfile, 
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* Avatar Upload Section */}
+        <div className="flex flex-col items-center py-4">
+          <AvatarUpload 
+            currentUrl={formData.avatarUrl}
+            userName={formData.name}
+            onUpload={handleAvatarUpload}
+          />
+        </div>
+
         <div className="space-y-4">
           <label className="block">
             <span className="text-sm font-bold text-slate-500 mb-1 block">Display Name</span>
@@ -207,6 +294,36 @@ const EditProfileModal = ({ profile, onClose, onSave }: { profile: UserProfile, 
           <h3 className="font-black text-lg">Privacy Settings</h3>
           
           <div className="space-y-4">
+            {/* Profile Visibility */}
+            <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl">
+              <label className="block mb-2 text-sm font-bold">Profile Visibility</label>
+              <select 
+                value={formData.privacyProfileVisibility}
+                onChange={e => setFormData({...formData, privacyProfileVisibility: e.target.value as any})}
+                className="w-full bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700"
+              >
+                <option value="public">Public (Anyone can view)</option>
+                <option value="friends">Friends Only</option>
+                <option value="private">Private (Only me)</option>
+              </select>
+              <p className="text-xs text-slate-400 mt-2">Who can see your profile and activity.</p>
+            </div>
+
+            {/* Activity Feed Privacy */}
+            <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl">
+              <label className="block mb-2 text-sm font-bold">Activity Feed</label>
+              <select 
+                value={formData.privacyActivityFeed}
+                onChange={e => setFormData({...formData, privacyActivityFeed: e.target.value as any})}
+                className="w-full bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700"
+              >
+                <option value="public">Public (Show in global feed)</option>
+                <option value="friends">Friends Only</option>
+                <option value="private">Private (Don't show)</option>
+              </select>
+              <p className="text-xs text-slate-400 mt-2">Controls who sees your activity in the feed.</p>
+            </div>
+
             <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl">
               <label className="block mb-2 text-sm font-bold">Public Leaderboard</label>
               <select 
@@ -233,6 +350,243 @@ const EditProfileModal = ({ profile, onClose, onSave }: { profile: UserProfile, 
                 <option value="hidden">Completely Hidden</option>
               </select>
               <p className="text-xs text-slate-400 mt-2">Controls how you appear in challenge rankings.</p>
+            </div>
+
+            {/* Blocked Users */}
+            <button
+              onClick={() => setShowBlockedUsers(true)}
+              className="w-full bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-red-500">block</span>
+                <span className="font-bold">Blocked Users</span>
+              </div>
+              <span className="material-symbols-outlined text-slate-400">chevron_right</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {showBlockedUsers && (
+        <BlockedUsersModal onClose={() => setShowBlockedUsers(false)} />
+      )}
+    </div>
+  );
+};
+
+// Security Settings Modal
+const SecuritySettingsModal = ({ profile, email, onClose, onLogout }: { 
+  profile: UserProfile, 
+  email: string,
+  onClose: () => void,
+  onLogout: () => void
+}) => {
+  const [showChangeEmail, setShowChangeEmail] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [showExportData, setShowExportData] = useState(false);
+
+  const handleChangeEmail = async (newEmail: string) => {
+    await userService.changeEmail(newEmail, '');
+    window.location.reload();
+  };
+
+  const handleChangePassword = async (oldPassword: string, newPassword: string) => {
+    await userService.changePassword(oldPassword, newPassword);
+    alert('Password changed successfully');
+  };
+
+  const handleDeleteAccount = async () => {
+    await userService.deleteAccount('');
+    onLogout();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-white dark:bg-slate-950 flex flex-col animate-in slide-in-from-bottom-10">
+      <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+        <button onClick={onClose} className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+          <span className="material-symbols-outlined">arrow_back</span>
+        </button>
+        <h2 className="font-bold text-lg">Security & Account</h2>
+        <div className="w-10" />
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        {/* Change Email */}
+        <button
+          onClick={() => setShowChangeEmail(true)}
+          className="w-full p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-blue-500">mail</span>
+            <div className="text-left">
+              <span className="font-bold block">Change Email</span>
+              <span className="text-sm text-slate-500">{email}</span>
+            </div>
+          </div>
+          <span className="material-symbols-outlined text-slate-400">chevron_right</span>
+        </button>
+
+        {/* Change Password */}
+        <button
+          onClick={() => setShowChangePassword(true)}
+          className="w-full p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-green-500">lock</span>
+            <span className="font-bold">Change Password</span>
+          </div>
+          <span className="material-symbols-outlined text-slate-400">chevron_right</span>
+        </button>
+
+        {/* Export Data */}
+        <button
+          onClick={() => setShowExportData(true)}
+          className="w-full p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-purple-500">download</span>
+            <div className="text-left">
+              <span className="font-bold block">Export Your Data</span>
+              <span className="text-sm text-slate-500">Download your personal data (GDPR)</span>
+            </div>
+          </div>
+          <span className="material-symbols-outlined text-slate-400">chevron_right</span>
+        </button>
+
+        <div className="border-t border-slate-100 dark:border-slate-800 pt-4 mt-4">
+          <h3 className="font-bold text-red-500 mb-4">Danger Zone</h3>
+          
+          {/* Delete Account */}
+          <button
+            onClick={() => setShowDeleteAccount(true)}
+            className="w-full p-4 bg-red-50 dark:bg-red-900/10 rounded-2xl flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-red-500">delete_forever</span>
+              <div className="text-left">
+                <span className="font-bold text-red-500 block">Delete Account</span>
+                <span className="text-sm text-red-400">Permanently delete your account and data</span>
+              </div>
+            </div>
+            <span className="material-symbols-outlined text-red-400">chevron_right</span>
+          </button>
+        </div>
+      </div>
+
+      {showChangeEmail && (
+        <ChangeEmailModal 
+          currentEmail={email}
+          onClose={() => setShowChangeEmail(false)}
+          onSave={handleChangeEmail}
+        />
+      )}
+
+      {showChangePassword && (
+        <ChangePasswordModal 
+          onClose={() => setShowChangePassword(false)}
+          onSave={handleChangePassword}
+        />
+      )}
+
+      {showDeleteAccount && (
+        <DeleteAccountModal 
+          onClose={() => setShowDeleteAccount(false)}
+          onDelete={handleDeleteAccount}
+        />
+      )}
+
+      {showExportData && (
+        <ExportDataModal onClose={() => setShowExportData(false)} />
+      )}
+    </div>
+  );
+};
+
+// Appearance Settings Modal
+const AppearanceSettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  const { theme, setTheme } = useTheme();
+
+  const themeOptions: { value: 'light' | 'dark' | 'system'; label: string; icon: string; description: string }[] = [
+    { value: 'light', label: 'Light', icon: 'light_mode', description: 'Always use light theme' },
+    { value: 'dark', label: 'Dark', icon: 'dark_mode', description: 'Always use dark theme' },
+    { value: 'system', label: 'System', icon: 'settings_suggest', description: 'Follow system preference' },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 bg-white dark:bg-slate-950 flex flex-col animate-in slide-in-from-bottom-10">
+      <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+        <button onClick={onClose} className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+          <span className="material-symbols-outlined">arrow_back</span>
+        </button>
+        <h2 className="font-bold text-lg text-slate-900 dark:text-white">Appearance</h2>
+        <div className="w-10" />
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div>
+          <h3 className="font-bold text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
+            Theme
+          </h3>
+          <div className="space-y-3">
+            {themeOptions.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setTheme(option.value)}
+                className={`w-full p-4 rounded-2xl flex items-center justify-between transition-all ${
+                  theme === option.value
+                    ? 'bg-primary/10 border-2 border-primary'
+                    : 'bg-slate-50 dark:bg-slate-900 border-2 border-transparent'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                    option.value === 'light' 
+                      ? 'bg-amber-100 text-amber-600' 
+                      : option.value === 'dark'
+                      ? 'bg-slate-700 text-slate-300'
+                      : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                  }`}>
+                    <span className="material-symbols-outlined text-2xl">{option.icon}</span>
+                  </div>
+                  <div className="text-left">
+                    <span className="font-bold block text-slate-900 dark:text-white">{option.label}</span>
+                    <span className="text-sm text-slate-500 dark:text-slate-400">{option.description}</span>
+                  </div>
+                </div>
+                {theme === option.value && (
+                  <span className="material-symbols-outlined text-primary">check_circle</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Preview */}
+        <div>
+          <h3 className="font-bold text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
+            Preview
+          </h3>
+          <div className="bg-slate-50 dark:bg-slate-900 rounded-2xl p-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                <span className="material-symbols-outlined text-primary">check_circle</span>
+              </div>
+              <div>
+                <p className="font-bold text-slate-900 dark:text-white">Sample Task</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Daily habit example</p>
+              </div>
+            </div>
+            <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+              <div className="h-full w-3/4 bg-primary rounded-full" />
+            </div>
+            <div className="flex gap-2">
+              <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full text-xs font-bold">
+                Completed
+              </span>
+              <span className="px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full text-xs font-bold">
+                In Progress
+              </span>
             </div>
           </div>
         </div>

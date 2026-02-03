@@ -67,6 +67,18 @@ export const authService = {
     localStorage.removeItem('user');
   },
 
+  async requestPasswordReset(email: string): Promise<{ success: boolean }> {
+    return authApi.post<{ success: boolean }>('/api/auth/forgot-password', { email });
+  },
+
+  async verifyResetCode(email: string, code: string): Promise<{ valid: boolean }> {
+    return authApi.post<{ valid: boolean }>('/api/auth/verify-reset-code', { email, code });
+  },
+
+  async resetPassword(email: string, code: string, newPassword: string): Promise<{ success: boolean }> {
+    return authApi.post<{ success: boolean }>('/api/auth/reset-password', { email, code, newPassword });
+  },
+
   storeAuth(response: AuthResponse): void {
     localStorage.setItem('token', response.accessToken);
     localStorage.setItem('refreshToken', response.refreshToken);
@@ -111,7 +123,37 @@ export const userService = {
     level: number;
     completedToday: number;
     totalToday: number;
+    badges?: string[];
+    totalRewards?: number;
   }> {
     return api.get('/api/user/stats');
+  },
+
+  async changeEmail(newEmail: string, password: string): Promise<{ success: boolean }> {
+    return api.post('/api/user/change-email', { newEmail, password });
+  },
+
+  async changePassword(oldPassword: string, newPassword: string): Promise<{ success: boolean }> {
+    return api.post('/api/user/change-password', { oldPassword, newPassword });
+  },
+
+  async deleteAccount(password: string): Promise<{ success: boolean }> {
+    return api.post('/api/user/delete', { password });
+  },
+
+  async exportData(): Promise<any> {
+    return api.get('/api/user/export');
+  },
+
+  async getBlockedUsers(): Promise<{ id: string; name: string; avatar?: string }[]> {
+    return api.get('/api/user/blocked');
+  },
+
+  async blockUser(userId: string): Promise<{ success: boolean }> {
+    return api.post(`/api/user/block/${userId}`);
+  },
+
+  async unblockUser(userId: string): Promise<{ success: boolean }> {
+    return api.delete(`/api/user/block/${userId}`);
   }
 };

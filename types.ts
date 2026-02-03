@@ -13,6 +13,9 @@ export interface Challenge {
   targetDays?: number;
 }
 
+export type TaskPriority = 'low' | 'medium' | 'high';
+export type TaskType = 'check' | 'counter' | 'log';
+
 export interface Task {
   id: string;
   title: string;
@@ -25,6 +28,14 @@ export interface Task {
   totalProgress: number;
   progressBlocks: number;
   activeBlocks: number;
+  priority?: TaskPriority;
+  dueDate?: string;
+  type?: TaskType;
+  // Counter-specific fields
+  currentValue?: number;
+  goal?: number;
+  unit?: string;
+  step?: number;
 }
 
 export interface LeaderboardUser {
@@ -44,7 +55,7 @@ export interface FeedItem {
   timestamp: string;
 }
 
-export type Tab = 'home' | 'active' | 'social' | 'me';
+export type Tab = 'home' | 'habits' | 'active' | 'social' | 'me';
 export type AuthMode = 'login' | 'signup';
 
 export interface Notification {

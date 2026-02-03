@@ -109,5 +109,29 @@ export const socialService = {
 
   async getFollowStats(userId: number): Promise<FollowStats> {
     return api.get(`/api/social/stats/${userId}`);
+  },
+
+  async getUserProfile(userId: string): Promise<any> {
+    return api.get(`/api/users/${userId}/profile`);
+  },
+
+  async followUser(userId: string): Promise<{ success: boolean }> {
+    return api.post(`/api/social/follow/${userId}`);
+  },
+
+  async unfollowUser(userId: string): Promise<{ success: boolean }> {
+    return api.delete(`/api/social/follow/${userId}`);
+  },
+
+  async blockUser(userId: string, reason?: string): Promise<{ success: boolean }> {
+    return api.post(`/api/users/${userId}/block`, { reason });
+  },
+
+  async unblockUser(userId: string): Promise<{ success: boolean }> {
+    return api.delete(`/api/users/${userId}/block`);
+  },
+
+  async getBlockedUsers(): Promise<{ id: string; name: string; blockedAt: string }[]> {
+    return api.get('/api/users/blocked');
   }
 };

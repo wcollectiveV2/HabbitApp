@@ -117,6 +117,14 @@ export const taskService = {
     return this.updateTask(task.id, newStatus, newValue);
   },
 
+  async decrementCounter(task: Task): Promise<Task> {
+    const step = task.step || 1;
+    const newValue = Math.max(0, task.currentValue - step);
+    // If we go below goal, set status back to pending
+    const newStatus = task.goal && newValue < task.goal ? 'pending' : task.status;
+    return this.updateTask(task.id, newStatus, newValue);
+  },
+
   // Habit Templates
   async getHabits(): Promise<Habit[]> {
     return api.get<Habit[]>('/api/habits');

@@ -1,14 +1,244 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { authService } from '../services';
 
 interface LoginViewProps {
   onSwitchToSignup: () => void;
 }
 
+// Forgot Password Modal Component
+const ForgotPasswordModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+  const [email, setEmail] = useState('');
+  const [step, setStep] = useState<'email' | 'code' | 'newPassword' | 'success'>('email');
+  const [code, setCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSendCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      await authService.requestPasswordReset(email);
+      setStep('code');
+    } catch (err: any) {
+      setError(err.message || 'Failed to send reset code. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      await authService.verifyResetCode(email, code);
+      setStep('newPassword');
+    } catch (err: any) {
+      setError(err.message || 'Invalid code. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      await authService.resetPassword(email, code, newPassword);
+      setStep('success');
+    } catch (err: any) {
+      setError(err.message || 'Failed to reset password. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    setStep('email');
+    setEmail('');
+    setCode('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setError('');
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 animate-in fade-in">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-6 animate-in zoom-in-95">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold">
+            {step === 'email' && 'Forgot Password'}
+            {step === 'code' && 'Enter Code'}
+            {step === 'newPassword' && 'New Password'}
+            {step === 'success' && 'Success!'}
+          </h2>
+          <button onClick={handleClose} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 text-red-500 p-3 rounded-xl text-sm mb-4">
+            {error}
+          </div>
+        )}
+
+        {/* Email Step */}
+        {step === 'email' && (
+          <form onSubmit={handleSendCode} className="space-y-4">
+            <p className="text-slate-500 text-sm mb-4">
+              Enter your email address and we'll send you a code to reset your password.
+            </p>
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">mail</span>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Your email address"
+                required
+                className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl py-4 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary outline-none"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-primary text-white py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              ) : (
+                'Send Reset Code'
+              )}
+            </button>
+          </form>
+        )}
+
+        {/* Code Step */}
+        {step === 'code' && (
+          <form onSubmit={handleVerifyCode} className="space-y-4">
+            <p className="text-slate-500 text-sm mb-4">
+              We sent a 6-digit code to <strong>{email}</strong>. Enter it below.
+            </p>
+            <input
+              type="text"
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="000000"
+              maxLength={6}
+              required
+              className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl py-4 px-4 text-center text-2xl font-mono tracking-[0.5em] focus:ring-2 focus:ring-primary outline-none"
+            />
+            <button
+              type="submit"
+              disabled={loading || code.length !== 6}
+              className="w-full bg-primary text-white py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              ) : (
+                'Verify Code'
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setStep('email')}
+              className="w-full text-slate-500 text-sm"
+            >
+              Didn't receive the code? <span className="text-primary font-bold">Resend</span>
+            </button>
+          </form>
+        )}
+
+        {/* New Password Step */}
+        {step === 'newPassword' && (
+          <form onSubmit={handleResetPassword} className="space-y-4">
+            <p className="text-slate-500 text-sm mb-4">
+              Create a new password for your account.
+            </p>
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">lock</span>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="New password"
+                required
+                minLength={6}
+                className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl py-4 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary outline-none"
+              />
+            </div>
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">lock</span>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm new password"
+                required
+                minLength={6}
+                className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl py-4 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary outline-none"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-primary text-white py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              ) : (
+                'Reset Password'
+              )}
+            </button>
+          </form>
+        )}
+
+        {/* Success Step */}
+        {step === 'success' && (
+          <div className="text-center py-4">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="material-symbols-outlined text-green-500 text-3xl">check_circle</span>
+            </div>
+            <h3 className="font-bold text-lg mb-2">Password Reset!</h3>
+            <p className="text-slate-500 text-sm mb-6">
+              Your password has been successfully reset. You can now log in with your new password.
+            </p>
+            <button
+              onClick={handleClose}
+              className="w-full bg-primary text-white py-4 rounded-2xl font-bold text-sm"
+            >
+              Back to Login
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const LoginView: React.FC<LoginViewProps> = ({ onSwitchToSignup }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { login, isLoading, error, clearError } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -56,7 +286,13 @@ const LoginView: React.FC<LoginViewProps> = ({ onSwitchToSignup }) => {
         <div className="space-y-1">
           <div className="flex justify-between items-center ml-1">
             <label className="text-xs font-bold uppercase text-slate-400">Password</label>
-            <button type="button" className="text-[10px] font-bold text-primary uppercase">Forgot?</button>
+            <button 
+              type="button" 
+              onClick={() => setShowForgotPassword(true)}
+              className="text-[10px] font-bold text-primary uppercase"
+            >
+              Forgot?
+            </button>
           </div>
           <div className="relative">
             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl">lock</span>
@@ -109,6 +345,12 @@ const LoginView: React.FC<LoginViewProps> = ({ onSwitchToSignup }) => {
           <button onClick={onSwitchToSignup} className="text-primary font-bold">Sign Up</button>
         </p>
       </div>
+
+      {/* Forgot Password Modal */}
+      <ForgotPasswordModal 
+        isOpen={showForgotPassword} 
+        onClose={() => setShowForgotPassword(false)} 
+      />
     </div>
   );
 };

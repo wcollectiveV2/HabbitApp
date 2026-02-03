@@ -6,3 +6,5 @@ export * from './challengeService';
 export * from './socialService';
 export * from './aiService';
 export * from './notificationService';
+export * from './protocolService';
+export * from './habitService';
