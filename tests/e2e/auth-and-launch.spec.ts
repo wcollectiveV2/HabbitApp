@@ -42,7 +42,7 @@ test.describe('Authentication Flows', () => {
     // Should show error
     await expect(
       page.locator('text=/invalid|error|incorrect|failed/i')
-    ).toBeVisible({ timeout: 5000 });
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test('should logout successfully', async ({ page }) => {

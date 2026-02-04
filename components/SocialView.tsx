@@ -11,6 +11,7 @@ interface LeaderboardEntry {
   avatar: string;
   points: number;
   isCurrentUser?: boolean;
+  isFollowing?: boolean;
 }
 
 interface FeedItem {
@@ -29,19 +30,26 @@ const SocialView: React.FC = () => {
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(true);
   const [isLoadingFeed, setIsLoadingFeed] = useState(true);
   const [leaderboardType, setLeaderboardType] = useState<'global' | 'friends'>('global');
+  const [leaderboardPeriod, setLeaderboardPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'allTime'>('weekly');
+  const [followLoading, setFollowLoading] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
       setIsLoadingLeaderboard(true);
       try {
-        const data = await socialService.getLeaderboard({ scope: leaderboardType, limit: 10 });
+        const data = await socialService.getLeaderboard({ 
+          scope: leaderboardType, 
+          period: leaderboardPeriod,
+          limit: 10 
+        });
         const mapped = data.entries?.map((entry: any, index: number) => ({
           rank: entry.rank || index + 1,
-          userId: entry.userId || entry.user_id,
+          userId: String(entry.userId || entry.user_id),
           name: entry.name || entry.userName || entry.user_name || 'Anonymous',
           avatar: entry.avatar || entry.userAvatar || entry.user_avatar || `https://i.pravatar.cc/150?u=${entry.userId || entry.user_id}`,
           points: entry.points || entry.totalPoints || 0,
-          isCurrentUser: entry.isCurrentUser || entry.is_current_user || false
+          isCurrentUser: entry.isCurrentUser || entry.is_current_user || false,
+          isFollowing: entry.isFollowing ?? false
         })) || [];
         setLeaderboard(mapped);
       } catch (err) {
@@ -51,7 +59,7 @@ const SocialView: React.FC = () => {
       setIsLoadingLeaderboard(false);
     };
     fetchLeaderboard();
-  }, [leaderboardType]);
+  }, [leaderboardType, leaderboardPeriod]);
 
   useEffect(() => {
     const fetchFeed = async () => {
@@ -77,6 +85,21 @@ const SocialView: React.FC = () => {
     fetchFeed();
   }, []);
 
+  const handleFollow = async (userId: string) => {
+    if (followLoading[userId]) return;
+    
+    setFollowLoading(prev => ({ ...prev, [userId]: true }));
+    try {
+      const result = await socialService.toggleFollow(Number(userId));
+      setLeaderboard(prev => prev.map(u => 
+        u.userId === userId ? { ...u, isFollowing: result.isFollowing } : u
+      ));
+    } catch (err) {
+      console.error('Failed to toggle follow:', err);
+    }
+    setFollowLoading(prev => ({ ...prev, [userId]: false }));
+  };
+
   const toggleLeaderboardType = () => {
     setLeaderboardType(prev => prev === 'global' ? 'friends' : 'global');
   };
@@ -84,16 +107,34 @@ const SocialView: React.FC = () => {
   return (
     <div className="px-6 space-y-8 animate-in slide-in-from-right-4 duration-500 pb-10">
       <section>
-        <div className="flex justify-between items-center mb-4">
-          {/* Fixed contrast: text-slate-400 -> text-slate-600 */}
-          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Leaderboard</h2>
-          <button 
-            onClick={toggleLeaderboardType}
-            className="text-primary text-xs font-bold uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-2 py-1"
-            aria-label={`Switch to ${leaderboardType === 'global' ? 'friends' : 'global'} leaderboard`}
-          >
-            {leaderboardType === 'global' ? 'Global' : 'Friends'}
-          </button>
+        <div className="flex flex-col gap-4 mb-4">
+          <div className="flex justify-between items-center">
+            {/* Fixed contrast: text-slate-400 -> text-slate-600 */}
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Leaderboard</h2>
+            <button 
+              onClick={toggleLeaderboardType}
+              className="text-primary text-xs font-bold uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-2 py-1"
+              aria-label={`Switch to ${leaderboardType === 'global' ? 'friends' : 'global'} leaderboard`}
+            >
+              {leaderboardType === 'global' ? 'Global' : 'Friends'}
+            </button>
+          </div>
+          
+          <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+            {(['daily', 'weekly', 'monthly', 'allTime'] as const).map((period) => (
+              <button
+                key={period}
+                onClick={() => setLeaderboardPeriod(period)}
+                className={`flex-1 py-1.5 text-[10px] font-bold uppercase tracking-wide rounded-md transition-colors ${
+                  leaderboardPeriod === period
+                    ? 'bg-white dark:bg-slate-700 text-primary shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                }`}
+              >
+                {period === 'allTime' ? 'All Time' : period}
+              </button>
+            ))}
+          </div>
         </div>
         
         {isLoadingLeaderboard ? (
@@ -135,9 +176,24 @@ const SocialView: React.FC = () => {
                     <p className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase">{user.points.toLocaleString()} Points</p>
                   </div>
                 </div>
-                {user.isCurrentUser && (
-                  <span className="bg-primary/20 text-primary text-[8px] font-black px-2 py-1 rounded-full uppercase">You</span>
-                )}
+                <div className="flex items-center gap-2">
+                  {!user.isCurrentUser && (
+                    <button 
+                      onClick={() => handleFollow(user.userId)}
+                      disabled={followLoading[user.userId]}
+                      className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                        user.isFollowing 
+                          ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700' 
+                          : 'bg-primary text-white shadow-sm shadow-primary/30'
+                      } disabled:opacity-50`}
+                    >
+                      {followLoading[user.userId] ? '...' : (user.isFollowing ? 'Following' : 'Follow')}
+                    </button>
+                  )}
+                  {user.isCurrentUser && (
+                    <span className="bg-primary/20 text-primary text-[8px] font-black px-2 py-1 rounded-full uppercase">You</span>
+                  )}
+                </div>
               </div>
             ))}
           </div>

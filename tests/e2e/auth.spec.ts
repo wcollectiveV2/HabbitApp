@@ -333,6 +333,33 @@ test.describe('Feature: Token Management (AUTH-003)', () => {
       // Should redirect to login
       await expect(page.locator('input[type="email"]')).toBeVisible({ timeout: 10000 });
     });
+
+    test('AUTH-003-03: Refresh token renews access token', async ({ page }) => {
+      await login(page, TEST_USERS.testUser);
+      
+      // Get initial tokens
+      const initialToken = await page.evaluate(() => localStorage.getItem('token'));
+      const initialRefreshToken = await page.evaluate(() => localStorage.getItem('refreshToken'));
+      expect(initialToken).toBeTruthy();
+      expect(initialRefreshToken).toBeTruthy();
+      
+      // Simulate token expiration by removing access token but keeping refresh token
+      await page.evaluate(() => localStorage.removeItem('token'));
+      
+      // Reload page which should trigger token refresh logic if implemented
+      // or subsequent API call should trigger refresh
+      await page.reload();
+      
+      // Should NOT be redirected to login if refresh works
+      await expect(page.locator('input[type="email"]')).not.toBeVisible();
+      await expect(page.locator('text=Current Progress').or(page.locator('text=Good'))).toBeVisible({ timeout: 15000 });
+      
+      // Check if new access token is present
+      const newToken = await page.evaluate(() => localStorage.getItem('token'));
+      expect(newToken).toBeTruthy();
+      
+      // Note: Ideally newToken should be different from initialToken, but depends on backend implementation
+    });
   });
 });
 

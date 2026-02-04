@@ -61,7 +61,7 @@ export interface ProtocolProgress {
   };
 }
 
-export interface LeaderboardEntry {
+export interface ProtocolLeaderboardEntry {
   rank: number;
   userId: string;
   name: string;
@@ -72,7 +72,7 @@ export interface LeaderboardEntry {
 }
 
 export interface LeaderboardResponse {
-  leaderboard: LeaderboardEntry[];
+  leaderboard: ProtocolLeaderboardEntry[];
   myRank?: {
     rank: number;
     totalPoints: number;

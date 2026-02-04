@@ -29,6 +29,113 @@ import {
   goToProtocolManagement
 } from './test-helpers';
 
+  goToProtocolManagement
+} from './test-helpers';
+
+// ============================================================================
+// 9.0 ORGANIZATION MANAGEMENT (ADMIN-ORG)
+// ============================================================================
+
+test.describe('Organization Management (ADMIN-ORG)', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginToAdminDashboard(page, TEST_USERS.superAdmin);
+  });
+
+  test('ADMIN-ORG-001-01: View list of organizations', async ({ page }) => {
+    // Navigate to organizations
+    await goToOrganizationSettings(page, TEST_ORGANIZATIONS.testOrg.id); 
+    // Usually there is a main list view before settings
+    await page.click('a:has-text("Organizations"), button:has-text("Organizations")');
+    
+    // Should see list of orgs
+    await expect(page.locator(`text=${TEST_ORGANIZATIONS.testOrg.name}`)).toBeVisible();
+    await expect(page.locator(`text=${TEST_ORGANIZATIONS.companyOrg.name}`)).toBeVisible();
+  });
+
+  test('ADMIN-ORG-001-02: Organization cards show logo and name', async ({ page }) => {
+    await page.click('a:has-text("Organizations")');
+    
+    const orgCard = page.locator(`text=${TEST_ORGANIZATIONS.testOrg.name}`).locator('..');
+    
+    // Should see name
+    await expect(orgCard).toContainText(TEST_ORGANIZATIONS.testOrg.name);
+    
+    // Should see logo/avatar placeholder
+    await expect(orgCard.locator('img, .avatar, .logo')).toBeVisible();
+  });
+
+  test('ADMIN-ORG-002-01/02: Create new organization', async ({ page }) => {
+    await page.click('a:has-text("Organizations")');
+    
+    // Click create button
+    await page.click('button:has-text("Create Organization"), button:has-text("New Organization")');
+    
+    // Fill form
+    const uniqueName = `New Org ${Date.now()}`;
+    await page.fill('input[name="name"]', uniqueName);
+    
+    // Select type if available
+    const typeSelect = page.locator('select[name="type"]');
+    if (await typeSelect.isVisible()) {
+        await typeSelect.selectOption('company');
+    }
+    
+    // Submit
+    await page.click('button[type="submit"]');
+    
+    // Should see new org
+    await expect(page.locator(`text=${uniqueName}`)).toBeVisible();
+  });
+
+  test('ADMIN-ORG-003-01: Edit organization name', async ({ page }) => {
+    await page.click('a:has-text("Organizations")');
+    
+    // Click on an org to edit (using one created or seeded)
+    // Be careful not to break seeded data for other tests if possible, or edit a specific test org
+    // For safety in E2E on seeded data, maybe just checking the edit modal opens is safer, 
+    // or editing a non-critical field
+    
+    const orgToEdit = TEST_ORGANIZATIONS.testOrg.name;
+    await page.click(`text=${orgToEdit}`);
+    
+    // Go to settings/edit tab if needed
+    const settingsTab = page.locator('text=Settings').first();
+    if (await settingsTab.isVisible()) await settingsTab.click();
+    
+    // Change name
+    const nameInput = page.locator('input[name="name"]');
+    await expect(nameInput).toBeVisible();
+    
+    // We won't actually save to avoid messing up other tests that rely on "E2E Test Organization" name
+    // unless we revert it or use a throwaway org
+  });
+
+  test('ADMIN-ORG-003-03: Delete organization with confirmation', async ({ page }) => {
+    // Only delete orgs created during test run
+    // Create one first
+    await page.click('a:has-text("Organizations")');
+    await page.click('button:has-text("Create Organization")');
+    const deleteMe = `Delete Me ${Date.now()}`;
+    await page.fill('input[name="name"]', deleteMe);
+    await page.click('button[type="submit"]');
+    await expect(page.locator(`text=${deleteMe}`)).toBeVisible();
+    
+    // Now delete it
+    await page.click(`text=${deleteMe}`);
+    const settingsTab = page.locator('text=Settings').first();
+    if (await settingsTab.isVisible()) await settingsTab.click();
+    
+    await page.click('button:has-text("Delete"), button[class*="danger"]');
+    
+    // Confirm
+    await expect(page.locator('text=Are you sure')).toBeVisible();
+    await page.click('button:has-text("Confirm"), button:has-text("Yes")');
+    
+    // Verify gone
+    await expect(page.locator(`text=${deleteMe}`)).not.toBeVisible();
+  });
+});
+
 // ============================================================================
 // 9.1 ADMIN USER MANAGEMENT
 // ============================================================================
@@ -83,6 +190,65 @@ test.describe('Admin User Management', () => {
     // In DashboardView it was using cards for stats, assume UserManagementView uses table
     const pageTitle = page.locator('h1, h2, h3').filter({ hasText: /User|Member/i });
     expect(await pageTitle.count()).toBeGreaterThan(0);
+  });
+
+  test('ADMIN-USER-001-03: Search users by email/name', async ({ page }) => {
+    await goToUserManagement(page);
+    
+    // Look for search input
+    const searchInput = page.locator('input[placeholder*="Search"]');
+    if (await searchInput.isVisible()) {
+      await searchInput.fill(TEST_USERS.testUser.email);
+      await page.waitForTimeout(1000);
+      
+      // Should show testUser
+      await expect(page.locator(`text=${TEST_USERS.testUser.email}`)).toBeVisible();
+      
+      // Should NOT show others (if filtering works)
+      // await expect(page.locator(`text=${TEST_USERS.otherUser.email}`)).not.toBeVisible();
+    }
+  });
+
+  test('ADMIN-USER-002-01: Create user with email and name', async ({ page }) => {
+    await goToUserManagement(page);
+    
+    // Open modal
+    await page.click('button:has-text("Create User"), button:has-text("Add User")');
+    
+    const newUserEmail = `created_admin_${Date.now()}@test.com`;
+    
+    // Fill form
+    await page.fill('input[name="email"]', newUserEmail);
+    await page.fill('input[name="name"]', 'Created User');
+    await page.fill('input[name="password"]', 'Password123!');
+    
+    // Submit
+    await page.click('button[type="submit"]');
+    
+    // Verify created
+    await expect(page.locator(`text=${newUserEmail}`)).toBeVisible();
+  });
+
+  test('ADMIN-USER-003-01: Edit user roles', async ({ page }) => {
+    await goToUserManagement(page);
+    
+    // Select a user to edit (e.g. testUser)
+    const userRow = page.locator(`tr:has-text("${TEST_USERS.testUser.email}")`).or(
+      page.locator(`div:has-text("${TEST_USERS.testUser.email}")`)
+    ).first();
+    
+    await userRow.click();
+    // Use edit button if separate
+    const editBtn = userRow.locator('button:has-text("Edit"), button:has(.material-symbols-outlined:has-text("edit"))');
+    if (await editBtn.isVisible()) await editBtn.click();
+    
+    // Change role (e.g. from User to Manager)
+    const roleSelect = page.locator('select[name="role"]');
+    if (await roleSelect.isVisible()) {
+      await roleSelect.selectOption('manager');
+      await page.click('button:has-text("Save")');
+      await expect(page.locator('text=Saved').or(page.locator('text=Success'))).toBeVisible({ timeout: 5000 });
+    }
   });
 
   test('should view organization members', async ({ page, request }) => {
@@ -155,7 +321,15 @@ test.describe('Admin Protocol Dashboard', () => {
   test('should list all protocols/challenges', async ({ page, request }) => {
     const token = await getAuthToken(request, TEST_USERS.productAdmin);
     
+    // UI Test
+    await goToProtocolManagement(page);
+    await expect(page.locator('text=Protocols').or(page.locator('text=Challenges'))).toBeVisible();
+    
+    // Should see list
+    await expect(page.locator(`text=${TEST_PROTOCOLS.activeHydration.name}`)).toBeVisible();
+    
     if (token) {
+       // verify via API as well (existing code)
       const response = await apiRequest(request, '/api/protocols', token);
       
       if (response.ok()) {
@@ -166,10 +340,51 @@ test.describe('Admin Protocol Dashboard', () => {
         expect(protocols.length).toBeGreaterThanOrEqual(0);
       }
     }
-    
-    // Navigate to protocol management
+  });
+
+  test('ADMIN-PROTO-002-01: Create new protocol via UI', async ({ page }) => {
     await goToProtocolManagement(page);
-    await page.waitForTimeout(1000);
+    
+    await page.click('button:has-text("Create Protocol"), button:has-text("New Protocol")');
+    
+    const uniqueName = `UI Protocol ${Date.now()}`;
+    await page.fill('input[name="name"]', uniqueName);
+    await page.fill('textarea[name="description"]', 'Created via UI E2E test');
+    
+    // Submit
+    await page.click('button[type="submit"]');
+    
+    // Should see created
+    await expect(page.locator(`text=${uniqueName}`)).toBeVisible();
+  });
+
+  test('ADMIN-PROTO-003-02: Add element to protocol', async ({ page }) => {
+    // Only works if we can select a protocol
+    await goToProtocolManagement(page);
+    
+    // Select one (e.g. the one we just created or from seed)
+    // For now, let's try to click one
+    const firstProtocol = page.locator('.protocol-card, tr').first();
+    await firstProtocol.click();
+    
+    // Look for Elements tab or section
+    const elementsTab = page.locator('text=Elements').or(page.locator('text=Tasks'));
+    if (await elementsTab.isVisible()) await elementsTab.click();
+    
+    // Add Element
+    const addBtn = page.locator('button:has-text("Add Element"), button:has-text("Add Task")');
+    if (await addBtn.isVisible()) {
+        await addBtn.click();
+        
+        await page.fill('input[name="title"]', 'New Element');
+        // Select type
+        const typeSelect = page.locator('select[name="type"]');
+        if (await typeSelect.isVisible()) await typeSelect.selectOption('check');
+        
+        await page.click('button:has-text("Save")');
+        
+        await expect(page.locator('text=New Element')).toBeVisible();
+    }
   });
 
   test('should view protocol participants', async ({ page, request }) => {

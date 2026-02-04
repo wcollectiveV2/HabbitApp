@@ -313,9 +313,9 @@ export async function login(
   
   // Wait for dashboard to load (real API response)
   await expect(
-    page.locator('text=Current Progress')
-      .or(page.locator('text=Good'))
-      .or(page.locator('button:has-text("Home")'))
+    page.locator('text=Habit Insight')
+      .or(page.locator('text=You\'re closer to your goal today!'))
+      .or(page.locator('text=Morning,').or(page.locator('text=Afternoon,')).or(page.locator('text=Evening,')))
   ).toBeVisible({ timeout: 15000 });
 }
 

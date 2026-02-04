@@ -237,6 +237,22 @@ test.describe('Feature: Active Challenges (CHAL-003)', () => {
       // User has progress 5 on Morning Yoga (from seed)
       await expect(page.locator('text=%').or(page.locator('[class*="progress"]'))).toBeVisible();
     });
+
+    test('CHAL-003-05: Empty state when no active challenges', async ({ page }) => {
+      await loginAndGoHome(page);
+      
+      // Mock API to return empty challenges
+      await page.route('**/api/challenges/active', route => route.fulfill({ json: [] }));
+      // Or filter to return empty
+      await page.reload();
+      
+      // Should see empty state message
+      // Note: Home view typically shows challenges. If empty, it might show "Join a challenge" button
+      await expect(page.locator('text=Join a challenge').or(
+        page.locator('text=No active').or(
+        page.locator('text=Start your journey'))
+      )).toBeVisible();
+    });
   });
 });
 
