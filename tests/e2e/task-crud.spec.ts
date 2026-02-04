@@ -9,7 +9,7 @@ import {
   toggleTask,
   apiRequest,
   getAuthToken
-} from '../e2e-test-config';
+} from './e2e-test-config';
 
 test.describe('Task CRUD Operations', () => {
   test.beforeEach(async ({ page }) => {

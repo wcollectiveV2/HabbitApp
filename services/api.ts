@@ -24,8 +24,29 @@ class ApiClient {
     return headers;
   }
 
+  private buildUrl(endpoint: string): string {
+    // Normalization logic to prevent double slash or double /api
+    let base = this.baseUrl;
+    let path = endpoint;
+    
+    // Remove trailing slash from base
+    if (base.endsWith('/')) base = base.slice(0, -1);
+    
+    // Remove leading slash from path
+    if (path.startsWith('/')) path = path.slice(1);
+    
+    // Fix for double /api prefix issue
+    // If base ends with /api AND path starts with api/
+    if (base.endsWith('/api') && path.startsWith('api/')) {
+       path = path.slice(4); // Remove 'api/' from start of path
+    }
+    
+    return `${base}/${path}`;
+  }
+
   async get<T>(endpoint: string): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+    const url = this.buildUrl(endpoint);
+    const response = await fetch(url, {
       method: 'GET',
       headers: this.getHeaders(),
     });
@@ -36,7 +57,8 @@ class ApiClient {
   }
 
   async post<T>(endpoint: string, data?: any): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+    const url = this.buildUrl(endpoint);
+    const response = await fetch(url, {
       method: 'POST',
       headers: this.getHeaders(),
       body: data ? JSON.stringify(data) : undefined,
@@ -49,7 +71,8 @@ class ApiClient {
   }
 
   async patch<T>(endpoint: string, data?: any): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+    const url = this.buildUrl(endpoint);
+    const response = await fetch(url, {
       method: 'PATCH',
       headers: this.getHeaders(),
       body: data ? JSON.stringify(data) : undefined,
@@ -61,7 +84,8 @@ class ApiClient {
   }
 
   async put<T>(endpoint: string, data?: any): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+    const url = this.buildUrl(endpoint);
+    const response = await fetch(url, {
       method: 'PUT',
       headers: this.getHeaders(),
       body: data ? JSON.stringify(data) : undefined,
@@ -73,7 +97,8 @@ class ApiClient {
   }
 
   async delete<T>(endpoint: string): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+    const url = this.buildUrl(endpoint);
+    const response = await fetch(url, {
       method: 'DELETE',
       headers: this.getHeaders(),
     });

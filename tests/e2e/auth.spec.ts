@@ -4,7 +4,7 @@
 // Uses REAL database with seeded test data (no mocks)
 
 import { test, expect, Page } from '@playwright/test';
-import { TEST_USERS, login, logout, assertOnLoginPage, assertOnDashboard } from '../e2e-test-config';
+import { TEST_USERS, login, logout, assertOnLoginPage, assertOnDashboard } from './e2e-test-config';
 
 // ============================================================================
 // FEATURE: LOGIN SYSTEM (AUTH-001)

@@ -4,7 +4,7 @@
 // Uses REAL database with seeded test data (no mocks)
 
 import { test, expect } from '@playwright/test';
-import { TEST_USERS, TEST_TASKS, login } from '../e2e-test-config';
+import { TEST_USERS, TEST_TASKS, login } from './e2e-test-config';
 
 // ============================================================================
 // FEATURE: TODAY'S TASKS VIEW (TASK-001)
