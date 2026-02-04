@@ -8,7 +8,7 @@ import {
   TEST_USERS, 
   login,
   openAICoach
-} from './e2e-test-config';
+} from '../e2e-test-config';
 
 // ============================================================================
 // HELPER FUNCTIONS

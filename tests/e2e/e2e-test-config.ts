@@ -386,10 +386,8 @@ export async function navigateTo(page: Page, tab: 'Home' | 'Discover' | 'Social'
 }
 
 export async function openFabMenu(page: Page) {
-  const fabButton = page.locator('button:has(.material-symbols-outlined:has-text("add"))').or(
-    page.locator('[class*="fab"]')
-  );
-  await fabButton.first().click();
+  const fabButton = page.locator('button[aria-label="Create new task"], button:has(.material-symbols-outlined:has-text("add"))').first();
+  await fabButton.click();
   await page.waitForTimeout(300);
 }
 

@@ -10,7 +10,7 @@ import {
   navigateTo,
   goToSocial,
   switchToFriendsLeaderboard
-} from './e2e-test-config';
+} from '../e2e-test-config';
 
 // ============================================================================
 // HELPER FUNCTIONS

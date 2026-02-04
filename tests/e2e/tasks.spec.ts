@@ -4,7 +4,7 @@
 // Uses REAL database with seeded test data (no mocks)
 
 import { test, expect } from '@playwright/test';
-import { TEST_USERS, TEST_TASKS, login } from './e2e-test-config';
+import { TEST_USERS, TEST_TASKS, login } from '../e2e-test-config';
 
 // ============================================================================
 // FEATURE: TODAY'S TASKS VIEW (TASK-001)
@@ -135,14 +135,14 @@ test.describe('Feature: Task CRUD Operations (TASK-003)', () => {
 
   test('TASK-003-01: Open create task modal via FAB button', async ({ page }) => {
     // FAB usually at bottom right
-    const fab = page.locator('button[aria-label="add"], button:has(.material-symbols-outlined:has-text("add"))');
+    const fab = page.locator('button[aria-label="Create new task"]');
     await fab.click();
     
     await expect(page.locator('text=Create Task').or(page.locator('text=New Habit'))).toBeVisible();
   });
 
   test('TASK-003-03: Create task with title only', async ({ page }) => {
-    const fab = page.locator('button[aria-label="add"], button:has(.material-symbols-outlined:has-text("add"))');
+    const fab = page.locator('button[aria-label="Create new task"]');
     await fab.click();
     
     const uniqueTitle = `Simple Task ${Date.now()}`;
@@ -153,7 +153,7 @@ test.describe('Feature: Task CRUD Operations (TASK-003)', () => {
   });
 
   test('TASK-003-04: Create task with all fields', async ({ page }) => {
-    const fab = page.locator('button[aria-label="add"]');
+    const fab = page.locator('button[aria-label="Create new task"]');
     await fab.click();
     
     const uniqueTitle = `Complex Task ${Date.now()}`;
@@ -168,7 +168,7 @@ test.describe('Feature: Task CRUD Operations (TASK-003)', () => {
 
   test('TASK-003-06: Delete task with confirmation dialog', async ({ page }) => {
     // Create a task first to delete
-    const fab = page.locator('button[aria-label="add"]');
+    const fab = page.locator('button[aria-label="Create new task"]');
     await fab.click();
     const taskToDelete = `Delete Me ${Date.now()}`;
     await page.fill('input[name="title"]', taskToDelete);
@@ -205,7 +205,7 @@ test.describe('Feature: Task Priority Display (TASK-004)', () => {
         // This is hard to test without specific class names or aria labels for priority
         
         // Let's create a high priority task
-        const fab = page.locator('button[aria-label="add"]');
+        const fab = page.locator('button[aria-label="Create new task"]');
         await fab.click();
         const highTask = `High Priority ${Date.now()}`;
         await page.fill('input[name="title"]', highTask);

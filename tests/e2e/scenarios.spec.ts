@@ -11,7 +11,7 @@ import {
   login,
   logout,
   navigateTo
-} from './e2e-test-config';
+} from '../e2e-test-config';
 
 // ============================================================================
 // SCENARIO: COMPLETE USER JOURNEY

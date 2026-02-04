@@ -9,7 +9,7 @@ import {
   toggleTask,
   apiRequest,
   getAuthToken
-} from './e2e-test-config';
+} from '../e2e-test-config';
 
 test.describe('Task CRUD Operations', () => {
   test.beforeEach(async ({ page }) => {
@@ -153,7 +153,7 @@ test.describe('Task CRUD Operations', () => {
       await navigateTo(page, 'home');
       
       // Find add task button
-      const addButton = page.locator('button:has-text("Add"), button:has-text("+"), [aria-label*="add"], [data-testid*="add-task"]').first();
+      const addButton = page.locator('button[aria-label="Create new task"]').first();
       
       if (await addButton.isVisible()) {
         await addButton.click();
@@ -169,7 +169,7 @@ test.describe('Task CRUD Operations', () => {
       await navigateTo(page, 'home');
       
       // Open create task modal
-      const addButton = page.locator('button:has-text("Add"), button:has-text("+"), [aria-label*="add"], [data-testid*="add-task"]').first();
+      const addButton = page.locator('button[aria-label="Create new task"]').first();
       
       if (await addButton.isVisible()) {
         await addButton.click();
@@ -195,7 +195,7 @@ test.describe('Task CRUD Operations', () => {
     test('should create counter task with goal', async ({ page }) => {
       await navigateTo(page, 'home');
       
-      const addButton = page.locator('button:has-text("Add"), button:has-text("+"), [aria-label*="add"], [data-testid*="add-task"]').first();
+      const addButton = page.locator('button[aria-label="Create new task"]').first();
       
       if (await addButton.isVisible()) {
         await addButton.click();

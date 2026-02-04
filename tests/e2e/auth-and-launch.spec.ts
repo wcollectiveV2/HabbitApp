@@ -10,7 +10,7 @@ import {
   TEST_USERS,
   getAuthToken,
   apiRequest
-} from './e2e-test-config';
+} from '../e2e-test-config';
 
 // ============================================================================
 // AUTHENTICATION FLOWS

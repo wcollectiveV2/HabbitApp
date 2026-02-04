@@ -4,7 +4,7 @@
 // Uses REAL database with seeded test data (no mocks)
 
 import { test, expect, Page } from '@playwright/test';
-import { TEST_USERS, login, logout, assertOnLoginPage, assertOnDashboard } from './e2e-test-config';
+import { TEST_USERS, login, logout, assertOnLoginPage, assertOnDashboard } from '../e2e-test-config';
 
 // ============================================================================
 // FEATURE: LOGIN SYSTEM (AUTH-001)
@@ -32,6 +32,12 @@ test.describe('Feature: Login System (AUTH-001)', () => {
     });
 
     test('AUTH-001-02: Login button shows loading spinner during API call', async ({ page }) => {
+      // Intercept login request to ensure we can catch the loading state
+      await page.route('**/api/auth/login', async route => {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        await route.continue();
+      });
+
       await page.goto('/');
       await page.fill('input[type="email"]', TEST_USERS.testUser.email);
       await page.fill('input[type="password"]', TEST_USERS.testUser.password);
