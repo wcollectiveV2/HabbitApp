@@ -29,9 +29,6 @@ import {
   goToProtocolManagement
 } from './test-helpers';
 
-  goToProtocolManagement
-} from './test-helpers';
-
 // ============================================================================
 // 9.0 ORGANIZATION MANAGEMENT (ADMIN-ORG)
 // ============================================================================

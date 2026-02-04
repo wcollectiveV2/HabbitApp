@@ -144,7 +144,6 @@ test.describe('Feature: Chat Interface (COACH-001)', () => {
         await expect(page.locator('text=mock response')).toBeVisible({ timeout: 5000 });
     });
   });
-});
     
     test('COACH-001-06: Welcome message is displayed', async ({ page }) => {
       await loginAndOpenCoach(page);
@@ -155,7 +154,7 @@ test.describe('Feature: Chat Interface (COACH-001)', () => {
       )).toBeVisible();
     });
   });
-});
+
 
 // ============================================================================
 // FEATURE: CHAT MESSAGING (COACH-002)

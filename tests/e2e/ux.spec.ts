@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { performLogin } from './e2e-test-config';
+import { login } from './e2e-test-config';
 
 test.describe('UX & UI Feedback', () => {
   test.beforeEach(async ({ page }) => {
@@ -10,7 +10,7 @@ test.describe('UX & UI Feedback', () => {
   test.describe('UX-001: Loading States', () => {
     test('UX-001-01: Login button shows spinner during auth', async ({ page }) => {
       // Intentionally delay the login request
-      await page.route('**/auth/token', async route => {
+      await page.route('**/api/auth/login', async route => {
         await new Promise(f => setTimeout(f, 2000));
         await route.continue();
       });
@@ -30,7 +30,7 @@ test.describe('UX & UI Feedback', () => {
     });
 
     test('UX-001-02: Task list shows skeleton cards while loading', async ({ page }) => {
-      await performLogin(page);
+      await login(page);
       
       // Delay task fetch
       await page.route('**/api/tasks*', async route => {
@@ -47,7 +47,7 @@ test.describe('UX & UI Feedback', () => {
     });
 
     test('UX-001-03: Challenges show skeleton cards while loading', async ({ page }) => {
-      await performLogin(page);
+      await login(page);
       
       // Delay challenges fetch
       await page.route('**/api/challenges*', async route => {
@@ -71,14 +71,15 @@ test.describe('UX & UI Feedback', () => {
       await page.click('button[type="submit"]');
       
       // Expect error message
-      await expect(page.locator('text=Invalid credentials')).toBeVisible({ timeout: 5000 }).catch(() => {
-          // Fallback or alternative error text
-          return expect(page.locator('text=Login failed')).toBeVisible();
-      });
+      await expect(
+        page.locator('text=Invalid credentials')
+          .or(page.locator('text=Login failed'))
+          .or(page.locator('text=Invalid email or password'))
+      ).toBeVisible({ timeout: 5000 });
     });
 
     test('UX-002-02: API failure shows error message', async ({ page }) => {
-      await performLogin(page);
+      await login(page);
       
       // Force API failure
       await page.route('**/api/tasks*', route => route.abort('failed'));

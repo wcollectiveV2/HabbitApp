@@ -1,0 +1,53 @@
+
+> habitpulse@0.0.0 test:e2e
+> playwright test --reporter=line
+
+
+🌱 Setting up E2E test database...
+
+⚠️  DATABASE_URL not set. Attempting to load from backend .env...
+✅ Loaded DATABASE_URL from backend .env
+📄 Running seed-e2e-tests.sql...
+⚠️  psql not available, trying Node.js approach...
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+Warning: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("S
+✅ Database seeded successfully via Node.js!
+
+
+Running 393 tests using 1 worker
+
+[1A[2K[1/393] [chromium] › tests/e2e/admin-auth.spec.ts:9:3 › Admin Authentication › ADMIN-AUTH-001-01: Admin can log in with valid credentials
