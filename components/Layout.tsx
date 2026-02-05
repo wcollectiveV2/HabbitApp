@@ -2,6 +2,7 @@ import React, { ReactNode } from 'react';
 import BottomNav from './BottomNav';
 import Header from './Header';
 import { Tab } from '../types';
+import { colors, shadows, spacing, components, borderRadius } from '../theme/designSystem';
 
 interface LayoutProps {
   children: ReactNode;
@@ -16,24 +17,24 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, titl
     <div style={{
       minHeight: '100vh',
       width: '100%',
-      background: 'linear-gradient(180deg, #F8FAFC 0%, #EEF2FF 100%)',
+      background: colors.gradients.primary.replace('135deg', '180deg').replace(colors.primary, colors.gray[50]).replace(colors.primaryLight, '#EEF2FF'),
       display: 'flex',
       justifyContent: 'center',
     }}>
       <div style={{
         width: '100%',
-        maxWidth: '430px',
+        maxWidth: components.layout.maxWidth,
         minHeight: '100vh',
-        background: '#FFFFFF',
+        background: colors.background.primary,
         position: 'relative',
-        boxShadow: '0 0 60px rgba(0,0,0,0.1)',
+        boxShadow: shadows['2xl'],
         display: 'flex',
         flexDirection: 'column',
       }}>
         <Header title={title} />
         <main style={{
           flex: 1,
-          padding: '0 20px 120px 20px',
+          padding: `0 ${spacing[5]} 120px ${spacing[5]}`,
           overflowY: 'auto',
           overflowX: 'hidden',
         }} className="no-scrollbar">

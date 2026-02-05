@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Task } from '../types';
 import { userService } from '../services';
 import type { UserProfile } from '../services';
+import { colors, spacing, borderRadius, typography, shadows, transitions } from '../theme/designSystem';
 
 interface HomeViewProps {
   tasks: Task[];
@@ -47,14 +48,14 @@ const HomeView: React.FC<HomeViewProps> = ({ tasks, profile }) => {
       
       {/* Hero Card - Streak */}
       <div style={{
-        background: 'linear-gradient(135deg, #5D5FEF 0%, #8B5CF6 100%)',
-        borderRadius: '24px',
-        padding: '24px',
-        color: '#FFFFFF',
+        background: colors.gradients.primary,
+        borderRadius: borderRadius['3xl'],
+        padding: spacing[6],
+        color: colors.white,
         position: 'relative',
         overflow: 'hidden',
-        boxShadow: '0 10px 40px rgba(93,95,239,0.3)',
-        marginBottom: '20px',
+        boxShadow: shadows.primaryLg,
+        marginBottom: spacing[5],
       }}>
         {/* Decorative elements */}
         <div style={{
@@ -63,8 +64,8 @@ const HomeView: React.FC<HomeViewProps> = ({ tasks, profile }) => {
           right: '-30px',
           width: '120px',
           height: '120px',
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.1)',
+          borderRadius: borderRadius.full,
+          background: colors.primaryAlpha(0.1),
         }} />
         <div style={{
           position: 'absolute',
@@ -72,30 +73,30 @@ const HomeView: React.FC<HomeViewProps> = ({ tasks, profile }) => {
           left: '-20px',
           width: '80px',
           height: '80px',
-          borderRadius: '50%',
+          borderRadius: borderRadius.full,
           background: 'rgba(0,0,0,0.1)',
         }} />
         
         <div style={{ position: 'relative', zIndex: 10 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing[5] }}>
             <div>
-              <h2 style={{ fontSize: '48px', fontWeight: 900, margin: 0, lineHeight: 1 }}>
+              <h2 style={{ fontSize: typography.fontSize['6xl'], fontWeight: typography.fontWeight.black, margin: 0, lineHeight: typography.lineHeight.tight }}>
                 {stats.streakCount}
               </h2>
-              <p style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', opacity: 0.8, margin: '4px 0 0 0', letterSpacing: '1px' }}>
+              <p style={{ fontSize: typography.fontSize.sm, fontWeight: typography.fontWeight.bold, textTransform: 'uppercase', opacity: 0.8, margin: `${spacing[1]} 0 0 0`, letterSpacing: typography.letterSpacing.wider }}>
                 Day Streak
               </p>
             </div>
             <div style={{
               width: '56px',
               height: '56px',
-              background: 'rgba(255,255,255,0.2)',
-              borderRadius: '16px',
+              background: colors.primaryAlpha(0.2),
+              borderRadius: borderRadius.xl,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '32px', color: '#FDE047' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '32px', color: colors.warningLight }}>
                 local_fire_department
               </span>
             </div>
@@ -104,20 +105,20 @@ const HomeView: React.FC<HomeViewProps> = ({ tasks, profile }) => {
           {/* Progress bar */}
           <div style={{
             background: 'rgba(0,0,0,0.2)',
-            borderRadius: '12px',
-            padding: '16px',
+            borderRadius: borderRadius.lg,
+            padding: spacing[4],
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', opacity: 0.7, marginBottom: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: typography.fontSize.xs, fontWeight: typography.fontWeight.bold, textTransform: 'uppercase', opacity: 0.7, marginBottom: spacing[2] }}>
               <span>Daily Goal</span>
               <span>{stats.completedPercent}%</span>
             </div>
-            <div style={{ height: '10px', background: 'rgba(255,255,255,0.2)', borderRadius: '5px', overflow: 'hidden' }}>
+            <div style={{ height: '10px', background: colors.primaryAlpha(0.2), borderRadius: borderRadius.full, overflow: 'hidden' }}>
               <div style={{
                 height: '100%',
                 width: `${stats.completedPercent}%`,
-                background: 'linear-gradient(90deg, #FDE047 0%, #FBBF24 100%)',
-                borderRadius: '5px',
-                transition: 'width 1s ease-out',
+                background: colors.gradients.sunset.replace('135deg', '90deg').replace('#FF6B6B', '#FDE047').replace('#FFE66D', '#FBBF24'),
+                borderRadius: borderRadius.full,
+                transition: transitions.slow,
                 boxShadow: '0 0 10px rgba(253,224,71,0.5)',
               }} />
             </div>
@@ -126,59 +127,59 @@ const HomeView: React.FC<HomeViewProps> = ({ tasks, profile }) => {
       </div>
 
       {/* Stats Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing[3], marginBottom: spacing[5] }}>
         <div style={{
-          background: '#FFFFFF',
-          borderRadius: '20px',
-          padding: '20px',
+          background: colors.background.primary,
+          borderRadius: borderRadius['2xl'],
+          padding: spacing[5],
           textAlign: 'center',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
-          border: '1px solid #F1F5F9',
+          boxShadow: shadows.card,
+          border: `1px solid ${colors.gray[100]}`,
         }}>
           <div style={{
             width: '48px',
             height: '48px',
-            borderRadius: '50%',
-            background: '#FEF3C7',
+            borderRadius: borderRadius.full,
+            background: colors.warningBg,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            margin: '0 auto 12px',
+            margin: `0 auto ${spacing[3]}`,
           }}>
-            <span className="material-symbols-outlined" style={{ color: '#F59E0B', fontSize: '24px' }}>stars</span>
+            <span className="material-symbols-outlined" style={{ color: colors.warning, fontSize: '24px' }}>stars</span>
           </div>
-          <div style={{ fontSize: '28px', fontWeight: 800, color: '#1E293B' }}>
+          <div style={{ fontSize: typography.fontSize['4xl'], fontWeight: typography.fontWeight.extrabold, color: colors.text.primary }}>
             {stats.totalPoints >= 1000 ? `${(stats.totalPoints / 1000).toFixed(1)}k` : stats.totalPoints}
           </div>
-          <div style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' }}>
+          <div style={{ fontSize: typography.fontSize.xs, fontWeight: typography.fontWeight.bold, color: colors.text.tertiary, textTransform: 'uppercase', letterSpacing: typography.letterSpacing.wider, marginTop: spacing[1] }}>
             Total Points
           </div>
         </div>
         
         <div style={{
-          background: '#FFFFFF',
-          borderRadius: '20px',
-          padding: '20px',
+          background: colors.background.primary,
+          borderRadius: borderRadius['2xl'],
+          padding: spacing[5],
           textAlign: 'center',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
-          border: '1px solid #F1F5F9',
+          boxShadow: shadows.card,
+          border: `1px solid ${colors.gray[100]}`,
         }}>
           <div style={{
             width: '48px',
             height: '48px',
-            borderRadius: '50%',
-            background: '#D1FAE5',
+            borderRadius: borderRadius.full,
+            background: colors.successBg,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            margin: '0 auto 12px',
+            margin: `0 auto ${spacing[3]}`,
           }}>
-            <span className="material-symbols-outlined" style={{ color: '#10B981', fontSize: '24px' }}>check_circle</span>
+            <span className="material-symbols-outlined" style={{ color: colors.success, fontSize: '24px' }}>check_circle</span>
           </div>
-          <div style={{ fontSize: '28px', fontWeight: 800, color: '#1E293B' }}>
+          <div style={{ fontSize: typography.fontSize['4xl'], fontWeight: typography.fontWeight.extrabold, color: colors.text.primary }}>
             {completedToday}
           </div>
-          <div style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' }}>
+          <div style={{ fontSize: typography.fontSize.xs, fontWeight: typography.fontWeight.bold, color: colors.text.tertiary, textTransform: 'uppercase', letterSpacing: typography.letterSpacing.wider, marginTop: spacing[1] }}>
             Completed Today
           </div>
         </div>
@@ -187,10 +188,10 @@ const HomeView: React.FC<HomeViewProps> = ({ tasks, profile }) => {
       {/* Tip Card */}
       <div style={{
         background: '#EFF6FF',
-        borderRadius: '20px',
-        padding: '20px',
+        borderRadius: borderRadius['2xl'],
+        padding: spacing[5],
         display: 'flex',
-        gap: '16px',
+        gap: spacing[4],
         alignItems: 'flex-start',
         border: '1px solid #DBEAFE',
         position: 'relative',
@@ -207,7 +208,7 @@ const HomeView: React.FC<HomeViewProps> = ({ tasks, profile }) => {
         <div style={{
           width: '40px',
           height: '40px',
-          borderRadius: '50%',
+          borderRadius: borderRadius.full,
           background: '#DBEAFE',
           display: 'flex',
           alignItems: 'center',
@@ -217,10 +218,10 @@ const HomeView: React.FC<HomeViewProps> = ({ tasks, profile }) => {
           <span className="material-symbols-outlined" style={{ color: '#3B82F6', fontSize: '20px' }}>auto_awesome</span>
         </div>
         <div style={{ position: 'relative', zIndex: 10 }}>
-          <p style={{ fontSize: '14px', fontWeight: 500, color: '#475569', fontStyle: 'italic', lineHeight: 1.5, margin: 0 }}>
+          <p style={{ fontSize: typography.fontSize.md, fontWeight: typography.fontWeight.medium, color: colors.text.secondary, fontStyle: 'italic', lineHeight: typography.lineHeight.normal, margin: 0 }}>
             "{tip}"
           </p>
-          <p style={{ fontSize: '10px', fontWeight: 700, color: '#3B82F6', textTransform: 'uppercase', marginTop: '8px', letterSpacing: '0.5px' }}>
+          <p style={{ fontSize: typography.fontSize.xs, fontWeight: typography.fontWeight.bold, color: '#3B82F6', textTransform: 'uppercase', marginTop: spacing[2], letterSpacing: typography.letterSpacing.wide }}>
             Daily Mindset
           </p>
         </div>

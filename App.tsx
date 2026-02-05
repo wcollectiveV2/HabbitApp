@@ -1,5 +1,6 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Header from './components/Header';
 import ProgressCard from './components/ProgressCard';
 import TaskCard from './components/TaskCard';
@@ -338,7 +339,6 @@ const ActiveView: React.FC<{
 const AppContent: React.FC = () => {
   const { user, profile, isLoading: authLoading, logout } = useAuth();
   const [authMode, setAuthMode] = useState<AuthMode>('login');
-  const [activeTab, setActiveTab] = useState<Tab>('active');
   const [tasks, setTasks] = useState<UITask[]>([]);
   const [challenges, setChallenges] = useState<UIChallenge[]>([]);
   const [loading, setLoading] = useState(true);
@@ -346,6 +346,32 @@ const AppContent: React.FC = () => {
   const [selectedChallengeId, setSelectedChallengeId] = useState<number | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   
+  // Routing
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const getTabFromPath = (path: string): Tab => {
+    if (path === '/') return 'active';
+    if (path === '/home') return 'home';
+    if (path === '/habits') return 'habits';
+    if (path === '/social') return 'social';
+    if (path === '/profile') return 'me';
+    return 'active';
+  };
+
+  const activeTab = getTabFromPath(location.pathname);
+
+  const handleTabChange = (tab: Tab) => {
+    switch (tab) {
+      case 'active': navigate('/'); break;
+      case 'home': navigate('/home'); break;
+      case 'habits': navigate('/habits'); break;
+      case 'social': navigate('/social'); break;
+      case 'me': navigate('/profile'); break;
+      default: navigate('/');
+    }
+  };
+
   // Task Modal States
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [selectedTask, setSelectedTask] = useState<UITask | null>(null);
@@ -661,7 +687,9 @@ const App: React.FC = () => {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <AppContent />
+        <Router>
+          <AppContent />
+        </Router>
       </AuthProvider>
     </ThemeProvider>
   );

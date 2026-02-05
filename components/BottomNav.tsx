@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Tab } from '../types';
+import { colors, spacing, shadows, borderRadius, typography, zIndex, transitions } from '../theme/designSystem';
 
 interface BottomNavProps {
   activeTab: Tab;
@@ -20,20 +21,20 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab }) => {
     <nav 
       style={{
         position: 'fixed',
-        bottom: '20px',
+        bottom: spacing[5],
         left: '50%',
         transform: 'translateX(-50%)',
         width: 'calc(100% - 40px)',
         maxWidth: '400px',
         height: '70px',
-        background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
-        borderRadius: '35px',
+        background: `linear-gradient(135deg, ${colors.gray[800]} 0%, ${colors.gray[900]} 100%)`,
+        borderRadius: borderRadius.full,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-around',
-        padding: '0 8px',
-        boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
-        zIndex: 9999,
+        padding: `0 ${spacing[2]}`,
+        boxShadow: shadows['2xl'],
+        zIndex: zIndex.fixed,
       }}
       role="tablist"
       aria-label="Main navigation"
@@ -53,13 +54,13 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab }) => {
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '2px',
+              gap: spacing[0],
               border: 'none',
-              borderRadius: '27px',
+              borderRadius: borderRadius.full,
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              background: isActive ? '#5D5FEF' : 'transparent',
-              color: isActive ? '#FFFFFF' : '#64748B',
+              transition: transitions.all,
+              background: isActive ? colors.primary : 'transparent',
+              color: isActive ? colors.white : colors.gray[500],
             }}
           >
             <span 
@@ -72,10 +73,10 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab }) => {
               {tab.icon}
             </span>
             <span style={{ 
-              fontSize: '9px', 
-              fontWeight: 700, 
+              fontSize: typography.fontSize.xs, 
+              fontWeight: typography.fontWeight.bold, 
               textTransform: 'uppercase',
-              letterSpacing: '0.5px'
+              letterSpacing: typography.letterSpacing.wide
             }}>
               {tab.label}
             </span>

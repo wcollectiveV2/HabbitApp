@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { colors, spacing, borderRadius, typography, shadows, getButtonStyle, getInputStyle } from '../theme/designSystem';
 
 interface SignupViewProps {
   onSwitchToLogin: () => void;
@@ -22,57 +23,135 @@ const SignupView: React.FC<SignupViewProps> = ({ onSwitchToLogin }) => {
     }
   };
 
+  const containerStyle: React.CSSProperties = {
+    minHeight: '100vh',
+    backgroundColor: colors.background.primary,
+    padding: `${spacing[20]} ${spacing[8]} ${spacing[10]}`,
+    display: 'flex',
+    flexDirection: 'column',
+  };
+
+  const logoStyle: React.CSSProperties = {
+    width: '64px',
+    height: '64px',
+    backgroundColor: colors.primaryAlpha(0.1),
+    color: colors.primary,
+    borderRadius: borderRadius['3xl'],
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing[6],
+  };
+
+  const titleStyle: React.CSSProperties = {
+    fontSize: typography.fontSize['5xl'],
+    fontWeight: typography.fontWeight.black,
+    letterSpacing: typography.letterSpacing.tighter,
+    marginBottom: spacing[2],
+    color: colors.text.primary,
+  };
+
+  const subtitleStyle: React.CSSProperties = {
+    color: colors.text.tertiary,
+    fontWeight: typography.fontWeight.medium,
+    margin: 0,
+  };
+
+  const labelStyle: React.CSSProperties = {
+    fontSize: typography.fontSize.xs,
+    fontWeight: typography.fontWeight.bold,
+    textTransform: 'uppercase',
+    color: colors.text.tertiary,
+    marginLeft: spacing[1],
+    marginBottom: spacing[1],
+    display: 'block',
+  };
+
+  const inputBoxStyle: React.CSSProperties = {
+    ...getInputStyle(),
+  };
+
+  const inputIconStyle: React.CSSProperties = {
+    position: 'absolute',
+    left: spacing[4],
+    top: '50%',
+    transform: 'translateY(-50%)',
+    color: colors.gray[400],
+    fontSize: '20px',
+  };
+
+  const primaryBtnStyle: React.CSSProperties = {
+    ...getButtonStyle('primary'),
+    width: '100%',
+  };
+
+  const errorBoxStyle: React.CSSProperties = {
+    backgroundColor: colors.errorBg,
+    color: colors.error,
+    padding: spacing[3],
+    borderRadius: borderRadius.lg,
+    fontSize: typography.fontSize.md,
+    textAlign: 'center',
+  };
+
+  const spinnerStyle: React.CSSProperties = {
+    width: '20px',
+    height: '20px',
+    border: `2px solid ${colors.primaryAlpha(0.3)}`,
+    borderTopColor: colors.white,
+    borderRadius: borderRadius.full,
+    animation: 'spin 1s linear infinite',
+  };
+
   return (
-    <div className="min-h-screen bg-white dark:bg-background-dark px-8 pt-20 pb-10 flex flex-col animate-in slide-in-from-right duration-500">
-      <div className="mb-10">
-        <div className="w-16 h-16 bg-primary/10 text-primary rounded-3xl flex items-center justify-center mb-6">
-          <span className="material-symbols-outlined text-3xl">add_circle</span>
+    <div style={containerStyle}>
+      <div style={{ marginBottom: spacing[10] }}>
+        <div style={logoStyle}>
+          <span className="material-symbols-outlined" style={{ fontSize: '32px' }}>add_circle</span>
         </div>
-        <h1 className="text-4xl font-black tracking-tight mb-2">Create Account</h1>
-        <p className="text-slate-400 font-medium">Start your wellness journey today.</p>
+        <h1 style={titleStyle}>Create Account</h1>
+        <p style={subtitleStyle}>Start your wellness journey today.</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: spacing[4] }}>
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 text-red-500 p-3 rounded-xl text-sm text-center">
-            {error}
-          </div>
+          <div style={errorBoxStyle}>{error}</div>
         )}
         
-        <div className="space-y-1">
-          <label className="text-xs font-bold uppercase text-slate-400 ml-1">Full Name</label>
-          <div className="relative">
-            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl">person</span>
+        <div>
+          <label style={labelStyle}>Full Name</label>
+          <div style={{ position: 'relative' }}>
+            <span className="material-symbols-outlined" style={inputIconStyle}>person</span>
             <input 
               required
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Alex Rivera"
-              className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-2xl py-4 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary transition-all"
+              style={inputBoxStyle}
             />
           </div>
         </div>
 
-        <div className="space-y-1">
-          <label className="text-xs font-bold uppercase text-slate-400 ml-1">Email Address</label>
-          <div className="relative">
-            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl">mail</span>
+        <div>
+          <label style={labelStyle}>Email Address</label>
+          <div style={{ position: 'relative' }}>
+            <span className="material-symbols-outlined" style={inputIconStyle}>mail</span>
             <input 
               required
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="alex@example.com"
-              className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-2xl py-4 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary transition-all"
+              style={inputBoxStyle}
             />
           </div>
         </div>
 
-        <div className="space-y-1">
-          <label className="text-xs font-bold uppercase text-slate-400 ml-1">Create Password</label>
-          <div className="relative">
-            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl">lock</span>
+        <div>
+          <label style={labelStyle}>Create Password</label>
+          <div style={{ position: 'relative' }}>
+            <span className="material-symbols-outlined" style={inputIconStyle}>lock</span>
             <input 
               required
               type="password"
@@ -80,35 +159,35 @@ const SignupView: React.FC<SignupViewProps> = ({ onSwitchToLogin }) => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               minLength={6}
-              className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-2xl py-4 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary transition-all"
+              style={inputBoxStyle}
             />
           </div>
         </div>
 
-        <div className="flex items-start gap-3 py-2 px-1">
-          <input type="checkbox" required className="mt-1 rounded border-slate-200 text-primary focus:ring-primary" />
-          <p className="text-[10px] text-slate-400 leading-relaxed font-medium">
-            I agree to the <span className="text-primary font-bold underline">Terms of Service</span> and <span className="text-primary font-bold underline">Privacy Policy</span>.
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: spacing[3], padding: `${spacing[2]} ${spacing[1]}` }}>
+          <input type="checkbox" required style={{ marginTop: spacing[1], accentColor: colors.primary }} />
+          <p style={{ fontSize: typography.fontSize.xs, color: colors.text.tertiary, lineHeight: typography.lineHeight.relaxed, fontWeight: typography.fontWeight.medium, margin: 0 }}>
+            I agree to the <span style={{ color: colors.primary, fontWeight: typography.fontWeight.bold, textDecoration: 'underline' }}>Terms of Service</span> and <span style={{ color: colors.primary, fontWeight: typography.fontWeight.bold, textDecoration: 'underline' }}>Privacy Policy</span>.
           </p>
         </div>
 
         <button 
           disabled={isLoading}
           type="submit"
-          className="w-full bg-primary text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-primary/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+          style={primaryBtnStyle}
         >
           {isLoading ? (
-            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            <div style={spinnerStyle}></div>
           ) : (
-            <>Get Started <span className="material-symbols-outlined text-sm">rocket_launch</span></>
+            <>Get Started <span className="material-symbols-outlined" style={{ fontSize: typography.fontSize.md }}>rocket_launch</span></>
           )}
         </button>
       </form>
 
-      <div className="mt-auto text-center pt-10">
-        <p className="text-sm text-slate-400">
+      <div style={{ marginTop: 'auto', textAlign: 'center', paddingTop: spacing[10] }}>
+        <p style={{ fontSize: typography.fontSize.md, color: colors.text.tertiary }}>
           Already have an account?{' '}
-          <button onClick={onSwitchToLogin} className="text-primary font-bold">Log In</button>
+          <button onClick={onSwitchToLogin} style={{ background: 'none', border: 'none', color: colors.primary, fontWeight: typography.fontWeight.bold, cursor: 'pointer' }}>Log In</button>
         </p>
       </div>
     </div>

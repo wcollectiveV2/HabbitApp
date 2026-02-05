@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { NotificationCenter, NotificationBell } from './NotificationCenter';
+import { colors, spacing, shadows, typography, zIndex, components } from '../theme/designSystem';
 
 interface HeaderProps {
   title?: string;
@@ -20,34 +21,34 @@ const Header: React.FC<HeaderProps> = ({ title = 'My Progress', userName, avatar
       <header style={{
         position: 'sticky',
         top: 0,
-        zIndex: 100,
+        zIndex: zIndex.sticky,
         background: 'rgba(255,255,255,0.9)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
-        padding: '16px 20px',
+        padding: `${spacing[4]} ${spacing[5]}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        borderBottom: '1px solid rgba(0,0,0,0.05)',
+        borderBottom: `1px solid ${colors.gray[100]}`,
       }}>
         <h1 style={{
-          fontSize: '24px',
-          fontWeight: 800,
-          color: '#5D5FEF',
+          fontSize: typography.fontSize['3xl'],
+          fontWeight: typography.fontWeight.extrabold,
+          color: colors.primary,
           margin: 0,
-          letterSpacing: '-0.5px',
+          letterSpacing: typography.letterSpacing.tighter,
         }}>
           {title}
         </h1>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: spacing[3] }}>
           <NotificationBell onClick={() => setShowNotifications(true)} />
           <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '50%',
+            width: components.avatar.sizes.lg,
+            height: components.avatar.sizes.lg,
+            borderRadius: components.avatar.borderRadius,
             overflow: 'hidden',
-            border: '3px solid #5D5FEF',
-            boxShadow: '0 4px 12px rgba(93,95,239,0.3)',
+            border: `3px solid ${colors.primary}`,
+            boxShadow: shadows.primary,
           }}>
             <img 
               alt={userName || 'User'} 
