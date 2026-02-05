@@ -49,7 +49,8 @@ const NotificationItem: React.FC<{
   notification: Notification;
   onMarkRead: (id: string) => void;
   onAction?: (notification: Notification) => void;
-}> = ({ notification, onMarkRead, onAction }) => {
+  onDecline?: (notification: Notification) => void;
+}> = ({ notification, onMarkRead, onAction, onDecline }) => {
   const { icon, color, bg } = getNotificationIcon(notification.type);
   const hasAction = ['friend_request', 'challenge_invite', 'CHALLENGE_INVITE', 'ORG_INVITE'].includes(notification.type);
 
@@ -89,7 +90,7 @@ const NotificationItem: React.FC<{
                 Accept
               </button>
               <button 
-                onClick={(e) => { e.stopPropagation(); onMarkRead(notification.id); }}
+                onClick={(e) => { e.stopPropagation(); onDecline?.(notification); }}
                 className="px-3 py-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold rounded-full"
               >
                 Decline
@@ -146,13 +147,30 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
   };
 
   const handleAction = async (notification: Notification) => {
-    // Handle accept actions for invites
+    // Handle accept actions for invites based on notification type
     try {
-      // API call would go here based on notification type
-      // await api.post(`/api/notifications/${notification.id}/accept`);
-      handleMarkRead(notification.id);
+      await notificationService.acceptNotification(notification.id, notification.type);
+      // Remove from list or mark as read after successful accept
+      setNotifications(prev => 
+        prev.map(n => n.id === notification.id ? { ...n, is_read: true } : n)
+      );
     } catch (err) {
       console.error('Failed to accept:', err);
+      alert('Failed to accept. Please try again.');
+    }
+  };
+
+  const handleDecline = async (notification: Notification) => {
+    // Handle decline actions for invites based on notification type
+    try {
+      await notificationService.declineNotification(notification.id, notification.type);
+      // Mark as read after successful decline
+      setNotifications(prev => 
+        prev.map(n => n.id === notification.id ? { ...n, is_read: true } : n)
+      );
+    } catch (err) {
+      console.error('Failed to decline:', err);
+      alert('Failed to decline. Please try again.');
     }
   };
 
@@ -235,6 +253,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
                 notification={notification}
                 onMarkRead={handleMarkRead}
                 onAction={handleAction}
+                onDecline={handleDecline}
               />
             ))}
           </div>

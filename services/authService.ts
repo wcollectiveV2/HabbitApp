@@ -161,5 +161,29 @@ export const userService = {
 
   async unblockUser(userId: string): Promise<{ success: boolean }> {
     return api.delete(`/api/user/block/${userId}`);
+  },
+
+  async getNotificationSettings(): Promise<{
+    pushEnabled: boolean;
+    emailEnabled: boolean;
+    dailyReminder: boolean;
+    challengeUpdates: boolean;
+    socialActivity: boolean;
+    achievements: boolean;
+    reminderTime: string;
+  }> {
+    return api.get('/api/user/notification-settings');
+  },
+
+  async updateNotificationSettings(settings: {
+    pushEnabled?: boolean;
+    emailEnabled?: boolean;
+    dailyReminder?: boolean;
+    challengeUpdates?: boolean;
+    socialActivity?: boolean;
+    achievements?: boolean;
+    reminderTime?: string;
+  }): Promise<{ success: boolean }> {
+    return api.patch('/api/user/notification-settings', settings);
   }
 };

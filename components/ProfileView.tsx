@@ -73,12 +73,15 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: propProfile, onLogou
     }
   };
 
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
+  const [showHelpCenter, setShowHelpCenter] = useState(false);
+
   const settings = [
     { icon: 'person_outline', label: 'Edit Profile & Privacy', color: 'text-blue-500', action: () => setShowSettings(true) },
-    { icon: 'notifications_active', label: 'Notifications', color: 'text-purple-500', action: () => {} },
+    { icon: 'notifications_active', label: 'Notifications', color: 'text-purple-500', action: () => setShowNotificationSettings(true) },
     { icon: 'dark_mode', label: 'Appearance', color: 'text-orange-500', action: () => setShowAppearanceSettings(true) },
     { icon: 'security', label: 'Security & Account', color: 'text-green-500', action: () => setShowSecuritySettings(true) },
-    { icon: 'help_outline', label: 'Help Center', color: 'text-slate-500', action: () => {} },
+    { icon: 'help_outline', label: 'Help Center', color: 'text-slate-500', action: () => setShowHelpCenter(true) },
   ];
 
   if (showSettings && profile) {
@@ -107,6 +110,22 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: propProfile, onLogou
     return (
       <AppearanceSettingsModal 
         onClose={() => setShowAppearanceSettings(false)}
+      />
+    );
+  }
+
+  if (showNotificationSettings) {
+    return (
+      <NotificationSettingsModal 
+        onClose={() => setShowNotificationSettings(false)}
+      />
+    );
+  }
+
+  if (showHelpCenter) {
+    return (
+      <HelpCenterModal 
+        onClose={() => setShowHelpCenter(false)}
       />
     );
   }
@@ -589,6 +608,208 @@ const AppearanceSettingsModal: React.FC<{ onClose: () => void }> = ({ onClose })
               </span>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Notification Settings Modal
+const NotificationSettingsModal = ({ onClose }: { onClose: () => void }) => {
+  const [settings, setSettings] = useState({
+    pushEnabled: true,
+    emailEnabled: true,
+    dailyReminder: true,
+    challengeUpdates: true,
+    socialActivity: true,
+    achievements: true,
+    reminderTime: '09:00',
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleToggle = (key: keyof typeof settings) => {
+    if (typeof settings[key] === 'boolean') {
+      setSettings(prev => ({ ...prev, [key]: !prev[key] }));
+    }
+  };
+
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      await userService.updateNotificationSettings(settings);
+      onClose();
+    } catch (err) {
+      console.error('Failed to save notification settings:', err);
+      alert('Failed to save settings');
+    }
+    setLoading(false);
+  };
+
+  const toggleItems = [
+    { key: 'pushEnabled', icon: 'notifications_active', label: 'Push Notifications', description: 'Receive notifications on your device' },
+    { key: 'emailEnabled', icon: 'email', label: 'Email Notifications', description: 'Get updates via email' },
+    { key: 'dailyReminder', icon: 'alarm', label: 'Daily Reminders', description: 'Remind me to complete my habits' },
+    { key: 'challengeUpdates', icon: 'emoji_events', label: 'Challenge Updates', description: 'Updates about your active challenges' },
+    { key: 'socialActivity', icon: 'people', label: 'Social Activity', description: 'When friends follow or interact' },
+    { key: 'achievements', icon: 'military_tech', label: 'Achievements', description: 'When you earn badges or milestones' },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 bg-white dark:bg-slate-950 flex flex-col animate-in slide-in-from-bottom-10">
+      <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+        <button onClick={onClose} className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+          <span className="material-symbols-outlined">arrow_back</span>
+        </button>
+        <h2 className="font-bold text-lg">Notifications</h2>
+        <button 
+          onClick={handleSave}
+          disabled={loading}
+          className="text-primary font-bold text-sm disabled:opacity-50"
+        >
+          {loading ? 'Saving...' : 'Save'}
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        {toggleItems.map(item => (
+          <div 
+            key={item.key}
+            className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl"
+          >
+            <div className="flex items-center gap-4">
+              <span className="material-symbols-outlined text-primary">{item.icon}</span>
+              <div>
+                <p className="font-bold text-slate-900 dark:text-white">{item.label}</p>
+                <p className="text-xs text-slate-500">{item.description}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => handleToggle(item.key as keyof typeof settings)}
+              className={`w-12 h-7 rounded-full transition-colors relative ${
+                settings[item.key as keyof typeof settings] ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-700'
+              }`}
+            >
+              <span 
+                className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                  settings[item.key as keyof typeof settings] ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        ))}
+
+        {/* Reminder Time */}
+        {settings.dailyReminder && (
+          <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl">
+            <label className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <span className="material-symbols-outlined text-primary">schedule</span>
+                <div>
+                  <p className="font-bold text-slate-900 dark:text-white">Reminder Time</p>
+                  <p className="text-xs text-slate-500">When to send daily reminders</p>
+                </div>
+              </div>
+              <input
+                type="time"
+                value={settings.reminderTime}
+                onChange={e => setSettings(prev => ({ ...prev, reminderTime: e.target.value }))}
+                className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 font-medium"
+              />
+            </label>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Help Center Modal
+const HelpCenterModal = ({ onClose }: { onClose: () => void }) => {
+  const helpTopics = [
+    { icon: 'help', title: 'Getting Started', description: 'Learn how to use HabitPulse' },
+    { icon: 'emoji_events', title: 'Challenges', description: 'How challenges work' },
+    { icon: 'checklist', title: 'Habits & Tasks', description: 'Managing your daily habits' },
+    { icon: 'leaderboard', title: 'Leaderboards', description: 'Compete with others' },
+    { icon: 'shield', title: 'Privacy & Security', description: 'Your data protection' },
+    { icon: 'bug_report', title: 'Report a Bug', description: 'Help us improve' },
+  ];
+
+  const handleContactSupport = () => {
+    window.open('mailto:support@habitpulse.com?subject=Support%20Request', '_blank');
+  };
+
+  const handleFeedback = () => {
+    window.open('mailto:feedback@habitpulse.com?subject=Feedback', '_blank');
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-white dark:bg-slate-950 flex flex-col animate-in slide-in-from-bottom-10">
+      <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+        <button onClick={onClose} className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+          <span className="material-symbols-outlined">arrow_back</span>
+        </button>
+        <h2 className="font-bold text-lg">Help Center</h2>
+        <div className="w-10" />
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* Help Topics */}
+        <div>
+          <h3 className="font-bold text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
+            Help Topics
+          </h3>
+          <div className="space-y-2">
+            {helpTopics.map((topic, index) => (
+              <button
+                key={index}
+                className="w-full p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center gap-4 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                  <span className="material-symbols-outlined text-primary">{topic.icon}</span>
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="font-bold text-slate-900 dark:text-white">{topic.title}</p>
+                  <p className="text-xs text-slate-500">{topic.description}</p>
+                </div>
+                <span className="material-symbols-outlined text-slate-400">chevron_right</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Contact */}
+        <div>
+          <h3 className="font-bold text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
+            Contact Us
+          </h3>
+          <div className="space-y-2">
+            <button
+              onClick={handleContactSupport}
+              className="w-full p-4 bg-primary/10 rounded-2xl flex items-center gap-4"
+            >
+              <span className="material-symbols-outlined text-primary">support_agent</span>
+              <div className="flex-1 text-left">
+                <p className="font-bold text-primary">Contact Support</p>
+                <p className="text-xs text-slate-500">Get help from our team</p>
+              </div>
+            </button>
+            <button
+              onClick={handleFeedback}
+              className="w-full p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center gap-4"
+            >
+              <span className="material-symbols-outlined text-slate-600 dark:text-slate-400">feedback</span>
+              <div className="flex-1 text-left">
+                <p className="font-bold text-slate-900 dark:text-white">Send Feedback</p>
+                <p className="text-xs text-slate-500">Help us improve the app</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* App Info */}
+        <div className="text-center pt-4 border-t border-slate-100 dark:border-slate-800">
+          <p className="text-sm text-slate-500">HabitPulse v1.0.0</p>
+          <p className="text-xs text-slate-400 mt-1">Made with ❤️ for habit builders</p>
         </div>
       </div>
     </div>

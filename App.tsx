@@ -163,14 +163,17 @@ const ActiveView: React.FC<{
           }}>
             Your Challenges
           </h2>
-          <button style={{
-            background: 'none',
-            border: 'none',
-            color: '#5D5FEF',
-            fontSize: '14px',
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}>
+          <button 
+            onClick={onOpenDiscover}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#5D5FEF',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
             See All
           </button>
         </div>
@@ -559,35 +562,6 @@ const AppContent: React.FC = () => {
     setShowOnboarding(false);
   };
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'home':
-        return <HomeView tasks={tasks} profile={profile} />;
-      case 'habits':
-        return <HabitView />;
-      case 'social':
-        return <SocialView />;
-      case 'me':
-        return <ProfileView onLogout={handleLogout} profile={profile} />;
-      case 'active':
-      default:
-        return (
-          <ActiveView 
-            tasks={tasks} 
-            challenges={challenges} 
-            onToggle={handleToggleTask}
-            onTaskClick={handleTaskClick}
-            onIncrement={handleIncrementTask}
-            onDecrement={handleDecrementTask}
-            loading={loading} 
-            onOpenDiscover={() => setShowDiscover(true)} 
-            onChallengeClick={handleChallengeClick}
-            onRefresh={handleRefresh}
-            onCreateTask={() => setShowCreateTask(true)}
-          />
-        );
-    }
-  };
 
   if (authLoading) {
     return (
@@ -617,8 +591,29 @@ const AppContent: React.FC = () => {
 
   return (
     <>
-      <Layout activeTab={activeTab} setActiveTab={setActiveTab} title={activeTab === 'active' ? 'My Progress' : undefined}>
-          {renderContent()}
+      <Layout activeTab={activeTab} setActiveTab={handleTabChange} title={activeTab === 'active' ? 'My Progress' : undefined}>
+        <Routes>
+          <Route path="/" element={
+            <ActiveView 
+              tasks={tasks} 
+              challenges={challenges} 
+              onToggle={handleToggleTask}
+              onTaskClick={handleTaskClick}
+              onIncrement={handleIncrementTask}
+              onDecrement={handleDecrementTask}
+              loading={loading} 
+              onOpenDiscover={() => setShowDiscover(true)} 
+              onChallengeClick={handleChallengeClick}
+              onRefresh={handleRefresh}
+              onCreateTask={() => setShowCreateTask(true)}
+            />
+          } />
+          <Route path="/home" element={<HomeView tasks={tasks} profile={profile} />} />
+          <Route path="/habits" element={<HabitView />} />
+          <Route path="/social" element={<SocialView />} />
+          <Route path="/profile" element={<ProfileView onLogout={handleLogout} profile={profile} />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </Layout>
 
         {/* Undo Snackbar */}
