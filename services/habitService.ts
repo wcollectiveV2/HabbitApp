@@ -14,6 +14,7 @@ export interface Habit {
   icon?: string;
   color?: string;
   streak?: number;
+  completionsToday?: number;
 }
 
 export interface HabitLog {
@@ -78,13 +79,14 @@ class HabitService {
     await api.delete(`/habits/${id}`);
   }
 
-  async completeHabit(id: string, notes?: string): Promise<{ success: boolean; streak?: number }> {
+  async completeHabit(id: string, notes?: string): Promise<{ success: boolean; streak?: number; completionsToday?: number }> {
     const response = await api.post(`/habits/${id}/complete`, { notes });
     return response;
   }
 
-  async uncompleteHabit(id: string): Promise<void> {
-    await api.delete(`/habits/${id}/complete`);
+  async uncompleteHabit(id: string): Promise<{ success: boolean; completionsToday?: number }> {
+    const response = await api.delete(`/habits/${id}/complete`);
+    return response;
   }
 
   async getHabitLogs(id: string, startDate?: string, endDate?: string): Promise<HabitLog[]> {

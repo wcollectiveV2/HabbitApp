@@ -353,6 +353,14 @@ const AppContent: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Switch to signup if invitation token is present
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get('invitationToken') || searchParams.get('token')) {
+      setAuthMode('signup');
+    }
+  }, []);
+
   const getTabFromPath = (path: string): Tab => {
     if (path === '/') return 'active';
     if (path === '/home') return 'home';

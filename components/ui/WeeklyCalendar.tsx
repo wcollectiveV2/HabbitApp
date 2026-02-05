@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { userService } from '../../services';
+import { colors, spacing, borderRadius, shadows, typography, transitions } from '../../theme/designSystem';
 
 interface DayActivity {
   date: string;
@@ -11,6 +12,211 @@ interface DayActivity {
 interface WeeklyCalendarProps {
   onDayClick?: (date: string, activity: DayActivity) => void;
 }
+
+const calendarStyles = {
+  container: {
+    backgroundColor: colors.gray[900],
+    borderRadius: borderRadius['2xl'],
+    padding: spacing[6],
+    color: colors.white,
+    overflow: 'hidden',
+    position: 'relative' as const,
+  },
+  innerContainer: {
+    position: 'relative' as const,
+    zIndex: 10,
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing[4],
+  },
+  title: {
+    fontSize: typography.fontSize.lg,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.white,
+  },
+  navBtns: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing[2],
+  },
+  navBtn: (disabled: boolean) => ({
+    width: '2rem',
+    height: '2rem',
+    borderRadius: borderRadius.full,
+    backgroundColor: disabled ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)',
+    color: disabled ? 'rgba(255,255,255,0.3)' : colors.white,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: 'none',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    transition: transitions.colors,
+  }),
+  weekRange: {
+    fontSize: typography.fontSize.xs,
+    fontWeight: typography.fontWeight.medium,
+    color: 'rgba(255,255,255,0.7)',
+    minWidth: '100px',
+    textAlign: 'center' as const,
+  },
+  daysGrid: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dayBtn: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    gap: spacing[3],
+    cursor: 'pointer',
+    background: 'none',
+    border: 'none',
+    padding: 0,
+  },
+  dayCircle: (isToday: boolean, isCompleted: boolean) => ({
+    width: '2rem',
+    height: '2rem',
+    borderRadius: borderRadius.full,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '10px',
+    fontWeight: typography.fontWeight.bold,
+    transition: transitions.all,
+    backgroundColor: isToday 
+      ? colors.primary 
+      : isCompleted 
+        ? `${colors.primary}33` 
+        : 'rgba(255,255,255,0.1)',
+    color: isToday 
+      ? colors.white 
+      : isCompleted 
+        ? colors.primaryLight
+        : 'rgba(255,255,255,0.5)',
+    boxShadow: isToday ? `0 0 0 3px ${colors.primary}4D` : 'none',
+  }),
+  dayLabel: (isToday: boolean) => ({
+    fontSize: '10px',
+    fontWeight: typography.fontWeight.bold,
+    color: isToday ? colors.white : 'rgba(255,255,255,0.5)',
+  }),
+  glow: {
+    position: 'absolute' as const,
+    top: 0,
+    right: 0,
+    width: '8rem',
+    height: '8rem',
+    backgroundColor: `${colors.primary}33`,
+    filter: 'blur(60px)',
+    borderRadius: borderRadius.full,
+    transform: 'translateX(50%) translateY(-50%)',
+  },
+};
+
+const modalStyles = {
+  overlay: {
+    position: 'fixed' as const,
+    inset: 0,
+    zIndex: 50,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backdropFilter: 'blur(4px)',
+  },
+  modal: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius['3xl'],
+    padding: spacing[6],
+    margin: spacing[4],
+    maxWidth: '24rem',
+    width: '100%',
+    boxShadow: shadows['2xl'],
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing[4],
+  },
+  title: {
+    fontWeight: typography.fontWeight.bold,
+    fontSize: typography.fontSize.lg,
+    color: colors.gray[900],
+  },
+  closeBtn: {
+    width: '2rem',
+    height: '2rem',
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.gray[100],
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: 'none',
+    cursor: 'pointer',
+  },
+  content: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: spacing[4],
+  },
+  statusBox: (isCompleted: boolean) => ({
+    padding: spacing[4],
+    borderRadius: borderRadius['2xl'],
+    backgroundColor: isCompleted ? colors.green[50] : colors.gray[50],
+  }),
+  statusRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing[3],
+  },
+  statusIcon: (isCompleted: boolean) => ({
+    width: '2.5rem',
+    height: '2.5rem',
+    borderRadius: borderRadius.full,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: isCompleted ? colors.green[500] : colors.gray[200],
+    color: isCompleted ? colors.white : colors.gray[500],
+  }),
+  statusTitle: {
+    fontWeight: typography.fontWeight.bold,
+    color: colors.gray[900],
+  },
+  statusSubtitle: {
+    fontSize: typography.fontSize.sm,
+    color: colors.gray[500],
+  },
+  tasksSection: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: spacing[2],
+  },
+  tasksLabel: {
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.gray[500],
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.05em',
+  },
+  taskItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing[2],
+    padding: spacing[3],
+    backgroundColor: colors.gray[50],
+    borderRadius: borderRadius.xl,
+  },
+  taskText: (isCompleted: boolean) => ({
+    fontSize: typography.fontSize.sm,
+    color: isCompleted ? colors.gray[900] : colors.gray[500],
+  }),
+};
 
 const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({ onDayClick }) => {
   const [weekOffset, setWeekOffset] = useState(0);
@@ -95,42 +301,38 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({ onDayClick }) => {
 
   return (
     <section 
-      className="bg-slate-900 rounded-[2rem] p-6 text-white overflow-hidden relative"
+      style={calendarStyles.container}
       role="region"
       aria-label="Weekly activity"
     >
-      <div className="relative z-10">
+      <div style={calendarStyles.innerContainer}>
         {/* Week Navigation Header */}
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold">Weekly Activity</h3>
-          <div className="flex items-center gap-2">
+        <div style={calendarStyles.header}>
+          <h3 style={calendarStyles.title}>Weekly Activity</h3>
+          <div style={calendarStyles.navBtns}>
             <button
               onClick={handlePrevWeek}
-              className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+              style={calendarStyles.navBtn(false)}
               aria-label="Previous week"
             >
-              <span className="material-symbols-outlined text-sm">chevron_left</span>
+              <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>chevron_left</span>
             </button>
-            <span className="text-xs font-medium text-white/70 min-w-[100px] text-center">
+            <span style={calendarStyles.weekRange}>
               {formatWeekRange()}
             </span>
             <button
               onClick={handleNextWeek}
               disabled={weekOffset >= 0}
-              className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                weekOffset >= 0 
-                  ? 'bg-white/5 text-white/30 cursor-not-allowed' 
-                  : 'bg-white/10 hover:bg-white/20'
-              }`}
+              style={calendarStyles.navBtn(weekOffset >= 0)}
               aria-label="Next week"
             >
-              <span className="material-symbols-outlined text-sm">chevron_right</span>
+              <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>chevron_right</span>
             </button>
           </div>
         </div>
 
         {/* Days Grid */}
-        <div className="flex justify-between items-center" role="list" aria-label="Days of the week">
+        <div style={calendarStyles.daysGrid} role="list" aria-label="Days of the week">
           {weekDates.map((date, i) => {
             const dateStr = date.toISOString().split('T')[0];
             const isToday = dateStr === todayStr;
@@ -140,22 +342,16 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({ onDayClick }) => {
               <button
                 key={i}
                 onClick={() => handleDayClick(dayActivity)}
-                className="flex flex-col items-center gap-3 group cursor-pointer"
+                style={calendarStyles.dayBtn}
                 role="listitem"
                 aria-label={`${days[date.getDay()]}${isToday ? ' (today)' : ''}${dayActivity.completed ? ' - completed' : ''}, ${date.toLocaleDateString()}`}
               >
-                <div 
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold transition-all group-hover:scale-110 ${
-                    isToday ? 'bg-primary text-white ring-2 ring-primary/30' : 
-                    dayActivity.completed ? 'bg-primary/20 text-primary' : 
-                    'bg-white/10 text-white/50 group-hover:bg-white/20'
-                  }`}
-                >
+                <div style={calendarStyles.dayCircle(isToday, dayActivity.completed)}>
                   {dayActivity.completed && !isToday ? (
-                    <span className="material-symbols-outlined text-sm" aria-hidden="true">check</span>
+                    <span className="material-symbols-outlined" style={{ fontSize: '0.875rem' }} aria-hidden="true">check</span>
                   ) : date.getDate()}
                 </div>
-                <span className={`text-[10px] font-bold ${isToday ? 'text-white' : 'text-white/50'}`} aria-hidden="true">
+                <span style={calendarStyles.dayLabel(isToday)} aria-hidden="true">
                   {days[date.getDay()]}
                 </span>
               </button>
@@ -163,7 +359,7 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({ onDayClick }) => {
           })}
         </div>
       </div>
-      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-[60px] rounded-full translate-x-1/2 -translate-y-1/2" aria-hidden="true"></div>
+      <div style={calendarStyles.glow} aria-hidden="true"></div>
 
       {/* Day Detail Modal */}
       {selectedDay && (
@@ -187,38 +383,36 @@ const DayDetailModal: React.FC<{ activity: DayActivity; onClose: () => void }> =
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in"
+      style={modalStyles.overlay}
       onClick={onClose}
     >
       <div 
-        className="bg-white dark:bg-slate-900 rounded-3xl p-6 m-4 max-w-sm w-full shadow-2xl animate-in zoom-in-95"
+        style={modalStyles.modal}
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-lg text-slate-900 dark:text-white">{formattedDate}</h3>
+        <div style={modalStyles.header}>
+          <h3 style={modalStyles.title}>{formattedDate}</h3>
           <button 
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center"
+            style={modalStyles.closeBtn}
           >
-            <span className="material-symbols-outlined text-sm">close</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>close</span>
           </button>
         </div>
         
-        <div className="space-y-4">
-          <div className={`p-4 rounded-2xl ${activity.completed ? 'bg-green-50 dark:bg-green-900/20' : 'bg-slate-50 dark:bg-slate-800'}`}>
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                activity.completed ? 'bg-green-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
-              }`}>
+        <div style={modalStyles.content}>
+          <div style={modalStyles.statusBox(activity.completed)}>
+            <div style={modalStyles.statusRow}>
+              <div style={modalStyles.statusIcon(activity.completed)}>
                 <span className="material-symbols-outlined">
                   {activity.completed ? 'check_circle' : 'radio_button_unchecked'}
                 </span>
               </div>
               <div>
-                <p className="font-bold text-slate-900 dark:text-white">
+                <p style={modalStyles.statusTitle}>
                   {activity.completed ? 'Tasks Completed!' : 'No activity'}
                 </p>
-                <p className="text-sm text-slate-500">
+                <p style={modalStyles.statusSubtitle}>
                   {activity.count || 0} task{(activity.count || 0) !== 1 ? 's' : ''} completed
                 </p>
               </div>
@@ -226,14 +420,20 @@ const DayDetailModal: React.FC<{ activity: DayActivity; onClose: () => void }> =
           </div>
 
           {activity.tasks && activity.tasks.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Tasks</h4>
+            <div style={modalStyles.tasksSection}>
+              <h4 style={modalStyles.tasksLabel}>Tasks</h4>
               {activity.tasks.map((task, i) => (
-                <div key={i} className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                  <span className={`material-symbols-outlined text-sm ${task.completed ? 'text-green-500' : 'text-slate-400'}`}>
+                <div key={i} style={modalStyles.taskItem}>
+                  <span 
+                    className="material-symbols-outlined" 
+                    style={{ 
+                      fontSize: '1rem', 
+                      color: task.completed ? colors.green[500] : colors.gray[400] 
+                    }}
+                  >
                     {task.completed ? 'check_circle' : 'radio_button_unchecked'}
                   </span>
-                  <span className={`text-sm ${task.completed ? 'text-slate-900 dark:text-white' : 'text-slate-500'}`}>
+                  <span style={modalStyles.taskText(task.completed)}>
                     {task.title}
                   </span>
                 </div>

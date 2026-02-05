@@ -19,7 +19,12 @@ import {
 
 async function loginAndGoHome(page: Page) {
   await login(page, TEST_USERS.testUser);
-  await expect(page.locator('text=Current Progress').or(page.locator('text=Good'))).toBeVisible({ timeout: 15000 });
+  // Wait for any of the possible home page indicators
+  await expect(
+    page.locator('h1:has-text("Hello there")').or(
+      page.locator('h2:has-text("Your Challenges")')
+    ).first()
+  ).toBeVisible({ timeout: 15000 });
 }
 
 // ============================================================================
@@ -538,6 +543,272 @@ test.describe('Feature: Completed Challenges (CHAL-009)', () => {
       )).toBeVisible({ timeout: 5000 }).catch(() => {
         // Completed challenges might be in different location
       });
+    });
+  });
+});
+// ============================================================================
+// FEATURE: CHALLENGE JOIN PROGRESS INITIALIZATION (CHAL-010)
+// Tests for bug fix: Newly joined challenges should show 0% progress
+// ============================================================================
+
+test.describe('Feature: Challenge Join Progress Initialization (CHAL-010)', () => {
+
+  test.describe('Scenario: Newly Joined Challenge Shows Correct Initial Progress', () => {
+    
+    test('CHAL-010-01: Newly joined challenge starts with 0% progress', async ({ page }) => {
+      await loginAndGoHome(page);
+      
+      // Click "Join a Challenge" button to open discover
+      await page.click('button:has-text("Join a Challenge")');
+      
+      // Wait for discover view to load - use first() to avoid strict mode
+      await expect(page.locator('h1:has-text("Discover Challenges")').or(page.getByRole('textbox', { name: 'Search challenges' }))).toBeVisible({ timeout: 10000 });
+      
+      // Wait a bit for challenges to load
+      await page.waitForTimeout(2000);
+      
+      // Look for any challenge card that has a Join button (not already joined)
+      const joinButton = page.locator('button:has-text("Join Challenge")').first();
+      
+      if (await joinButton.isVisible({ timeout: 5000 }).catch(() => false)) {
+        // Click the join button on the card
+        await joinButton.click();
+        
+        // Handle confirmation modal if it appears
+        await page.waitForTimeout(500);
+        const confirmModalJoinButton = page.locator('[role="dialog"] button:has-text("Join Challenge")').or(
+          page.locator('.modal button:has-text("Join Challenge")')
+        );
+        if (await confirmModalJoinButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+          await confirmModalJoinButton.click();
+        }
+        
+        // Wait for join to complete
+        await page.waitForTimeout(2000);
+        
+        // After joining, the card should now show "Joined" or "Leave" button
+        // Click on the challenge to view details
+        const joinedChallenge = page.locator('article:has(button:has-text("Joined"))').first().or(
+          page.locator('article:has(button:has-text("Leave"))').first()
+        );
+        
+        if (await joinedChallenge.isVisible({ timeout: 3000 }).catch(() => false)) {
+          await joinedChallenge.click();
+          await page.waitForTimeout(1000);
+          
+          // Look for My Progress tab and click it
+          const progressTab = page.locator('button:has-text("My Progress")');
+          if (await progressTab.isVisible({ timeout: 3000 }).catch(() => false)) {
+            await progressTab.click();
+            await page.waitForTimeout(500);
+            
+            // Verify progress shows 0%
+            await expect(page.locator('text=0%').first()).toBeVisible({ timeout: 5000 });
+          }
+        }
+      } else {
+        // No join button found - user may already be in all challenges
+        console.log('No joinable challenges found - user may be in all challenges');
+        test.skip();
+      }
+    });
+
+    test('CHAL-010-02: Newly joined challenge shows 0 completed days', async ({ page }) => {
+      await loginAndGoHome(page);
+      await page.click('button:has-text("Join a Challenge")').catch(() => page.click('button:has-text("See All")'));
+      await page.waitForTimeout(1000);
+      
+      // Find a challenge to join
+      const challengeCard = page.locator('article:has-text("Challenge")').or(
+        page.locator('div:has(button:has-text("Join"))')
+      ).first();
+      
+      await challengeCard.click();
+      await page.waitForTimeout(500);
+      
+      // Join if not already joined
+      const joinButton = page.locator('button:has-text("Join")').first();
+      if (await joinButton.isVisible()) {
+        await joinButton.click();
+        
+        // Handle confirmation
+        const confirmButton = page.locator('button:has-text("Join Challenge")').last();
+        if (await confirmButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+          await confirmButton.click();
+        }
+        
+        await page.waitForTimeout(1500);
+        
+        // Go to Progress tab
+        const progressTab = page.locator('button:has-text("Progress")');
+        if (await progressTab.isVisible()) {
+          await progressTab.click();
+          await page.waitForTimeout(500);
+          
+          // Should show "0 / X" for completed days
+          await expect(page.locator('text=/0\\s*\\/\\s*\\d+/').or(
+            page.locator('p:has-text("0")')
+          )).toBeVisible({ timeout: 5000 });
+        }
+      }
+    });
+
+    test('CHAL-010-03: Newly joined challenge shows 0 current streak', async ({ page }) => {
+      await loginAndGoHome(page);
+      await page.click('button:has-text("Join a Challenge")').catch(() => page.click('button:has-text("See All")'));
+      await page.waitForTimeout(1000);
+      
+      // Find and join a challenge
+      const joinButton = page.locator('button:has-text("Join Challenge")').or(
+        page.locator('button:has-text("Join")')
+      ).first();
+      
+      if (await joinButton.isVisible()) {
+        await joinButton.click();
+        
+        // Handle confirmation
+        await page.waitForTimeout(500);
+        const confirmButton = page.locator('button:has-text("Join Challenge")').last();
+        if (await confirmButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+          await confirmButton.click();
+        }
+        
+        await page.waitForTimeout(1500);
+        
+        // Check Progress tab
+        const progressTab = page.locator('button:has-text("Progress")');
+        if (await progressTab.isVisible()) {
+          await progressTab.click();
+          await page.waitForTimeout(500);
+          
+          // Should show 0 streak
+          const streakSection = page.locator('text=Current Streak').locator('..');
+          await expect(streakSection.locator('text=0').or(
+            page.locator('p:has-text("0"):near(:text("Streak"))')
+          )).toBeVisible({ timeout: 5000 });
+        }
+      }
+    });
+
+    test('CHAL-010-04: Progress circle shows 0% visually after join', async ({ page }) => {
+      await loginAndGoHome(page);
+      await page.click('button:has-text("Join a Challenge")').catch(() => page.click('button:has-text("See All")'));
+      await page.waitForTimeout(1000);
+      
+      // Find unjoined challenge
+      const challengeWithJoin = page.locator('article:has(button:has-text("Join"))').first();
+      await challengeWithJoin.click();
+      await page.waitForTimeout(500);
+      
+      const joinButton = page.locator('button:has-text("Join")').first();
+      if (await joinButton.isVisible()) {
+        await joinButton.click();
+        
+        // Handle confirmation
+        const confirmButton = page.locator('button:has-text("Join Challenge")').last();
+        if (await confirmButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+          await confirmButton.click();
+        }
+        
+        await page.waitForTimeout(1500);
+        
+        // Check Progress tab shows circular progress at 0%
+        const progressTab = page.locator('button:has-text("Progress")');
+        if (await progressTab.isVisible()) {
+          await progressTab.click();
+          await page.waitForTimeout(500);
+          
+          // The progress circle should show 0%
+          await expect(page.locator('svg circle').or(
+            page.locator('[class*="progress"]')
+          )).toBeVisible({ timeout: 5000 });
+          
+          // The text "0%" should be visible within the progress section
+          await expect(page.locator('text=0%')).toBeVisible({ timeout: 5000 });
+        }
+      }
+    });
+
+    test('CHAL-010-05: Challenge does NOT show as completed immediately after joining', async ({ page }) => {
+      await loginAndGoHome(page);
+      await page.click('button:has-text("Join a Challenge")').catch(() => page.click('button:has-text("See All")'));
+      await page.waitForTimeout(1000);
+      
+      // Find a challenge that can be joined
+      const joinButton = page.locator('button:has-text("Join Challenge")').or(
+        page.locator('button:has-text("Join")')
+      ).first();
+      
+      if (await joinButton.isVisible()) {
+        await joinButton.click();
+        
+        // Handle confirmation
+        const confirmButton = page.locator('button:has-text("Join Challenge")').last();
+        if (await confirmButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+          await confirmButton.click();
+        }
+        
+        await page.waitForTimeout(1500);
+        
+        // Should NOT see "100%" or "Completed" status for progress
+        await expect(page.locator('text=100%')).not.toBeVisible({ timeout: 3000 }).catch(() => {});
+        
+        // Check the Progress tab
+        const progressTab = page.locator('button:has-text("Progress")');
+        if (await progressTab.isVisible()) {
+          await progressTab.click();
+          await page.waitForTimeout(500);
+          
+          // Progress should be 0%, not 100%
+          const progressText = await page.locator('text=/\\d+%/').first().textContent();
+          expect(progressText).not.toBe('100%');
+          expect(progressText).toBe('0%');
+        }
+      }
+    });
+  });
+
+  test.describe('Scenario: Active Challenge List Shows Correct Progress', () => {
+    
+    test('CHAL-010-06: Newly joined challenge appears in active challenges with 0% progress', async ({ page }) => {
+      await loginAndGoHome(page);
+      await page.click('button:has-text("Join a Challenge")').catch(() => page.click('button:has-text("See All")'));
+      await page.waitForTimeout(1000);
+      
+      // Join a new challenge
+      const joinButton = page.locator('button:has-text("Join")').first();
+      if (await joinButton.isVisible()) {
+        await joinButton.click();
+        
+        // Handle confirmation
+        const confirmButton = page.locator('button:has-text("Join Challenge")').last();
+        if (await confirmButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+          await confirmButton.click();
+        }
+        
+        await page.waitForTimeout(1500);
+        
+        // Go back to home to see active challenges
+        const backButton = page.locator('button:has-text("Back")').or(
+          page.locator('button:has(.material-symbols-outlined:has-text("arrow_back"))')
+        );
+        if (await backButton.isVisible()) {
+          await backButton.click();
+          await page.waitForTimeout(500);
+        }
+        
+        // Navigate to home/active view
+        await navigateTo(page, 'active');
+        await page.waitForTimeout(1000);
+        
+        // The newly joined challenge should be visible with low progress
+        // Look for challenge cards with progress indicator
+        const challengeCards = page.locator('[class*="challenge"]').or(
+          page.locator('div:has(text="days left")')
+        );
+        
+        await expect(challengeCards.first()).toBeVisible({ timeout: 5000 });
+      }
     });
   });
 });

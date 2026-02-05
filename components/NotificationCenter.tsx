@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { notificationService } from '../services/notificationService';
 import { Notification } from '../types';
 import Skeleton from './ui/Skeleton';
+import { colors, spacing, borderRadius, typography, shadows, zIndex } from '../theme/designSystem';
 
 interface NotificationCenterProps {
   isOpen: boolean;
@@ -11,22 +12,22 @@ interface NotificationCenterProps {
 const getNotificationIcon = (type: string): { icon: string; color: string; bg: string } => {
   switch (type) {
     case 'friend_request':
-      return { icon: 'person_add', color: 'text-blue-500', bg: 'bg-blue-100' };
+      return { icon: 'person_add', color: '#3B82F6', bg: '#DBEAFE' };
     case 'challenge_invite':
     case 'CHALLENGE_INVITE':
-      return { icon: 'emoji_events', color: 'text-purple-500', bg: 'bg-purple-100' };
+      return { icon: 'emoji_events', color: '#A855F7', bg: '#F3E8FF' };
     case 'ORG_INVITE':
-      return { icon: 'groups', color: 'text-green-500', bg: 'bg-green-100' };
+      return { icon: 'groups', color: colors.success, bg: colors.successBg };
     case 'achievement':
     case 'badge_earned':
-      return { icon: 'military_tech', color: 'text-yellow-500', bg: 'bg-yellow-100' };
+      return { icon: 'military_tech', color: colors.warning, bg: colors.warningBg };
     case 'streak_milestone':
-      return { icon: 'local_fire_department', color: 'text-orange-500', bg: 'bg-orange-100' };
+      return { icon: 'local_fire_department', color: '#F97316', bg: '#FFEDD5' };
     case 'reminder':
-      return { icon: 'alarm', color: 'text-red-500', bg: 'bg-red-100' };
+      return { icon: 'alarm', color: colors.error, bg: colors.errorBg };
     case 'system':
     default:
-      return { icon: 'notifications', color: 'text-slate-500', bg: 'bg-slate-100' };
+      return { icon: 'notifications', color: colors.text.secondary, bg: colors.gray[100] };
   }
 };
 
@@ -54,44 +55,88 @@ const NotificationItem: React.FC<{
   const { icon, color, bg } = getNotificationIcon(notification.type);
   const hasAction = ['friend_request', 'challenge_invite', 'CHALLENGE_INVITE', 'ORG_INVITE'].includes(notification.type);
 
+  const itemStyle = {
+    padding: spacing[4],
+    display: 'flex',
+    gap: spacing[3],
+    backgroundColor: notification.is_read ? colors.background.primary : '#EFF6FF',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s ease',
+  };
+
+  const iconBoxStyle = {
+    width: '40px',
+    height: '40px',
+    borderRadius: borderRadius.full,
+    backgroundColor: bg,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  };
+
+  const actionBtnStyle = {
+    padding: `${spacing[1]} ${spacing[3]}`,
+    fontSize: typography.fontSize.xs,
+    fontWeight: typography.fontWeight.bold,
+    borderRadius: borderRadius.full,
+    border: 'none',
+    cursor: 'pointer',
+  };
+
   return (
-    <div 
-      className={`p-4 flex gap-3 transition-colors ${
-        notification.is_read ? 'bg-white dark:bg-slate-900' : 'bg-blue-50 dark:bg-blue-900/20'
-      }`}
-      onClick={() => !notification.is_read && onMarkRead(notification.id)}
-    >
+    <div style={itemStyle} onClick={() => !notification.is_read && onMarkRead(notification.id)}>
       {/* Icon */}
-      <div className={`w-10 h-10 rounded-full ${bg} dark:bg-opacity-20 flex items-center justify-center flex-shrink-0`}>
-        <span className={`material-symbols-outlined ${color}`}>{icon}</span>
+      <div style={iconBoxStyle}>
+        <span className="material-symbols-outlined" style={{ color }}>{icon}</span>
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2">
-          <h4 className={`font-semibold text-sm ${notification.is_read ? 'text-slate-700 dark:text-slate-300' : 'text-slate-900 dark:text-white'}`}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing[2] }}>
+          <h4 style={{
+            fontWeight: typography.fontWeight.semibold,
+            fontSize: typography.fontSize.sm,
+            color: notification.is_read ? colors.text.secondary : colors.text.primary,
+            margin: 0,
+          }}>
             {notification.title}
           </h4>
           {!notification.is_read && (
-            <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1.5"></span>
+            <span style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: borderRadius.full,
+              backgroundColor: colors.primary,
+              flexShrink: 0,
+              marginTop: '6px',
+            }} />
           )}
         </div>
         {notification.message && (
-          <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">{notification.message}</p>
+          <p style={{
+            fontSize: typography.fontSize.sm,
+            color: colors.text.secondary,
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            margin: 0,
+          }}>{notification.message}</p>
         )}
-        <div className="flex items-center justify-between mt-2">
-          <span className="text-xs text-slate-400">{formatTimeAgo(notification.created_at)}</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing[2] }}>
+          <span style={{ fontSize: typography.fontSize.xs, color: colors.gray[400] }}>{formatTimeAgo(notification.created_at)}</span>
           {hasAction && !notification.is_read && (
-            <div className="flex gap-2">
+            <div style={{ display: 'flex', gap: spacing[2] }}>
               <button 
                 onClick={(e) => { e.stopPropagation(); onAction?.(notification); }}
-                className="px-3 py-1 bg-primary text-white text-xs font-bold rounded-full"
+                style={{ ...actionBtnStyle, backgroundColor: colors.primary, color: 'white' }}
               >
                 Accept
               </button>
               <button 
                 onClick={(e) => { e.stopPropagation(); onDecline?.(notification); }}
-                className="px-3 py-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold rounded-full"
+                style={{ ...actionBtnStyle, backgroundColor: colors.gray[200], color: colors.text.secondary }}
               >
                 Decline
               </button>
@@ -179,82 +224,137 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
     ? notifications.filter(n => !n.is_read) 
     : notifications;
 
+  const centerStyles = {
+    container: {
+      position: 'fixed' as const,
+      inset: 0,
+      zIndex: zIndex.modal,
+      backgroundColor: colors.background.primary,
+      display: 'flex',
+      flexDirection: 'column' as const,
+    },
+    header: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: spacing[4],
+      borderBottom: `1px solid ${colors.gray[100]}`,
+    },
+    backBtn: {
+      padding: spacing[2],
+      marginLeft: `-${spacing[2]}`,
+      borderRadius: borderRadius.full,
+      border: 'none',
+      background: 'transparent',
+      cursor: 'pointer',
+      color: colors.text.primary,
+    },
+    markAllBtn: {
+      color: colors.primary,
+      fontSize: typography.fontSize.sm,
+      fontWeight: typography.fontWeight.bold,
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+    },
+    tabBar: {
+      display: 'flex',
+      borderBottom: `1px solid ${colors.gray[100]}`,
+    },
+    tabBtn: (active: boolean) => ({
+      flex: 1,
+      padding: spacing[3],
+      fontSize: typography.fontSize.sm,
+      fontWeight: typography.fontWeight.bold,
+      color: active ? colors.primary : colors.text.secondary,
+      borderBottom: active ? `2px solid ${colors.primary}` : 'none',
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+    }),
+    badge: {
+      marginLeft: spacing[1],
+      padding: `${spacing[0.5]} ${spacing[1.5]}`,
+      backgroundColor: colors.primary,
+      color: 'white',
+      fontSize: typography.fontSize.xs,
+      borderRadius: borderRadius.full,
+    },
+    emptyState: {
+      display: 'flex',
+      flexDirection: 'column' as const,
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100%',
+      textAlign: 'center' as const,
+      padding: spacing[6],
+    },
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-white dark:bg-slate-950 flex flex-col animate-in slide-in-from-right-10">
+    <div style={centerStyles.container}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
-        <button onClick={onClose} className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+      <div style={centerStyles.header}>
+        <button onClick={onClose} style={centerStyles.backBtn}>
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
-        <h2 className="font-bold text-lg">Notifications</h2>
+        <h2 style={{ fontWeight: typography.fontWeight.bold, fontSize: typography.fontSize.lg, color: colors.text.primary }}>Notifications</h2>
         <button 
           onClick={handleMarkAllRead}
           disabled={unreadCount === 0}
-          className="text-primary text-sm font-bold disabled:opacity-50"
+          style={{ ...centerStyles.markAllBtn, opacity: unreadCount === 0 ? 0.5 : 1 }}
         >
           Mark all read
         </button>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex border-b border-slate-100 dark:border-slate-800">
-        <button
-          onClick={() => setFilter('all')}
-          className={`flex-1 py-3 text-sm font-bold transition-colors ${
-            filter === 'all' 
-              ? 'text-primary border-b-2 border-primary' 
-              : 'text-slate-500'
-          }`}
-        >
+      <div style={centerStyles.tabBar}>
+        <button onClick={() => setFilter('all')} style={centerStyles.tabBtn(filter === 'all')}>
           All
         </button>
-        <button
-          onClick={() => setFilter('unread')}
-          className={`flex-1 py-3 text-sm font-bold transition-colors relative ${
-            filter === 'unread' 
-              ? 'text-primary border-b-2 border-primary' 
-              : 'text-slate-500'
-          }`}
-        >
+        <button onClick={() => setFilter('unread')} style={centerStyles.tabBtn(filter === 'unread')}>
           Unread
           {unreadCount > 0 && (
-            <span className="ml-1 px-1.5 py-0.5 bg-primary text-white text-xs rounded-full">{unreadCount}</span>
+            <span style={centerStyles.badge}>{unreadCount}</span>
           )}
         </button>
       </div>
 
       {/* Notification List */}
-      <div className="flex-1 overflow-y-auto">
+      <div style={{ flex: 1, overflowY: 'auto' }}>
         {loading ? (
-          <div className="p-4 space-y-4">
+          <div style={{ padding: spacing[4], display: 'flex', flexDirection: 'column', gap: spacing[4] }}>
             <Skeleton variant="card" className="h-20" />
             <Skeleton variant="card" className="h-20" />
             <Skeleton variant="card" className="h-20" />
           </div>
         ) : filteredNotifications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center p-6">
-            <span className="material-symbols-outlined text-6xl text-slate-300 mb-4">notifications_off</span>
-            <h3 className="font-bold text-lg text-slate-600 dark:text-slate-300 mb-2">
+          <div style={centerStyles.emptyState}>
+            <span className="material-symbols-outlined" style={{ fontSize: '60px', color: colors.gray[300], marginBottom: spacing[4] }}>notifications_off</span>
+            <h3 style={{ fontWeight: typography.fontWeight.bold, fontSize: typography.fontSize.lg, color: colors.text.secondary, marginBottom: spacing[2] }}>
               {filter === 'unread' ? 'All caught up!' : 'No notifications yet'}
             </h3>
-            <p className="text-slate-400">
+            <p style={{ color: colors.gray[400] }}>
               {filter === 'unread' 
                 ? 'You have no unread notifications' 
                 : 'When you get notifications, they\'ll show up here'}
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
-            {filteredNotifications.map(notification => (
-              <NotificationItem
-                key={notification.id}
-                notification={notification}
-                onMarkRead={handleMarkRead}
-                onAction={handleAction}
-                onDecline={handleDecline}
-              />
+          <div>
+            {filteredNotifications.map((notification, index) => (
+              <div key={notification.id} style={{ borderBottom: index < filteredNotifications.length - 1 ? `1px solid ${colors.gray[100]}` : 'none' }}>
+                <NotificationItem
+                  notification={notification}
+                  onMarkRead={handleMarkRead}
+                  onAction={handleAction}
+                  onDecline={handleDecline}
+                />
+              </div>
             ))}
           </div>
         )}
@@ -283,15 +383,42 @@ export const NotificationBell: React.FC<{ onClick: () => void }> = ({ onClick })
     return () => clearInterval(interval);
   }, []);
 
+  const bellStyle = {
+    position: 'relative' as const,
+    padding: spacing[2],
+    borderRadius: borderRadius.full,
+    border: 'none',
+    background: 'transparent',
+    cursor: 'pointer',
+    color: colors.text.primary,
+    transition: 'background-color 0.2s ease',
+  };
+
+  const badgeStyle = {
+    position: 'absolute' as const,
+    top: spacing[1],
+    right: spacing[1],
+    width: '16px',
+    height: '16px',
+    backgroundColor: colors.error,
+    color: 'white',
+    fontSize: '10px',
+    fontWeight: typography.fontWeight.bold,
+    borderRadius: borderRadius.full,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  };
+
   return (
     <button
       onClick={onClick}
-      className="relative p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+      style={bellStyle}
       aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
     >
       <span className="material-symbols-outlined">notifications</span>
       {unreadCount > 0 && (
-        <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+        <span style={badgeStyle}>
           {unreadCount > 9 ? '9+' : unreadCount}
         </span>
       )}

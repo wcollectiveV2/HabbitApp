@@ -13,11 +13,15 @@ const SignupView: React.FC<SignupViewProps> = ({ onSwitchToLogin }) => {
   const [password, setPassword] = useState('');
   const { register, isLoading, error, clearError } = useAuth();
 
+  // Parse invitation token from URL
+  const searchParams = new URLSearchParams(window.location.search);
+  const invitationToken = searchParams.get('invitationToken') || searchParams.get('token');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
     try {
-      await register(email, password, name);
+      await register(email, password, name, invitationToken || undefined);
     } catch (err) {
       // Error handled by context
     }

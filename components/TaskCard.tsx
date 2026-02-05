@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Task } from '../types';
+import { colors, spacing, borderRadius, typography, shadows } from '../theme/designSystem';
 
 interface TaskCardProps {
   task: Task;
@@ -12,11 +13,11 @@ interface TaskCardProps {
 const getPriorityStyles = (priority?: string) => {
   switch (priority) {
     case 'high':
-      return { bg: '#FEE2E2', color: '#DC2626', label: 'High' };
+      return { bg: colors.errorBg, color: colors.error, label: 'High' };
     case 'medium':
-      return { bg: '#FEF3C7', color: '#D97706', label: 'Medium' };
+      return { bg: colors.warningBg, color: colors.warning, label: 'Medium' };
     case 'low':
-      return { bg: '#D1FAE5', color: '#059669', label: 'Low' };
+      return { bg: colors.successBg, color: colors.success, label: 'Low' };
     default:
       return null;
   }
@@ -43,11 +44,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onIncrement, onDecr
   };
 
   const cardStyle: React.CSSProperties = {
-    background: '#FFFFFF',
-    padding: '16px',
-    borderRadius: '20px',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
-    border: '1px solid #F1F5F9',
+    background: colors.white,
+    padding: spacing[4],
+    borderRadius: borderRadius['2xl'],
+    boxShadow: shadows.md,
+    border: `1px solid ${colors.gray[100]}`,
     transition: 'all 0.2s ease',
     opacity: task.completed ? 0.7 : 1,
   };
@@ -55,18 +56,18 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onIncrement, onDecr
   const iconContainerStyle: React.CSSProperties = {
     width: '48px',
     height: '48px',
-    borderRadius: '14px',
+    borderRadius: borderRadius.xl,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: task.completed ? '#E2E8F0' : '#EEF2FF',
-    color: task.completed ? '#94A3B8' : '#5D5FEF',
+    background: task.completed ? colors.gray[200] : colors.primaryAlpha(0.1),
+    color: task.completed ? colors.gray[400] : colors.primary,
     flexShrink: 0,
   };
 
   return (
     <div style={cardStyle}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4] }}>
         <div style={iconContainerStyle}>
           <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>
             {task.icon}
@@ -74,11 +75,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onIncrement, onDecr
         </div>
         
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2], flexWrap: 'wrap' }}>
             <h3 style={{ 
-              fontSize: '16px', 
-              fontWeight: 700, 
-              color: '#1E293B',
+              fontSize: typography.fontSize.md, 
+              fontWeight: typography.fontWeight.bold, 
+              color: colors.text.primary,
               margin: 0,
               textDecoration: task.completed ? 'line-through' : 'none',
               opacity: task.completed ? 0.6 : 1,
@@ -87,10 +88,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onIncrement, onDecr
             </h3>
             {priorityBadge && (
               <span style={{
-                fontSize: '10px',
-                fontWeight: 700,
-                padding: '3px 8px',
-                borderRadius: '20px',
+                fontSize: typography.fontSize.xs,
+                fontWeight: typography.fontWeight.bold,
+                padding: `${spacing[1]} ${spacing[2]}`,
+                borderRadius: borderRadius.full,
                 background: priorityBadge.bg,
                 color: priorityBadge.color,
               }}>
@@ -99,10 +100,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onIncrement, onDecr
             )}
           </div>
           <p style={{ 
-            fontSize: '12px', 
-            color: '#64748B', 
-            margin: '4px 0 0 0',
-            fontWeight: 500,
+            fontSize: typography.fontSize.sm, 
+            color: colors.text.secondary, 
+            margin: `${spacing[1]} 0 0 0`,
+            fontWeight: typography.fontWeight.medium,
           }}>
             {task.challengeName}
           </p>
@@ -110,17 +111,17 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onIncrement, onDecr
 
         {/* Toggle or Counter */}
         {isCounterTask ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2] }}>
             <button
               onClick={handleDecrement}
               disabled={(task.currentValue || 0) <= 0}
               style={{
                 width: '36px',
                 height: '36px',
-                borderRadius: '50%',
+                borderRadius: borderRadius.full,
                 border: 'none',
-                background: '#F1F5F9',
-                color: (task.currentValue || 0) <= 0 ? '#CBD5E1' : '#475569',
+                background: colors.gray[100],
+                color: (task.currentValue || 0) <= 0 ? colors.gray[300] : colors.gray[600],
                 cursor: (task.currentValue || 0) <= 0 ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -130,11 +131,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onIncrement, onDecr
               <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>remove</span>
             </button>
             <div style={{ textAlign: 'center', minWidth: '50px' }}>
-              <span style={{ fontSize: '18px', fontWeight: 700, color: '#1E293B' }}>
+              <span style={{ fontSize: typography.fontSize.lg, fontWeight: typography.fontWeight.bold, color: colors.text.primary }}>
                 {task.currentValue || 0}
               </span>
               {task.goal && (
-                <span style={{ fontSize: '14px', color: '#94A3B8' }}>/{task.goal}</span>
+                <span style={{ fontSize: typography.fontSize.sm, color: colors.gray[400] }}>/{task.goal}</span>
               )}
             </div>
             <button
@@ -142,10 +143,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onIncrement, onDecr
               style={{
                 width: '36px',
                 height: '36px',
-                borderRadius: '50%',
+                borderRadius: borderRadius.full,
                 border: 'none',
-                background: '#5D5FEF',
-                color: '#FFFFFF',
+                background: colors.primary,
+                color: colors.white,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -161,9 +162,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onIncrement, onDecr
             style={{
               width: '28px',
               height: '28px',
-              borderRadius: '50%',
-              border: task.completed ? 'none' : '2px solid #CBD5E1',
-              background: task.completed ? '#5D5FEF' : 'transparent',
+              borderRadius: borderRadius.full,
+              border: task.completed ? 'none' : `2px solid ${colors.gray[300]}`,
+              background: task.completed ? colors.primary : 'transparent',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -175,7 +176,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onIncrement, onDecr
             {task.completed && (
               <span className="material-symbols-outlined" style={{ 
                 fontSize: '18px', 
-                color: '#FFFFFF',
+                color: colors.white,
                 fontWeight: 700,
               }}>
                 check
@@ -187,25 +188,25 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onIncrement, onDecr
       
       {/* Progress bar */}
       <div style={{ 
-        marginTop: '14px', 
-        paddingTop: '14px', 
-        borderTop: '1px solid #F1F5F9',
+        marginTop: spacing[4], 
+        paddingTop: spacing[4], 
+        borderTop: `1px solid ${colors.gray[100]}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
       }}>
-        <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600 }}>
+        <span style={{ fontSize: typography.fontSize.xs, color: colors.gray[400], fontWeight: typography.fontWeight.semibold }}>
           {task.currentProgress}/{task.totalProgress} days
         </span>
-        <div style={{ display: 'flex', gap: '4px' }}>
+        <div style={{ display: 'flex', gap: spacing[1] }}>
           {Array.from({ length: task.progressBlocks }).map((_, i) => (
             <div 
               key={i}
               style={{
                 width: '20px',
                 height: '6px',
-                borderRadius: '3px',
-                background: i < task.activeBlocks ? '#5D5FEF' : '#E2E8F0',
+                borderRadius: borderRadius.sm,
+                background: i < task.activeBlocks ? colors.primary : colors.gray[200],
                 transition: 'background 0.3s ease',
               }}
             />

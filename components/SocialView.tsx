@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { socialService } from '../services';
 import { LeaderboardSkeleton, FeedItemSkeleton } from './ui/Skeleton';
 import EmptyState from './ui/EmptyState';
+import { colors, spacing, borderRadius, typography, shadows } from '../theme/designSystem';
 
 interface LeaderboardEntry {
   rank: number;
@@ -104,32 +105,142 @@ const SocialView: React.FC = () => {
     setLeaderboardType(prev => prev === 'global' ? 'friends' : 'global');
   };
 
+  const styles = {
+    container: {
+      padding: `0 ${spacing[6]}`,
+      paddingBottom: spacing[10],
+    } as React.CSSProperties,
+    section: {
+      marginBottom: spacing[8],
+    } as React.CSSProperties,
+    sectionTitle: {
+      fontSize: typography.fontSize.sm,
+      fontWeight: typography.fontWeight.bold,
+      textTransform: 'uppercase' as const,
+      letterSpacing: typography.letterSpacing.wider,
+      color: colors.text.secondary,
+      marginBottom: spacing[4],
+    } as React.CSSProperties,
+    periodTabs: {
+      display: 'flex',
+      padding: spacing[1],
+      backgroundColor: colors.gray[100],
+      borderRadius: borderRadius.lg,
+      marginBottom: spacing[4],
+    } as React.CSSProperties,
+    periodTab: (active: boolean) => ({
+      flex: 1,
+      padding: `${spacing[2]} ${spacing[2]}`,
+      fontSize: '10px',
+      fontWeight: typography.fontWeight.bold,
+      textTransform: 'uppercase' as const,
+      letterSpacing: '0.5px',
+      borderRadius: borderRadius.md,
+      border: 'none',
+      cursor: 'pointer',
+      backgroundColor: active ? colors.white : 'transparent',
+      color: active ? colors.primary : colors.text.secondary,
+      boxShadow: active ? shadows.sm : 'none',
+      transition: 'all 0.2s ease',
+    } as React.CSSProperties),
+    leaderboardCard: {
+      backgroundColor: colors.white,
+      borderRadius: borderRadius['3xl'],
+      border: `1px solid ${colors.gray[100]}`,
+      boxShadow: shadows.sm,
+      overflow: 'hidden',
+    } as React.CSSProperties,
+    leaderboardItem: (isCurrentUser: boolean) => ({
+      padding: spacing[4],
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      borderBottom: `1px solid ${colors.gray[100]}`,
+      backgroundColor: isCurrentUser ? colors.primaryAlpha(0.05) : 'transparent',
+    } as React.CSSProperties),
+    rankBadge: (rank: number) => ({
+      width: '32px',
+      height: '32px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontWeight: typography.fontWeight.black,
+      fontSize: typography.fontSize.sm,
+      borderRadius: borderRadius.full,
+      backgroundColor: rank === 1 ? '#FBBF24' : rank === 2 ? '#CBD5E1' : rank === 3 ? '#FB923C' : 'transparent',
+      color: rank <= 3 ? colors.white : colors.text.secondary,
+    } as React.CSSProperties),
+    followBtn: (isFollowing: boolean) => ({
+      padding: `${spacing[1]} ${spacing[3]}`,
+      borderRadius: borderRadius.full,
+      fontSize: '10px',
+      fontWeight: typography.fontWeight.bold,
+      textTransform: 'uppercase' as const,
+      letterSpacing: '0.5px',
+      border: isFollowing ? `1px solid ${colors.gray[200]}` : 'none',
+      backgroundColor: isFollowing ? colors.gray[100] : colors.primary,
+      color: isFollowing ? colors.text.secondary : colors.white,
+      boxShadow: isFollowing ? 'none' : shadows.primarySm,
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+    } as React.CSSProperties),
+    youBadge: {
+      backgroundColor: colors.primaryAlpha(0.2),
+      color: colors.primary,
+      fontSize: '8px',
+      fontWeight: typography.fontWeight.black,
+      padding: `${spacing[1]} ${spacing[2]}`,
+      borderRadius: borderRadius.full,
+      textTransform: 'uppercase' as const,
+    } as React.CSSProperties,
+    feedItem: {
+      display: 'flex',
+      gap: spacing[4],
+      padding: spacing[4],
+      borderRadius: borderRadius['3xl'],
+      backgroundColor: colors.gray[50],
+      marginBottom: spacing[4],
+    } as React.CSSProperties,
+    feedAvatar: {
+      width: '40px',
+      height: '40px',
+      borderRadius: borderRadius.full,
+      objectFit: 'cover' as const,
+      backgroundColor: colors.gray[200],
+    } as React.CSSProperties,
+  };
+
   return (
-    <div className="px-6 space-y-8 animate-in slide-in-from-right-4 duration-500 pb-10">
-      <section>
-        <div className="flex flex-col gap-4 mb-4">
-          <div className="flex justify-between items-center">
-            {/* Fixed contrast: text-slate-400 -> text-slate-600 */}
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Leaderboard</h2>
+    <div style={styles.container}>
+      <section style={styles.section}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[4], marginBottom: spacing[4] }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2 style={styles.sectionTitle}>Leaderboard</h2>
             <button 
               onClick={toggleLeaderboardType}
-              className="text-primary text-xs font-bold uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-2 py-1"
+              style={{
+                color: colors.primary,
+                fontSize: typography.fontSize.xs,
+                fontWeight: typography.fontWeight.bold,
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: `${spacing[1]} ${spacing[2]}`,
+              }}
               aria-label={`Switch to ${leaderboardType === 'global' ? 'friends' : 'global'} leaderboard`}
             >
               {leaderboardType === 'global' ? 'Global' : 'Friends'}
             </button>
           </div>
           
-          <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+          <div style={styles.periodTabs}>
             {(['daily', 'weekly', 'monthly', 'allTime'] as const).map((period) => (
               <button
                 key={period}
                 onClick={() => setLeaderboardPeriod(period)}
-                className={`flex-1 py-1.5 text-[10px] font-bold uppercase tracking-wide rounded-md transition-colors ${
-                  leaderboardPeriod === period
-                    ? 'bg-white dark:bg-slate-700 text-primary shadow-sm'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                }`}
+                style={styles.periodTab(leaderboardPeriod === period)}
               >
                 {period === 'allTime' ? 'All Time' : period}
               </button>
@@ -140,58 +251,45 @@ const SocialView: React.FC = () => {
         {isLoadingLeaderboard ? (
           <LeaderboardSkeleton />
         ) : leaderboard.length > 0 ? (
-          <div 
-            className="bg-white dark:bg-card-dark rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden"
-            role="list"
-            aria-label="Leaderboard rankings"
-          >
-            {leaderboard.map((user) => (
+          <div style={styles.leaderboardCard} role="list" aria-label="Leaderboard rankings">
+            {leaderboard.map((user, index) => (
               <div 
                 key={user.rank} 
-                className={`p-4 flex items-center justify-between ${user.isCurrentUser ? 'bg-primary/5' : ''}`}
+                style={{
+                  ...styles.leaderboardItem(user.isCurrentUser || false),
+                  borderBottom: index === leaderboard.length - 1 ? 'none' : `1px solid ${colors.gray[100]}`,
+                }}
                 role="listitem"
               >
-                <div className="flex items-center gap-4">
-                  <div 
-                    className={`w-8 h-8 flex items-center justify-center font-black text-sm rounded-full ${
-                      user.rank === 1 ? 'bg-yellow-400 text-white' : 
-                      user.rank === 2 ? 'bg-slate-300 text-slate-700' :
-                      user.rank === 3 ? 'bg-orange-400 text-white' : 'text-slate-500 dark:text-slate-400'
-                    }`}
-                    aria-label={`Rank ${user.rank}`}
-                  >
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4] }}>
+                  <div style={styles.rankBadge(user.rank)} aria-label={`Rank ${user.rank}`}>
                     {user.rank}
                   </div>
                   <img 
                     src={user.avatar} 
-                    className="w-10 h-10 rounded-full bg-slate-100 object-cover" 
+                    style={{ width: '40px', height: '40px', borderRadius: borderRadius.full, backgroundColor: colors.gray[100], objectFit: 'cover' }}
                     alt={`${user.name}'s avatar`}
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = `https://i.pravatar.cc/100?u=${user.userId}`;
                     }}
                   />
                   <div>
-                    <h4 className="font-bold text-sm text-slate-900 dark:text-white">{user.name}</h4>
-                    {/* Fixed contrast: text-slate-400 -> text-slate-600 */}
-                    <p className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase">{user.points.toLocaleString()} Points</p>
+                    <h4 style={{ fontWeight: typography.fontWeight.bold, fontSize: typography.fontSize.sm, color: colors.text.primary, margin: 0 }}>{user.name}</h4>
+                    <p style={{ fontSize: '10px', fontWeight: typography.fontWeight.bold, color: colors.text.secondary, textTransform: 'uppercase', margin: 0 }}>{user.points.toLocaleString()} Points</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2] }}>
                   {!user.isCurrentUser && (
                     <button 
                       onClick={() => handleFollow(user.userId)}
                       disabled={followLoading[user.userId]}
-                      className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-colors ${
-                        user.isFollowing 
-                          ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700' 
-                          : 'bg-primary text-white shadow-sm shadow-primary/30'
-                      } disabled:opacity-50`}
+                      style={{ ...styles.followBtn(user.isFollowing || false), opacity: followLoading[user.userId] ? 0.5 : 1 }}
                     >
                       {followLoading[user.userId] ? '...' : (user.isFollowing ? 'Following' : 'Follow')}
                     </button>
                   )}
                   {user.isCurrentUser && (
-                    <span className="bg-primary/20 text-primary text-[8px] font-black px-2 py-1 rounded-full uppercase">You</span>
+                    <span style={styles.youBadge}>You</span>
                   )}
                 </div>
               </div>
@@ -208,25 +306,24 @@ const SocialView: React.FC = () => {
       </section>
 
       <section>
-        {/* Fixed contrast: text-slate-400 -> text-slate-600 */}
-        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-4">Recent Activity</h2>
+        <h2 style={styles.sectionTitle}>Recent Activity</h2>
         {isLoadingFeed ? (
-          <div className="space-y-4">
+          <div>
             <FeedItemSkeleton />
             <FeedItemSkeleton />
             <FeedItemSkeleton />
           </div>
         ) : feed.length > 0 ? (
-          <div className="space-y-4" role="feed" aria-label="Activity feed">
+          <div role="feed" aria-label="Activity feed">
             {feed.map((item) => (
               <article 
                 key={item.id} 
-                className="flex gap-4 p-4 rounded-3xl bg-slate-50 dark:bg-slate-900/50"
+                style={styles.feedItem}
                 aria-label={`${item.userName} ${item.action} ${item.target}`}
               >
                 <img 
                   src={item.userAvatar} 
-                  className="w-10 h-10 rounded-full object-cover bg-slate-200" 
+                  style={styles.feedAvatar}
                   alt=""
                   aria-hidden="true"
                   onError={(e) => {
@@ -234,14 +331,12 @@ const SocialView: React.FC = () => {
                   }}
                 />
                 <div>
-                  <p className="text-sm leading-snug">
-                    <span className="font-bold text-slate-900 dark:text-white">{item.userName}</span>{' '}
-                    {/* Fixed contrast: text-slate-500 -> text-slate-600 */}
-                    <span className="text-slate-600 dark:text-slate-400">{item.action}</span>{' '}
-                    <span className="font-semibold text-primary">{item.target}</span>
+                  <p style={{ fontSize: typography.fontSize.sm, lineHeight: typography.lineHeight.snug, margin: 0 }}>
+                    <span style={{ fontWeight: typography.fontWeight.bold, color: colors.text.primary }}>{item.userName}</span>{' '}
+                    <span style={{ color: colors.text.secondary }}>{item.action}</span>{' '}
+                    <span style={{ fontWeight: typography.fontWeight.semibold, color: colors.primary }}>{item.target}</span>
                   </p>
-                  {/* Fixed contrast: text-slate-400 -> text-slate-500 */}
-                  <span className="text-[10px] text-slate-500 dark:text-slate-500 font-medium">{item.timestamp}</span>
+                  <span style={{ fontSize: '10px', color: colors.text.secondary, fontWeight: typography.fontWeight.medium }}>{item.timestamp}</span>
                 </div>
               </article>
             ))}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { taskService } from '../../services';
+import { colors, spacing, borderRadius, shadows, typography, transitions } from '../../theme/designSystem';
 
 export type TaskPriority = 'low' | 'medium' | 'high';
 export type TaskType = 'check' | 'counter' | 'log';
@@ -40,6 +41,273 @@ const ICONS = [
 ];
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const styles = {
+  overlay: {
+    position: 'fixed' as const,
+    inset: 0,
+    zIndex: 50,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backdropFilter: 'blur(4px)',
+    display: 'flex',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  modal: {
+    backgroundColor: colors.white,
+    borderTopLeftRadius: borderRadius['3xl'],
+    borderTopRightRadius: borderRadius['3xl'],
+    width: '100%',
+    maxWidth: '32rem',
+    maxHeight: '90vh',
+    overflow: 'hidden',
+    boxShadow: shadows.xl,
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing[4],
+    borderBottom: `1px solid ${colors.gray[100]}`,
+  },
+  closeBtn: {
+    padding: spacing[2],
+    marginLeft: `-${spacing[2]}`,
+    borderRadius: borderRadius.full,
+    border: 'none',
+    backgroundColor: 'transparent',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: transitions.colors,
+  },
+  headerTitle: {
+    fontWeight: typography.fontWeight.bold,
+    fontSize: typography.fontSize.lg,
+    color: colors.gray[900],
+  },
+  createBtn: {
+    color: colors.primaryDark,
+    fontWeight: typography.fontWeight.bold,
+    fontSize: typography.fontSize.sm,
+    border: 'none',
+    backgroundColor: 'transparent',
+    cursor: 'pointer',
+    padding: `${spacing[2]} ${spacing[3]}`,
+    borderRadius: borderRadius.lg,
+    transition: transitions.colors,
+  },
+  createBtnDisabled: {
+    opacity: 0.5,
+    cursor: 'not-allowed',
+  },
+  form: {
+    padding: spacing[4],
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: spacing[4],
+    overflowY: 'auto' as const,
+    maxHeight: '70vh',
+  },
+  errorBox: {
+    padding: spacing[3],
+    backgroundColor: colors.red[50],
+    color: colors.red[500],
+    fontSize: typography.fontSize.sm,
+    borderRadius: borderRadius.xl,
+  },
+  iconTitleRow: {
+    display: 'flex',
+    gap: spacing[3],
+  },
+  iconBtn: {
+    width: '3.5rem',
+    height: '3.5rem',
+    borderRadius: borderRadius['2xl'],
+    backgroundColor: `${colors.primary}15`,
+    color: colors.primaryDark,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    border: 'none',
+    cursor: 'pointer',
+    transition: transitions.colors,
+  },
+  titleInput: {
+    flex: 1,
+    backgroundColor: colors.gray[50],
+    borderRadius: borderRadius['2xl'],
+    padding: `${spacing[3]} ${spacing[4]}`,
+    fontWeight: typography.fontWeight.semibold,
+    fontSize: typography.fontSize.base,
+    border: `1px solid ${colors.gray[200]}`,
+    outline: 'none',
+    transition: transitions.colors,
+  },
+  iconPickerGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(6, 1fr)',
+    gap: spacing[2],
+    padding: spacing[3],
+    backgroundColor: colors.gray[50],
+    borderRadius: borderRadius['2xl'],
+  },
+  iconPickerBtn: (isSelected: boolean) => ({
+    width: '2.5rem',
+    height: '2.5rem',
+    borderRadius: borderRadius.xl,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: 'none',
+    cursor: 'pointer',
+    transition: transitions.colors,
+    backgroundColor: isSelected ? colors.primary : colors.white,
+    color: isSelected ? colors.white : colors.gray[600],
+  }),
+  textarea: {
+    width: '100%',
+    backgroundColor: colors.gray[50],
+    borderRadius: borderRadius['2xl'],
+    padding: `${spacing[3]} ${spacing[4]}`,
+    fontWeight: typography.fontWeight.medium,
+    fontSize: typography.fontSize.base,
+    border: `1px solid ${colors.gray[200]}`,
+    outline: 'none',
+    resize: 'none' as const,
+    fontFamily: 'inherit',
+  },
+  label: {
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.gray[500],
+    marginBottom: spacing[2],
+    display: 'block',
+  },
+  typeButtonRow: {
+    display: 'flex',
+    gap: spacing[2],
+  },
+  typeBtn: (isSelected: boolean) => ({
+    flex: 1,
+    padding: spacing[3],
+    borderRadius: borderRadius.xl,
+    fontWeight: typography.fontWeight.semibold,
+    fontSize: typography.fontSize.sm,
+    textTransform: 'capitalize' as const,
+    border: 'none',
+    cursor: 'pointer',
+    transition: transitions.colors,
+    backgroundColor: isSelected ? colors.primary : colors.gray[100],
+    color: isSelected ? colors.white : colors.gray[600],
+  }),
+  counterGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: spacing[3],
+  },
+  input: {
+    width: '100%',
+    backgroundColor: colors.gray[50],
+    borderRadius: borderRadius.xl,
+    padding: `${spacing[3]} ${spacing[4]}`,
+    fontWeight: typography.fontWeight.semibold,
+    fontSize: typography.fontSize.base,
+    border: `1px solid ${colors.gray[200]}`,
+    outline: 'none',
+  },
+  priorityBtn: (isSelected: boolean, priority: TaskPriority) => {
+    const priorityColors = {
+      high: colors.red[500],
+      medium: colors.yellow[500],
+      low: colors.green[500],
+    };
+    return {
+      flex: 1,
+      padding: spacing[3],
+      borderRadius: borderRadius.xl,
+      fontWeight: typography.fontWeight.semibold,
+      fontSize: typography.fontSize.sm,
+      textTransform: 'capitalize' as const,
+      border: 'none',
+      cursor: 'pointer',
+      transition: transitions.colors,
+      backgroundColor: isSelected ? priorityColors[priority] : colors.gray[100],
+      color: isSelected ? colors.white : colors.gray[600],
+    };
+  },
+  recurringBox: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing[4],
+    backgroundColor: colors.gray[50],
+    borderRadius: borderRadius['2xl'],
+  },
+  recurringLabel: {
+    fontWeight: typography.fontWeight.bold,
+    color: colors.gray[900],
+  },
+  recurringDesc: {
+    fontSize: typography.fontSize.xs,
+    color: colors.gray[500],
+  },
+  toggle: (isOn: boolean) => ({
+    width: '3rem',
+    height: '1.5rem',
+    borderRadius: borderRadius.full,
+    position: 'relative' as const,
+    border: 'none',
+    cursor: 'pointer',
+    transition: transitions.colors,
+    backgroundColor: isOn ? colors.primary : colors.gray[300],
+  }),
+  toggleKnob: (isOn: boolean) => ({
+    width: '1rem',
+    height: '1rem',
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.full,
+    position: 'absolute' as const,
+    top: '0.25rem',
+    left: isOn ? '1.75rem' : '0.25rem',
+    transition: transitions.all,
+  }),
+  freqBtnRow: {
+    display: 'flex',
+    gap: spacing[2],
+  },
+  freqBtn: (isSelected: boolean) => ({
+    flex: 1,
+    padding: spacing[2],
+    borderRadius: borderRadius.xl,
+    fontWeight: typography.fontWeight.semibold,
+    fontSize: typography.fontSize.xs,
+    textTransform: 'capitalize' as const,
+    border: 'none',
+    cursor: 'pointer',
+    transition: transitions.colors,
+    backgroundColor: isSelected ? colors.primary : colors.gray[100],
+    color: isSelected ? colors.white : colors.gray[600],
+  }),
+  daysRow: {
+    display: 'flex',
+    gap: '0.25rem',
+  },
+  dayBtn: (isSelected: boolean) => ({
+    flex: 1,
+    padding: `${spacing[2]} 0`,
+    borderRadius: borderRadius.lg,
+    fontSize: typography.fontSize.xs,
+    fontWeight: typography.fontWeight.bold,
+    border: 'none',
+    cursor: 'pointer',
+    transition: transitions.colors,
+    backgroundColor: isSelected ? colors.primary : colors.gray[100],
+    color: isSelected ? colors.white : colors.gray[500],
+  }),
+};
 
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose, onTaskCreated }) => {
   const [formData, setFormData] = useState<TaskFormData>({
@@ -119,58 +387,63 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose, onTa
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center animate-in fade-in">
+    <div style={styles.overlay} onClick={onClose}>
       <div 
-        className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl w-full max-w-lg max-h-[90vh] overflow-hidden animate-in slide-in-from-bottom-10"
+        style={styles.modal}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+        <div style={styles.header}>
           <button 
             onClick={onClose}
-            className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+            style={styles.closeBtn}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.gray[100]}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           >
             <span className="material-symbols-outlined">close</span>
           </button>
-          <h2 className="font-bold text-lg">Create Task</h2>
+          <h2 style={styles.headerTitle}>Create Task</h2>
           <button 
             onClick={handleSubmit}
             disabled={loading || !formData.title.trim()}
-            className="text-primary font-bold text-sm disabled:opacity-50"
+            style={{
+              ...styles.createBtn,
+              ...(loading || !formData.title.trim() ? styles.createBtnDisabled : {}),
+            }}
           >
             {loading ? 'Creating...' : 'Create'}
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-4 space-y-4 overflow-y-auto max-h-[70vh]">
+        <form onSubmit={handleSubmit} style={styles.form}>
           {error && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-500 text-sm rounded-xl">
+            <div style={styles.errorBox}>
               {error}
             </div>
           )}
 
           {/* Icon & Title Row */}
-          <div className="flex gap-3">
+          <div style={styles.iconTitleRow}>
             <button
               type="button"
               onClick={() => setShowIconPicker(!showIconPicker)}
-              className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0"
+              style={styles.iconBtn}
             >
-              <span className="material-symbols-outlined text-2xl">{formData.icon}</span>
+              <span className="material-symbols-outlined" style={{ fontSize: '1.5rem' }}>{formData.icon}</span>
             </button>
             <input
               type="text"
               value={formData.title}
               onChange={e => setFormData({ ...formData, title: e.target.value })}
               placeholder="Task title"
-              className="flex-1 bg-slate-50 dark:bg-slate-800 rounded-2xl px-4 py-3 font-semibold focus:ring-2 focus:ring-primary outline-none"
+              style={styles.titleInput}
             />
           </div>
 
           {/* Icon Picker */}
           {showIconPicker && (
-            <div className="grid grid-cols-6 gap-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+            <div style={styles.iconPickerGrid}>
               {ICONS.map(icon => (
                 <button
                   key={icon.name}
@@ -179,13 +452,9 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose, onTa
                     setFormData({ ...formData, icon: icon.name });
                     setShowIconPicker(false);
                   }}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
-                    formData.icon === icon.name 
-                      ? 'bg-primary text-white' 
-                      : 'bg-white dark:bg-slate-700 hover:bg-primary/10'
-                  }`}
+                  style={styles.iconPickerBtn(formData.icon === icon.name)}
                 >
-                  <span className="material-symbols-outlined text-xl">{icon.name}</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>{icon.name}</span>
                 </button>
               ))}
             </div>
@@ -197,23 +466,19 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose, onTa
             onChange={e => setFormData({ ...formData, description: e.target.value })}
             placeholder="Description (optional)"
             rows={2}
-            className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl px-4 py-3 font-medium focus:ring-2 focus:ring-primary outline-none resize-none"
+            style={styles.textarea}
           />
 
           {/* Task Type */}
           <div>
-            <label className="text-sm font-bold text-slate-500 mb-2 block">Task Type</label>
-            <div className="flex gap-2">
+            <label style={styles.label}>Task Type</label>
+            <div style={styles.typeButtonRow}>
               {(['check', 'counter', 'log'] as TaskType[]).map(type => (
                 <button
                   key={type}
                   type="button"
                   onClick={() => setFormData({ ...formData, type })}
-                  className={`flex-1 p-3 rounded-xl font-semibold text-sm capitalize transition-colors ${
-                    formData.type === type
-                      ? 'bg-primary text-white'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                  }`}
+                  style={styles.typeBtn(formData.type === type)}
                 >
                   {type}
                 </button>
@@ -223,25 +488,25 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose, onTa
 
           {/* Counter Settings */}
           {formData.type === 'counter' && (
-            <div className="grid grid-cols-2 gap-3">
+            <div style={styles.counterGrid}>
               <div>
-                <label className="text-sm font-bold text-slate-500 mb-2 block">Goal</label>
+                <label style={styles.label}>Goal</label>
                 <input
                   type="number"
                   value={formData.goal}
                   onChange={e => setFormData({ ...formData, goal: parseInt(e.target.value) || 1 })}
                   min={1}
-                  className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-4 py-3 font-semibold focus:ring-2 focus:ring-primary outline-none"
+                  style={styles.input}
                 />
               </div>
               <div>
-                <label className="text-sm font-bold text-slate-500 mb-2 block">Unit</label>
+                <label style={styles.label}>Unit</label>
                 <input
                   type="text"
                   value={formData.unit}
                   onChange={e => setFormData({ ...formData, unit: e.target.value })}
                   placeholder="e.g., glasses, minutes"
-                  className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-primary outline-none"
+                  style={{ ...styles.input, fontWeight: typography.fontWeight.medium }}
                 />
               </div>
             </div>
@@ -249,20 +514,14 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose, onTa
 
           {/* Priority */}
           <div>
-            <label className="text-sm font-bold text-slate-500 mb-2 block">Priority</label>
-            <div className="flex gap-2">
+            <label style={styles.label}>Priority</label>
+            <div style={styles.typeButtonRow}>
               {(['low', 'medium', 'high'] as TaskPriority[]).map(priority => (
                 <button
                   key={priority}
                   type="button"
                   onClick={() => setFormData({ ...formData, priority })}
-                  className={`flex-1 p-3 rounded-xl font-semibold text-sm capitalize transition-colors ${
-                    formData.priority === priority
-                      ? priority === 'high' ? 'bg-red-500 text-white' :
-                        priority === 'medium' ? 'bg-yellow-500 text-white' :
-                        'bg-green-500 text-white'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                  }`}
+                  style={styles.priorityBtn(formData.priority === priority, priority)}
                 >
                   {priority}
                 </button>
@@ -272,48 +531,40 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose, onTa
 
           {/* Due Date */}
           <div>
-            <label className="text-sm font-bold text-slate-500 mb-2 block">Due Date</label>
+            <label style={styles.label}>Due Date</label>
             <input
               type="date"
               value={formData.dueDate}
               onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
-              className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-primary outline-none"
+              style={{ ...styles.input, fontWeight: typography.fontWeight.medium }}
             />
           </div>
 
           {/* Recurring Toggle */}
-          <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+          <div style={styles.recurringBox}>
             <div>
-              <span className="font-bold text-slate-900 dark:text-white">Recurring Task</span>
-              <p className="text-xs text-slate-500">Repeat this task automatically</p>
+              <span style={styles.recurringLabel}>Recurring Task</span>
+              <p style={styles.recurringDesc}>Repeat this task automatically</p>
             </div>
             <button
               type="button"
               onClick={() => setFormData({ ...formData, isRecurring: !formData.isRecurring })}
-              className={`w-12 h-6 rounded-full relative transition-colors ${
-                formData.isRecurring ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'
-              }`}
+              style={styles.toggle(formData.isRecurring)}
             >
-              <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${
-                formData.isRecurring ? 'translate-x-7' : 'translate-x-1'
-              }`} />
+              <div style={styles.toggleKnob(formData.isRecurring)} />
             </button>
           </div>
 
           {/* Recurring Options */}
           {formData.isRecurring && (
-            <div className="space-y-3">
-              <div className="flex gap-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[3] }}>
+              <div style={styles.freqBtnRow}>
                 {(['daily', 'weekly', 'custom'] as const).map(freq => (
                   <button
                     key={freq}
                     type="button"
                     onClick={() => setFormData({ ...formData, frequency: freq })}
-                    className={`flex-1 p-2 rounded-xl font-semibold text-xs capitalize transition-colors ${
-                      formData.frequency === freq
-                        ? 'bg-primary text-white'
-                        : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
-                    }`}
+                    style={styles.freqBtn(formData.frequency === freq)}
                   >
                     {freq}
                   </button>
@@ -321,17 +572,13 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose, onTa
               </div>
 
               {formData.frequency === 'custom' && (
-                <div className="flex gap-1">
+                <div style={styles.daysRow}>
                   {DAYS.map((day, i) => (
                     <button
                       key={day}
                       type="button"
                       onClick={() => toggleRecurringDay(i)}
-                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${
-                        formData.recurringDays.includes(i)
-                          ? 'bg-primary text-white'
-                          : 'bg-slate-100 dark:bg-slate-700 text-slate-500'
-                      }`}
+                      style={styles.dayBtn(formData.recurringDays.includes(i))}
                     >
                       {day[0]}
                     </button>

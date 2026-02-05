@@ -4,6 +4,7 @@ import type { Challenge } from '../services/challengeService';
 import { ConfirmModal } from './ui';
 import Skeleton from './ui/Skeleton';
 import EmptyState from './ui/EmptyState';
+import { colors, spacing, borderRadius, typography, shadows } from '../theme/designSystem';
 
 interface DiscoverViewProps {
   onClose?: () => void;
@@ -83,26 +84,189 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ onClose, onJoin }) => {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusStyle = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
-      case 'upcoming': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
-      default: return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
+      case 'active': return { backgroundColor: colors.successBg, color: colors.success };
+      case 'upcoming': return { backgroundColor: '#DBEAFE', color: '#3B82F6' };
+      default: return { backgroundColor: colors.gray[100], color: colors.text.secondary };
     }
   };
 
+  const styles = {
+    container: {
+      padding: `0 ${spacing[6]}`,
+      paddingBottom: spacing[10],
+    } as React.CSSProperties,
+    header: {
+      marginBottom: spacing[6],
+    } as React.CSSProperties,
+    title: {
+      fontSize: typography.fontSize['2xl'],
+      fontWeight: typography.fontWeight.black,
+      color: colors.text.primary,
+      margin: 0,
+    } as React.CSSProperties,
+    subtitle: {
+      fontSize: typography.fontSize.sm,
+      fontWeight: typography.fontWeight.medium,
+      color: colors.text.secondary,
+      margin: 0,
+    } as React.CSSProperties,
+    searchContainer: {
+      position: 'relative' as const,
+      marginBottom: spacing[6],
+    } as React.CSSProperties,
+    searchIcon: {
+      position: 'absolute' as const,
+      left: spacing[4],
+      top: '50%',
+      transform: 'translateY(-50%)',
+      color: colors.text.secondary,
+    } as React.CSSProperties,
+    searchInput: {
+      width: '100%',
+      paddingLeft: spacing[12],
+      paddingRight: spacing[4],
+      paddingTop: spacing[4],
+      paddingBottom: spacing[4],
+      backgroundColor: colors.white,
+      borderRadius: borderRadius['2xl'],
+      border: `1px solid ${colors.gray[200]}`,
+      fontSize: typography.fontSize.sm,
+      fontWeight: typography.fontWeight.medium,
+      color: colors.text.primary,
+      outline: 'none',
+    } as React.CSSProperties,
+    filtersContainer: {
+      display: 'flex',
+      gap: spacing[2],
+      overflowX: 'auto' as const,
+      paddingBottom: spacing[2],
+      marginBottom: spacing[6],
+    } as React.CSSProperties,
+    filterBtn: (active: boolean) => ({
+      display: 'flex',
+      alignItems: 'center',
+      gap: spacing[2],
+      padding: `${spacing[2]} ${spacing[4]}`,
+      borderRadius: borderRadius.full,
+      fontWeight: typography.fontWeight.bold,
+      fontSize: typography.fontSize.xs,
+      textTransform: 'uppercase' as const,
+      letterSpacing: '0.5px',
+      whiteSpace: 'nowrap' as const,
+      border: 'none',
+      cursor: 'pointer',
+      backgroundColor: active ? colors.primary : colors.gray[100],
+      color: active ? colors.white : colors.text.secondary,
+      boxShadow: active ? shadows.primaryLg : 'none',
+      transition: 'all 0.2s ease',
+    } as React.CSSProperties),
+    challengeCard: {
+      backgroundColor: colors.white,
+      borderRadius: borderRadius['3xl'],
+      border: `1px solid ${colors.gray[100]}`,
+      boxShadow: shadows.sm,
+      overflow: 'hidden',
+      marginBottom: spacing[4],
+    } as React.CSSProperties,
+    cardContent: {
+      padding: spacing[5],
+    } as React.CSSProperties,
+    statusBadge: (status: string) => ({
+      ...getStatusStyle(status),
+      fontSize: '10px',
+      fontWeight: typography.fontWeight.bold,
+      textTransform: 'uppercase' as const,
+      padding: `${spacing[1]} ${spacing[2]}`,
+      borderRadius: borderRadius.full,
+    } as React.CSSProperties),
+    typeBadge: {
+      color: colors.text.secondary,
+      fontSize: '10px',
+      fontWeight: typography.fontWeight.bold,
+      textTransform: 'uppercase' as const,
+      display: 'flex',
+      alignItems: 'center',
+      gap: spacing[1],
+    } as React.CSSProperties,
+    challengeTitle: {
+      fontWeight: typography.fontWeight.bold,
+      fontSize: typography.fontSize.lg,
+      color: colors.text.primary,
+      margin: 0,
+    } as React.CSSProperties,
+    dailyAction: {
+      color: colors.primary,
+      fontSize: typography.fontSize.sm,
+      fontWeight: typography.fontWeight.semibold,
+      marginTop: spacing[1],
+      display: 'flex',
+      alignItems: 'center',
+      gap: spacing[1],
+    } as React.CSSProperties,
+    description: {
+      color: colors.text.secondary,
+      fontSize: typography.fontSize.sm,
+      marginTop: spacing[1],
+      display: '-webkit-box',
+      WebkitLineClamp: 2,
+      WebkitBoxOrient: 'vertical' as const,
+      overflow: 'hidden',
+    } as React.CSSProperties,
+    iconBox: {
+      width: '56px',
+      height: '56px',
+      borderRadius: borderRadius['2xl'],
+      backgroundColor: colors.primaryAlpha(0.1),
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+    } as React.CSSProperties,
+    cardFooter: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: spacing[4],
+      paddingTop: spacing[4],
+      borderTop: `1px solid ${colors.gray[100]}`,
+    } as React.CSSProperties,
+    metaInfo: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: spacing[4],
+      fontSize: typography.fontSize.xs,
+      color: colors.text.secondary,
+      fontWeight: typography.fontWeight.medium,
+    } as React.CSSProperties,
+    joinBtn: (isJoined: boolean) => ({
+      padding: `${spacing[2]} ${spacing[5]}`,
+      borderRadius: borderRadius.xl,
+      fontWeight: typography.fontWeight.bold,
+      fontSize: typography.fontSize.xs,
+      textTransform: 'uppercase' as const,
+      letterSpacing: '0.5px',
+      border: 'none',
+      cursor: 'pointer',
+      backgroundColor: isJoined ? colors.successBg : colors.primary,
+      color: isJoined ? colors.success : colors.white,
+      boxShadow: isJoined ? 'none' : shadows.primaryLg,
+      transition: 'all 0.2s ease',
+    } as React.CSSProperties),
+  };
+
   return (
-    <div className="px-6 space-y-6 animate-in fade-in duration-500 pb-10">
+    <div style={styles.container}>
       {/* Header */}
-      <div>
-        <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">Discover Challenges</h2>
-        {/* Fixed contrast: text-slate-400 -> text-slate-600 */}
-        <p className="text-slate-600 dark:text-slate-400 font-medium text-sm">Find new challenges to join</p>
+      <div style={styles.header}>
+        <h2 style={styles.title}>Discover Challenges</h2>
+        <p style={styles.subtitle}>Find new challenges to join</p>
       </div>
 
       {/* Search Bar */}
-      <div className="relative">
-        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" aria-hidden="true">
+      <div style={styles.searchContainer}>
+        <span className="material-symbols-outlined" style={styles.searchIcon} aria-hidden="true">
           search
         </span>
         <input
@@ -110,95 +274,96 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ onClose, onJoin }) => {
           placeholder="Search challenges..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-12 pr-4 py-4 bg-white dark:bg-card-dark rounded-2xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary font-medium text-sm text-slate-900 dark:text-white placeholder:text-slate-500"
+          style={styles.searchInput}
           aria-label="Search challenges"
         />
         {searchQuery && (
           <button
             onClick={() => setSearchQuery('')}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 p-1"
+            style={{
+              position: 'absolute',
+              right: spacing[4],
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: colors.text.secondary,
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: spacing[1],
+            }}
             aria-label="Clear search"
           >
-            <span className="material-symbols-outlined text-lg">close</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
           </button>
         )}
       </div>
 
       {/* Type Filters */}
-      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2" role="tablist" aria-label="Challenge type filters">
+      <div style={styles.filtersContainer} role="tablist" aria-label="Challenge type filters">
         {types.map((type) => (
           <button
             key={type.id}
             onClick={() => setSelectedType(type.id)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-full font-bold text-xs uppercase tracking-wide whitespace-nowrap transition-all ${
-              selectedType === type.id
-                ? 'bg-primary text-white shadow-lg shadow-primary/30'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-            }`}
+            style={styles.filterBtn(selectedType === type.id)}
             role="tab"
             aria-selected={selectedType === type.id}
             aria-label={`Filter by ${type.label} challenges`}
           >
-            <span className="material-symbols-outlined text-sm" aria-hidden="true">{type.icon}</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '14px' }} aria-hidden="true">{type.icon}</span>
             {type.label}
           </button>
         ))}
       </div>
 
       {/* Results */}
-      <div className="space-y-4" role="list" aria-label="Available challenges">
+      <div role="list" aria-label="Available challenges">
         {isLoading ? (
           <>
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} variant="card" className="h-44" />
+              <div key={i} style={{ marginBottom: spacing[4] }}>
+                <Skeleton variant="card" height="176px" />
+              </div>
             ))}
           </>
         ) : challenges.length > 0 ? (
           challenges.map((challenge) => (
-            <article
-              key={challenge.id}
-              className="bg-white dark:bg-card-dark rounded-3xl border border-slate-100 dark:border-slate-800 overflow-hidden shadow-sm"
-              role="listitem"
-            >
-              <div className="p-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full ${getStatusColor(challenge.status)}`}>
+            <article key={challenge.id} style={styles.challengeCard} role="listitem">
+              <div style={styles.cardContent}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing[4] }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2], marginBottom: spacing[2] }}>
+                      <span style={styles.statusBadge(challenge.status)}>
                         {challenge.status}
                       </span>
-                      {/* Fixed contrast */}
-                      <span className="text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase flex items-center gap-1">
-                        <span className="material-symbols-outlined text-xs" aria-hidden="true">{getTypeIcon(challenge.type)}</span>
+                      <span style={styles.typeBadge}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '12px' }} aria-hidden="true">{getTypeIcon(challenge.type)}</span>
                         {challenge.type}
                       </span>
                     </div>
-                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">{challenge.title}</h3>
+                    <h3 style={styles.challengeTitle}>{challenge.title}</h3>
                     {challenge.daily_action && (
-                      <p className="text-primary text-sm font-semibold mt-1 flex items-center gap-1">
-                        <span className="material-symbols-outlined text-sm" aria-hidden="true">task_alt</span>
+                      <p style={styles.dailyAction}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }} aria-hidden="true">task_alt</span>
                         {challenge.daily_action}
                       </p>
                     )}
-                    {/* Fixed contrast: text-slate-400 -> text-slate-500 */}
-                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1 line-clamp-2">{challenge.description}</p>
+                    <p style={styles.description}>{challenge.description}</p>
                   </div>
-                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0" aria-hidden="true">
-                    <span className="material-symbols-outlined text-primary text-2xl">
+                  <div style={styles.iconBox} aria-hidden="true">
+                    <span className="material-symbols-outlined" style={{ color: colors.primary, fontSize: '24px' }}>
                       {challenge.icon || 'flag'}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-                  {/* Fixed contrast: text-slate-400 -> text-slate-600 */}
-                  <div className="flex items-center gap-4 text-xs text-slate-600 dark:text-slate-400 font-medium">
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-sm" aria-hidden="true">group</span>
+                <div style={styles.cardFooter}>
+                  <div style={styles.metaInfo}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: spacing[1] }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '14px' }} aria-hidden="true">group</span>
                       {challenge.participantCount || 0} joined
                     </span>
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-sm" aria-hidden="true">schedule</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: spacing[1] }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '14px' }} aria-hidden="true">schedule</span>
                       {challenge.targetDays || 21} days
                     </span>
                   </div>
@@ -206,21 +371,17 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ onClose, onJoin }) => {
                   <button
                     onClick={() => handleJoinClick(challenge)}
                     disabled={joiningId === challenge.id || (challenge as any).isJoined}
-                    className={`px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wide transition-all active:scale-95 ${
-                      (challenge as any).isJoined
-                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                        : 'bg-primary text-white shadow-lg shadow-primary/30'
-                    }`}
+                    style={{ ...styles.joinBtn((challenge as any).isJoined), opacity: joiningId === challenge.id ? 0.5 : 1 }}
                     aria-label={`${(challenge as any).isJoined ? 'Already joined' : 'Join'} ${challenge.title}`}
                   >
                     {joiningId === challenge.id ? (
-                      <span className="flex items-center gap-2">
-                        <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" aria-hidden="true"></span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: spacing[2] }}>
+                        <span style={{ width: '12px', height: '12px', border: `2px solid rgba(255,255,255,0.3)`, borderTopColor: colors.white, borderRadius: borderRadius.full, animation: 'spin 1s linear infinite' }} aria-hidden="true"></span>
                         Joining...
                       </span>
                     ) : (challenge as any).isJoined ? (
-                      <span className="flex items-center gap-1">
-                        <span className="material-symbols-outlined text-sm" aria-hidden="true">check</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: spacing[1] }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }} aria-hidden="true">check</span>
                         Joined
                       </span>
                     ) : (

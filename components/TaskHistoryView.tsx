@@ -1,5 +1,56 @@
 import React, { useState, useEffect } from 'react';
 import { taskService, TaskHistory, HeatmapData } from '../services/taskService';
+import { colors, spacing, typography, borderRadius, shadows } from '../theme/designSystem';
+
+const sharedStyles = {
+  card: {
+    backgroundColor: colors.background.primary,
+    borderRadius: borderRadius.xl,
+    border: `1px solid ${colors.gray[100]}`,
+    overflow: 'hidden' as const,
+  },
+  header: {
+    backgroundColor: colors.background.primary,
+    borderBottom: `1px solid ${colors.gray[100]}`,
+    position: 'sticky' as const,
+    top: 0,
+    zIndex: 10,
+    padding: spacing[4],
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing[3],
+  },
+  backBtn: {
+    width: '40px',
+    height: '40px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: borderRadius.full,
+    border: 'none',
+    background: 'transparent',
+    cursor: 'pointer',
+    color: colors.text.primary,
+  },
+  statCard: {
+    backgroundColor: colors.background.primary,
+    borderRadius: borderRadius.xl,
+    padding: spacing[4],
+    textAlign: 'center' as const,
+    border: `1px solid ${colors.gray[100]}`,
+  },
+  filterBtn: (active: boolean) => ({
+    padding: `${spacing[1]} ${spacing[3]}`,
+    fontSize: typography.fontSize.xs,
+    fontWeight: typography.fontWeight.medium,
+    borderRadius: borderRadius.full,
+    border: 'none',
+    cursor: 'pointer',
+    backgroundColor: active ? colors.primary : colors.gray[100],
+    color: active ? 'white' : colors.text.secondary,
+    transition: 'all 0.2s ease',
+  }),
+};
 
 // Heatmap component showing task completion intensity
 const TaskHeatmap: React.FC<{ data: HeatmapData[], year: number, onYearChange: (year: number) => void }> = ({ 
@@ -33,11 +84,11 @@ const TaskHeatmap: React.FC<{ data: HeatmapData[], year: number, onYearChange: (
   
   // Get color intensity based on count
   const getColor = (count: number) => {
-    if (count === 0) return 'bg-slate-100 dark:bg-slate-800';
-    if (count <= 2) return 'bg-emerald-200 dark:bg-emerald-900/60';
-    if (count <= 4) return 'bg-emerald-400 dark:bg-emerald-700';
-    if (count <= 6) return 'bg-emerald-500 dark:bg-emerald-600';
-    return 'bg-emerald-600 dark:bg-emerald-500';
+    if (count === 0) return colors.gray[100];
+    if (count <= 2) return '#A7F3D0'; // emerald-200
+    if (count <= 4) return '#34D399'; // emerald-400
+    if (count <= 6) return '#10B981'; // emerald-500
+    return '#059669'; // emerald-600
   };
   
   // Group days by week
@@ -80,21 +131,33 @@ const TaskHeatmap: React.FC<{ data: HeatmapData[], year: number, onYearChange: (
   
   const monthPositions = getMonthPositions();
 
+  const heatmapStyles = {
+    container: {
+      ...sharedStyles.card,
+      borderRadius: borderRadius['2xl'],
+      padding: spacing[4],
+      boxShadow: shadows.sm,
+    },
+    headerRow: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: spacing[4],
+    },
+    yearBtn: (active: boolean) => sharedStyles.filterBtn(active),
+  };
+
   return (
-    <div className="bg-white dark:bg-card-dark rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-800">
+    <div style={heatmapStyles.container}>
       {/* Year selector */}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-bold text-slate-900 dark:text-white">Activity Heatmap</h3>
-        <div className="flex gap-1">
+      <div style={heatmapStyles.headerRow}>
+        <h3 style={{ fontWeight: typography.fontWeight.bold, color: colors.text.primary, margin: 0 }}>Activity Heatmap</h3>
+        <div style={{ display: 'flex', gap: spacing[1] }}>
           {years.map(y => (
             <button
               key={y}
               onClick={() => onYearChange(y)}
-              className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                y === year
-                  ? 'bg-primary text-white'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-              }`}
+              style={heatmapStyles.yearBtn(y === year)}
             >
               {y}
             </button>
@@ -103,15 +166,16 @@ const TaskHeatmap: React.FC<{ data: HeatmapData[], year: number, onYearChange: (
       </div>
       
       {/* Heatmap grid */}
-      <div className="overflow-x-auto">
-        <div className="inline-block min-w-full">
+      <div style={{ overflowX: 'auto' }}>
+        <div style={{ display: 'inline-block', minWidth: '100%' }}>
           {/* Month labels */}
-          <div className="flex mb-1 ml-8">
+          <div style={{ display: 'flex', marginBottom: spacing[1], marginLeft: '32px' }}>
             {monthPositions.map(({ month, weekIndex }) => (
               <span 
                 key={month}
-                className="text-[10px] text-slate-500 dark:text-slate-400"
                 style={{ 
+                  fontSize: '10px',
+                  color: colors.gray[500],
                   marginLeft: weekIndex === 0 ? 0 : `${(weekIndex - (monthPositions.find(p => p.month === month - 1)?.weekIndex || 0)) * 12 - 20}px`,
                   minWidth: '32px'
                 }}
@@ -122,23 +186,28 @@ const TaskHeatmap: React.FC<{ data: HeatmapData[], year: number, onYearChange: (
           </div>
           
           {/* Day labels + grid */}
-          <div className="flex">
-            <div className="flex flex-col gap-[3px] mr-2 text-[10px] text-slate-500 dark:text-slate-400">
-              <span className="h-[10px]"></span>
-              <span className="h-[10px]">Mon</span>
-              <span className="h-[10px]"></span>
-              <span className="h-[10px]">Wed</span>
-              <span className="h-[10px]"></span>
-              <span className="h-[10px]">Fri</span>
-              <span className="h-[10px]"></span>
+          <div style={{ display: 'flex' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginRight: spacing[2], fontSize: '10px', color: colors.gray[500] }}>
+              <span style={{ height: '10px' }}></span>
+              <span style={{ height: '10px' }}>Mon</span>
+              <span style={{ height: '10px' }}></span>
+              <span style={{ height: '10px' }}>Wed</span>
+              <span style={{ height: '10px' }}></span>
+              <span style={{ height: '10px' }}>Fri</span>
+              <span style={{ height: '10px' }}></span>
             </div>
-            <div className="flex gap-[3px]">
+            <div style={{ display: 'flex', gap: '3px' }}>
               {weeks.map((week, weekIndex) => (
-                <div key={weekIndex} className="flex flex-col gap-[3px]">
+                <div key={weekIndex} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                   {week.map((day, dayIndex) => (
                     <div
                       key={dayIndex}
-                      className={`w-[10px] h-[10px] rounded-sm ${day ? getColor(day.count) : 'bg-transparent'}`}
+                      style={{
+                        width: '10px',
+                        height: '10px',
+                        borderRadius: '2px',
+                        backgroundColor: day ? getColor(day.count) : 'transparent',
+                      }}
                       title={day ? `${day.date}: ${day.count} task${day.count !== 1 ? 's' : ''} completed` : ''}
                     />
                   ))}
@@ -148,11 +217,11 @@ const TaskHeatmap: React.FC<{ data: HeatmapData[], year: number, onYearChange: (
           </div>
           
           {/* Legend */}
-          <div className="flex items-center justify-end gap-2 mt-3 text-[10px] text-slate-500 dark:text-slate-400">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: spacing[2], marginTop: spacing[3], fontSize: '10px', color: colors.gray[500] }}>
             <span>Less</span>
-            <div className="flex gap-1">
+            <div style={{ display: 'flex', gap: spacing[1] }}>
               {[0, 2, 4, 6, 8].map((count) => (
-                <div key={count} className={`w-[10px] h-[10px] rounded-sm ${getColor(count)}`} />
+                <div key={count} style={{ width: '10px', height: '10px', borderRadius: '2px', backgroundColor: getColor(count) }} />
               ))}
             </div>
             <span>More</span>
@@ -184,69 +253,129 @@ const HistoryItem: React.FC<HistoryItemProps> = ({ history }) => {
     ? Math.round((history.completedCount / history.totalCount) * 100) 
     : 0;
   
+  const getCompletionStyle = () => {
+    if (completionRate === 100) return { bg: '#D1FAE5', color: '#059669' }; // emerald
+    if (completionRate >= 50) return { bg: '#FEF3C7', color: '#D97706' }; // amber
+    return { bg: colors.gray[100], color: colors.gray[500] };
+  };
+
+  const completionStyle = getCompletionStyle();
+
+  const itemStyles = {
+    container: sharedStyles.card,
+    button: {
+      width: '100%',
+      padding: spacing[4],
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      textAlign: 'left' as const,
+      border: 'none',
+      background: 'transparent',
+      cursor: 'pointer',
+    },
+    leftContent: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: spacing[3],
+    },
+    iconBox: {
+      width: '40px',
+      height: '40px',
+      borderRadius: borderRadius.full,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: completionStyle.bg,
+      color: completionStyle.color,
+    },
+    badge: {
+      padding: `${spacing[1]} ${spacing[2]}`,
+      borderRadius: borderRadius.full,
+      fontSize: typography.fontSize.xs,
+      fontWeight: typography.fontWeight.bold,
+      backgroundColor: completionRate === 100 ? '#D1FAE5' : colors.gray[100],
+      color: completionRate === 100 ? '#059669' : colors.text.secondary,
+    },
+    expandedArea: {
+      padding: `0 ${spacing[4]} ${spacing[4]}`,
+      display: 'flex',
+      flexDirection: 'column' as const,
+      gap: spacing[2],
+      borderTop: `1px solid ${colors.gray[100]}`,
+      paddingTop: spacing[3],
+    },
+    taskRow: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: `${spacing[2]} 0`,
+    },
+  };
+
   return (
-    <div className="bg-white dark:bg-card-dark rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+    <div style={itemStyles.container}>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full p-4 flex items-center justify-between text-left"
+        style={itemStyles.button}
       >
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-            completionRate === 100 
-              ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
-              : completionRate >= 50
-              ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
-              : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
-          }`}>
-            <span className="material-symbols-outlined text-xl">
+        <div style={itemStyles.leftContent}>
+          <div style={itemStyles.iconBox}>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
               {completionRate === 100 ? 'check_circle' : 'radio_button_unchecked'}
             </span>
           </div>
           <div>
-            <h4 className="font-semibold text-slate-900 dark:text-white">{getDateLabel()}</h4>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <h4 style={{ fontWeight: typography.fontWeight.semibold, color: colors.text.primary, margin: 0 }}>{getDateLabel()}</h4>
+            <p style={{ fontSize: typography.fontSize.sm, color: colors.gray[500], margin: 0 }}>
               {history.completedCount}/{history.totalCount} tasks completed
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className={`px-2 py-1 rounded-full text-xs font-bold ${
-            completionRate === 100
-              ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
-              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-          }`}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: spacing[3] }}>
+          <div style={itemStyles.badge}>
             {completionRate}%
           </div>
-          <span className={`material-symbols-outlined text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}`}>
+          <span 
+            className="material-symbols-outlined" 
+            style={{ 
+              color: colors.gray[400], 
+              transition: 'transform 0.2s ease',
+              transform: expanded ? 'rotate(180deg)' : 'none'
+            }}
+          >
             expand_more
           </span>
         </div>
       </button>
       
       {expanded && history.tasks.length > 0 && (
-        <div className="px-4 pb-4 space-y-2 border-t border-slate-100 dark:border-slate-800 pt-3">
+        <div style={itemStyles.expandedArea}>
           {history.tasks.map((task) => (
-            <div key={task.taskId} className="flex items-center justify-between py-2">
-              <div className="flex items-center gap-2">
-                <span className={`material-symbols-outlined text-lg ${
-                  task.status === 'completed' 
-                    ? 'text-emerald-500' 
-                    : task.status === 'skipped'
-                    ? 'text-slate-400'
-                    : 'text-slate-300 dark:text-slate-600'
-                }`}>
+            <div key={task.taskId} style={itemStyles.taskRow}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2] }}>
+                <span 
+                  className="material-symbols-outlined" 
+                  style={{ 
+                    fontSize: '18px',
+                    color: task.status === 'completed' 
+                      ? '#10B981' 
+                      : task.status === 'skipped'
+                      ? colors.gray[400]
+                      : colors.gray[300]
+                  }}
+                >
                   {task.status === 'completed' ? 'check_circle' : task.status === 'skipped' ? 'cancel' : 'radio_button_unchecked'}
                 </span>
-                <span className={`text-sm ${
-                  task.status === 'completed'
-                    ? 'text-slate-900 dark:text-white'
-                    : 'text-slate-500 dark:text-slate-400'
-                }`}>
+                <span style={{ 
+                  fontSize: typography.fontSize.sm,
+                  color: task.status === 'completed' ? colors.text.primary : colors.gray[500]
+                }}>
                   {task.title}
                 </span>
               </div>
               {task.goal && (
-                <span className="text-xs text-slate-500 dark:text-slate-400">
+                <span style={{ fontSize: typography.fontSize.xs, color: colors.gray[500] }}>
                   {task.value}/{task.goal}
                 </span>
               )}
@@ -309,43 +438,61 @@ const TaskHistoryView: React.FC<TaskHistoryViewProps> = ({ onBack }) => {
   const perfectDays = history.filter(h => h.completedCount === h.totalCount && h.totalCount > 0).length;
   const avgCompletion = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
+  const viewStyles = {
+    container: {
+      minHeight: '100vh',
+      backgroundColor: colors.gray[50],
+    },
+    content: {
+      padding: spacing[4],
+      display: 'flex',
+      flexDirection: 'column' as const,
+      gap: spacing[4],
+      paddingBottom: '96px',
+    },
+    statsGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(3, 1fr)',
+      gap: spacing[3],
+    },
+    emptyState: {
+      textAlign: 'center' as const,
+      padding: `${spacing[12]} 0`,
+    },
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-bg-dark">
+    <div style={viewStyles.container}>
       {/* Header */}
-      <div className="bg-white dark:bg-card-dark border-b border-slate-100 dark:border-slate-800 sticky top-0 z-10">
-        <div className="px-4 py-4 flex items-center gap-3">
-          {onBack && (
-            <button
-              onClick={onBack}
-              className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <span className="material-symbols-outlined">arrow_back</span>
-            </button>
-          )}
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white">Task History</h1>
-        </div>
+      <div style={sharedStyles.header}>
+        {onBack && (
+          <button onClick={onBack} style={sharedStyles.backBtn}>
+            <span className="material-symbols-outlined">arrow_back</span>
+          </button>
+        )}
+        <h1 style={{ fontSize: typography.fontSize.xl, fontWeight: typography.fontWeight.bold, color: colors.text.primary, margin: 0 }}>Task History</h1>
       </div>
 
-      <div className="p-4 space-y-4 pb-24">
+      <div style={viewStyles.content}>
         {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-white dark:bg-card-dark rounded-xl p-4 text-center border border-slate-100 dark:border-slate-800">
-            <p className="text-2xl font-bold text-primary">{completedTasks}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Tasks Done</p>
+        <div style={viewStyles.statsGrid}>
+          <div style={sharedStyles.statCard}>
+            <p style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold, color: colors.primary, margin: 0 }}>{completedTasks}</p>
+            <p style={{ fontSize: typography.fontSize.xs, color: colors.gray[500], marginTop: spacing[1] }}>Tasks Done</p>
           </div>
-          <div className="bg-white dark:bg-card-dark rounded-xl p-4 text-center border border-slate-100 dark:border-slate-800">
-            <p className="text-2xl font-bold text-emerald-500">{perfectDays}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Perfect Days</p>
+          <div style={sharedStyles.statCard}>
+            <p style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold, color: '#10B981', margin: 0 }}>{perfectDays}</p>
+            <p style={{ fontSize: typography.fontSize.xs, color: colors.gray[500], marginTop: spacing[1] }}>Perfect Days</p>
           </div>
-          <div className="bg-white dark:bg-card-dark rounded-xl p-4 text-center border border-slate-100 dark:border-slate-800">
-            <p className="text-2xl font-bold text-amber-500">{avgCompletion}%</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Avg. Rate</p>
+          <div style={sharedStyles.statCard}>
+            <p style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold, color: '#F59E0B', margin: 0 }}>{avgCompletion}%</p>
+            <p style={{ fontSize: typography.fontSize.xs, color: colors.gray[500], marginTop: spacing[1] }}>Avg. Rate</p>
           </div>
         </div>
 
         {/* Heatmap */}
         {loading ? (
-          <div className="bg-white dark:bg-card-dark rounded-2xl p-4 h-40 animate-pulse" />
+          <div style={{ ...sharedStyles.card, borderRadius: borderRadius['2xl'], padding: spacing[4], height: '160px', backgroundColor: colors.gray[100] }} />
         ) : (
           <TaskHeatmap 
             data={heatmapData} 
@@ -355,18 +502,14 @@ const TaskHistoryView: React.FC<TaskHistoryViewProps> = ({ onBack }) => {
         )}
 
         {/* Date Range Filter */}
-        <div className="flex items-center justify-between">
-          <h3 className="font-bold text-slate-900 dark:text-white">Recent Activity</h3>
-          <div className="flex gap-1">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h3 style={{ fontWeight: typography.fontWeight.bold, color: colors.text.primary, margin: 0 }}>Recent Activity</h3>
+          <div style={{ display: 'flex', gap: spacing[1] }}>
             {(['week', 'month', 'all'] as const).map((range) => (
               <button
                 key={range}
                 onClick={() => setDateRange(range)}
-                className={`px-3 py-1 text-xs font-medium rounded-full transition-colors capitalize ${
-                  range === dateRange
-                    ? 'bg-primary text-white'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
+                style={sharedStyles.filterBtn(range === dateRange)}
               >
                 {range === 'week' ? '7 Days' : range === 'month' ? '30 Days' : 'All'}
               </button>
@@ -376,22 +519,22 @@ const TaskHistoryView: React.FC<TaskHistoryViewProps> = ({ onBack }) => {
 
         {/* History List */}
         {loading ? (
-          <div className="space-y-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[3] }}>
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white dark:bg-card-dark rounded-xl h-20 animate-pulse" />
+              <div key={i} style={{ ...sharedStyles.card, height: '80px', backgroundColor: colors.gray[100] }} />
             ))}
           </div>
         ) : history.length > 0 ? (
-          <div className="space-y-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[3] }}>
             {history.map((h) => (
               <HistoryItem key={h.date} history={h} />
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-slate-600">history</span>
-            <p className="mt-2 text-slate-500 dark:text-slate-400">No history yet</p>
-            <p className="text-sm text-slate-400 dark:text-slate-500">Complete tasks to see your history</p>
+          <div style={viewStyles.emptyState}>
+            <span className="material-symbols-outlined" style={{ fontSize: '36px', color: colors.gray[300] }}>history</span>
+            <p style={{ marginTop: spacing[2], color: colors.gray[500] }}>No history yet</p>
+            <p style={{ fontSize: typography.fontSize.sm, color: colors.gray[400] }}>Complete tasks to see your history</p>
           </div>
         )}
       </div>

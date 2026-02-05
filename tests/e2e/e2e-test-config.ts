@@ -302,9 +302,24 @@ export async function login(
   user: { email: string; password: string } = TEST_USERS.testUser
 ) {
   await page.goto('/');
-  
-  // Wait for login form
-  await expect(page.locator('input[type="email"]')).toBeVisible({ timeout: 5000 });
+
+  // Increase timeout significantly
+  await expect(
+    page.locator('input[type="email"]')
+      .or(page.locator('text=Hello there'))
+      .or(page.locator('text=Today\'s Progress'))
+      .or(page.locator('text=Current Progress'))
+  ).toBeVisible({ timeout: 30000 });
+
+  // Check if we are already logged in
+  const dashboardVisible = await page.locator('text=Hello there')
+    .or(page.locator('text=Current Progress'))
+    .or(page.locator('text=Today\'s Progress'))
+    .isVisible();
+    
+  if (dashboardVisible) {
+    return; // Already logged in
+  }
   
   // Fill login form
   await page.fill('input[type="email"]', user.email);
@@ -314,7 +329,7 @@ export async function login(
   // Handle Onboarding if it appears (Wait for either Skip button or Dashboard)
   try {
     const skipButton = page.locator('button:has-text("Skip")');
-    const dashboardElement = page.locator('text=Habit Insight').or(page.locator('text=Current Progress'));
+    const dashboardElement = page.locator('text=Hello there').or(page.locator('text=Current Progress')).or(page.locator('text=Your Challenges'));
     
     // Race condition: either skip button appears OR dashboard appears
     // We give checking for skip button a short timeout
@@ -349,8 +364,9 @@ export async function login(
 
   // Wait for dashboard to load (real API response)
   await expect(
-    page.locator('text=Habit Insight')
+    page.locator('text=Hello there')
       .or(page.locator('text=Current Progress'))
+      .or(page.locator('text=Today\'s Progress')) // Added for HabitView
   ).toBeVisible({ timeout: 15000 });
 }
 

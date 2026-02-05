@@ -8,7 +8,7 @@ interface AuthContextType {
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<void>;
+  register: (email: string, password: string, name: string, invitationToken?: string) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
   refreshProfile: () => Promise<void>;
@@ -76,11 +76,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (email: string, password: string, name: string) => {
+  const register = async (email: string, password: string, name: string, invitationToken?: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await authService.register({ email, password, name });
+      const response = await authService.register({ email, password, name, invitationToken });
       authService.storeAuth(response);
       setToken(response.accessToken);
       setUser(response.user);

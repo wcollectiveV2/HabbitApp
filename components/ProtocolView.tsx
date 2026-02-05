@@ -1,9 +1,30 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { protocolService, Protocol, ProtocolProgress, ProtocolElement } from '../services/protocolService';
+import { colors, spacing, borderRadius, typography, shadows } from '../theme/designSystem';
 
 interface ProtocolViewProps {
   onBack?: () => void;
 }
+
+// Shared styles
+const sharedStyles = {
+  container: {
+    minHeight: '100vh',
+    backgroundColor: colors.background.secondary,
+    paddingBottom: spacing[24],
+  },
+  card: {
+    backgroundColor: colors.background.primary,
+    borderRadius: borderRadius['2xl'],
+    boxShadow: shadows.sm,
+    border: `1px solid ${colors.gray[100]}`,
+  },
+  btn: {
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  },
+};
 
 // Element input components based on type
 const ElementInput: React.FC<{
@@ -25,17 +46,72 @@ const ElementInput: React.FC<{
 
   const isCompleted = element.completed || element.pointsEarned! > 0;
 
+  const inputStyles = {
+    checkBtn: (completed: boolean) => ({
+      width: '48px',
+      height: '48px',
+      borderRadius: borderRadius.xl,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: completed ? colors.success : colors.gray[100],
+      color: completed ? 'white' : colors.gray[400],
+      border: 'none',
+      cursor: 'pointer',
+      opacity: isLogging ? 0.5 : 1,
+    }),
+    numberInput: {
+      width: '96px',
+      padding: `${spacing[2]} ${spacing[3]}`,
+      borderRadius: borderRadius.xl,
+      textAlign: 'center' as const,
+      border: `2px solid ${isCompleted ? colors.success : colors.gray[200]}`,
+      backgroundColor: isCompleted ? colors.successBg : colors.background.primary,
+      color: colors.text.primary,
+      outline: 'none',
+    },
+    rangeBtn: (active: boolean) => ({
+      width: '40px',
+      height: '40px',
+      borderRadius: borderRadius.xl,
+      fontSize: typography.fontSize.sm,
+      fontWeight: typography.fontWeight.medium,
+      backgroundColor: active ? colors.primary : colors.gray[100],
+      color: active ? 'white' : colors.text.secondary,
+      border: 'none',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+    }),
+    saveBtn: {
+      padding: `${spacing[2]} ${spacing[4]}`,
+      backgroundColor: colors.primary,
+      color: 'white',
+      borderRadius: borderRadius.xl,
+      fontSize: typography.fontSize.sm,
+      fontWeight: typography.fontWeight.medium,
+      border: 'none',
+      cursor: 'pointer',
+      opacity: isLogging ? 0.5 : 1,
+    },
+    textarea: {
+      width: '100%',
+      padding: spacing[4],
+      borderRadius: borderRadius.xl,
+      resize: 'none' as const,
+      border: `2px solid ${isCompleted ? colors.success : colors.gray[200]}`,
+      backgroundColor: isCompleted ? colors.successBg : colors.background.primary,
+      color: colors.text.primary,
+      outline: 'none',
+    },
+  };
+
   switch (element.type) {
     case 'check':
       return (
         <button
           onClick={() => handleLog({ completed: !element.completed })}
           disabled={isLogging || loading}
-          className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
-            element.completed 
-              ? 'bg-green-500 text-white' 
-              : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
-          } ${isLogging ? 'opacity-50' : ''}`}
+          style={inputStyles.checkBtn(element.completed)}
         >
           <span className="material-symbols-outlined">
             {element.completed ? 'check' : 'radio_button_unchecked'}
@@ -46,23 +122,19 @@ const ElementInput: React.FC<{
     case 'number':
     case 'timer':
       return (
-        <div className="flex items-center gap-2">
+        <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2] }}>
           <input
             type="number"
             value={value}
             onChange={(e) => setValue(e.target.value)}
             placeholder={element.goal ? `Goal: ${element.goal}` : '0'}
-            className={`w-24 px-3 py-2 rounded-xl text-center border-2 transition-all ${
-              isCompleted 
-                ? 'border-green-500 bg-green-50 dark:bg-green-900/20' 
-                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'
-            }`}
+            style={inputStyles.numberInput}
           />
-          {element.unit && <span className="text-sm text-slate-500">{element.unit}</span>}
+          {element.unit && <span style={{ fontSize: typography.fontSize.sm, color: colors.text.secondary }}>{element.unit}</span>}
           <button
             onClick={() => handleLog({ value: Number(value) })}
             disabled={isLogging || loading}
-            className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-medium disabled:opacity-50"
+            style={inputStyles.saveBtn}
           >
             {isLogging ? '...' : 'Save'}
           </button>
@@ -73,43 +145,35 @@ const ElementInput: React.FC<{
       const min = element.minValue ?? 0;
       const max = element.maxValue ?? 10;
       return (
-        <div className="flex items-center gap-2 flex-wrap">
+        <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2], flexWrap: 'wrap' }}>
           {Array.from({ length: max - min + 1 }, (_, i) => min + i).map((num) => (
             <button
               key={num}
               onClick={() => handleLog({ value: num })}
               disabled={isLogging || loading}
-              className={`w-10 h-10 rounded-xl text-sm font-medium transition-all ${
-                element.value === num
-                  ? 'bg-primary text-white'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-              }`}
+              style={inputStyles.rangeBtn(element.value === num)}
             >
               {num}
             </button>
           ))}
-          {element.unit && <span className="text-sm text-slate-500 ml-2">{element.unit}</span>}
+          {element.unit && <span style={{ fontSize: typography.fontSize.sm, color: colors.text.secondary, marginLeft: spacing[2] }}>{element.unit}</span>}
         </div>
       );
 
     case 'text':
       return (
-        <div className="flex flex-col gap-2 w-full">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[2], width: '100%' }}>
           <textarea
             value={value}
             onChange={(e) => setValue(e.target.value)}
             placeholder="Enter your note..."
             rows={2}
-            className={`w-full px-4 py-2 rounded-xl border-2 resize-none transition-all ${
-              isCompleted 
-                ? 'border-green-500 bg-green-50 dark:bg-green-900/20' 
-                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'
-            }`}
+            style={inputStyles.textarea}
           />
           <button
             onClick={() => handleLog({ text_value: value })}
             disabled={isLogging || loading || !value}
-            className="self-end px-4 py-2 bg-primary text-white rounded-xl text-sm font-medium disabled:opacity-50"
+            style={{ ...inputStyles.saveBtn, alignSelf: 'flex-end', opacity: isLogging || loading || !value ? 0.5 : 1 }}
           >
             {isLogging ? 'Saving...' : 'Save Note'}
           </button>
@@ -126,38 +190,55 @@ const ProtocolCard: React.FC<{
   protocol: Protocol;
   onClick: () => void;
 }> = ({ protocol, onClick }) => {
+  const cardStyle = {
+    width: '100%',
+    padding: spacing[4],
+    backgroundColor: colors.background.primary,
+    borderRadius: borderRadius['2xl'],
+    boxShadow: shadows.sm,
+    border: `1px solid ${colors.gray[100]}`,
+    textAlign: 'left' as const,
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  };
+
   return (
-    <button
-      onClick={onClick}
-      className="w-full p-4 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 text-left transition-all hover:shadow-md active:scale-[0.98]"
-    >
-      <div className="flex items-start gap-3">
-        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-          <span className="material-symbols-outlined text-primary">
+    <button onClick={onClick} style={cardStyle}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: spacing[3] }}>
+        <div style={{
+          width: '48px',
+          height: '48px',
+          borderRadius: borderRadius.xl,
+          backgroundColor: colors.primaryAlpha(0.1),
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <span className="material-symbols-outlined" style={{ color: colors.primary }}>
             {protocol.icon || 'checklist'}
           </span>
         </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-slate-900 dark:text-white truncate">{protocol.name}</h3>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h3 style={{ fontWeight: typography.fontWeight.bold, color: colors.text.primary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{protocol.name}</h3>
           {protocol.description && (
-            <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5">
+            <p style={{ fontSize: typography.fontSize.sm, color: colors.text.secondary, marginTop: spacing[0.5], display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
               {protocol.description}
             </p>
           )}
-          <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
-            <span className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-sm">task_alt</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: spacing[3], marginTop: spacing[2], fontSize: typography.fontSize.xs, color: colors.gray[400] }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: spacing[1] }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>task_alt</span>
               {protocol.elements.length} elements
             </span>
             {protocol.organizationName && (
-              <span className="flex items-center gap-1">
-                <span className="material-symbols-outlined text-sm">business</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: spacing[1] }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>business</span>
                 {protocol.organizationName}
               </span>
             )}
           </div>
         </div>
-        <span className="material-symbols-outlined text-slate-400">chevron_right</span>
+        <span className="material-symbols-outlined" style={{ color: colors.gray[400] }}>chevron_right</span>
       </div>
     </button>
   );
@@ -192,147 +273,230 @@ const ProtocolDetail: React.FC<{
   const handleLogElement = async (elementId: number, data: any) => {
     try {
       await protocolService.logElement(protocol.id, elementId, { ...data, log_date: date });
-      // Refresh progress
       await fetchProgress();
     } catch (err) {
       console.error('Failed to log element:', err);
     }
   };
 
+  const detailStyles = {
+    container: {
+      minHeight: '100vh',
+      backgroundColor: colors.background.secondary,
+      paddingBottom: spacing[24],
+    },
+    header: {
+      background: `linear-gradient(to bottom right, ${colors.primary}, #9333EA)`,
+      color: 'white',
+      padding: spacing[6],
+      paddingBottom: spacing[24],
+      position: 'relative' as const,
+    },
+    backBtn: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: spacing[2],
+      color: 'rgba(255,255,255,0.8)',
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      marginBottom: spacing[4],
+    },
+    iconBox: {
+      width: '64px',
+      height: '64px',
+      borderRadius: borderRadius['2xl'],
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    stat: {
+      textAlign: 'center' as const,
+    },
+    contentCard: {
+      backgroundColor: colors.background.primary,
+      borderRadius: borderRadius['2xl'],
+      boxShadow: shadows.lg,
+      overflow: 'hidden',
+    },
+    toolbar: {
+      padding: spacing[4],
+      borderBottom: `1px solid ${colors.gray[100]}`,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    leaderboardBtn: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: spacing[1],
+      padding: `${spacing[1.5]} ${spacing[3]}`,
+      backgroundColor: '#FEF3C7',
+      color: '#B45309',
+      borderRadius: borderRadius.lg,
+      fontSize: typography.fontSize.sm,
+      fontWeight: typography.fontWeight.medium,
+      border: 'none',
+      cursor: 'pointer',
+    },
+    progressBar: {
+      padding: spacing[4],
+      backgroundColor: colors.gray[50],
+      borderBottom: `1px solid ${colors.gray[100]}`,
+    },
+    elementCard: {
+      padding: spacing[4],
+      borderBottom: `1px solid ${colors.gray[100]}`,
+    },
+    elementIcon: (completed: boolean) => ({
+      width: '40px',
+      height: '40px',
+      borderRadius: borderRadius.lg,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: completed ? colors.successBg : colors.gray[100],
+      color: completed ? colors.success : colors.gray[400],
+    }),
+    pointsBadge: {
+      padding: `${spacing[1]} ${spacing[2]}`,
+      backgroundColor: colors.successBg,
+      color: colors.success,
+      fontSize: typography.fontSize.xs,
+      fontWeight: typography.fontWeight.medium,
+      borderRadius: borderRadius.lg,
+    },
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-24">
+    <div style={detailStyles.container}>
       {/* Header */}
-      <div className="bg-gradient-to-br from-primary to-purple-600 text-white p-6 pb-24 relative">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-white/80 hover:text-white mb-4"
-        >
+      <div style={detailStyles.header}>
+        <button onClick={onBack} style={detailStyles.backBtn}>
           <span className="material-symbols-outlined">arrow_back</span>
           <span>Back</span>
         </button>
         
-        <div className="flex items-start gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center">
-            <span className="material-symbols-outlined text-3xl">
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: spacing[4] }}>
+          <div style={detailStyles.iconBox}>
+            <span className="material-symbols-outlined" style={{ fontSize: '30px' }}>
               {protocol.icon || 'checklist'}
             </span>
           </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">{protocol.name}</h1>
+          <div style={{ flex: 1 }}>
+            <h1 style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold, margin: 0 }}>{protocol.name}</h1>
             {protocol.description && (
-              <p className="text-white/70 mt-1">{protocol.description}</p>
+              <p style={{ opacity: 0.7, marginTop: spacing[1] }}>{protocol.description}</p>
             )}
           </div>
         </div>
 
         {/* Stats */}
         {progress?.stats && (
-          <div className="grid grid-cols-3 gap-4 mt-6">
-            <div className="text-center">
-              <div className="text-2xl font-bold">{progress.stats.totalPoints}</div>
-              <div className="text-xs text-white/60">Total Points</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: spacing[4], marginTop: spacing[6] }}>
+            <div style={detailStyles.stat}>
+              <div style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold }}>{progress.stats.totalPoints}</div>
+              <div style={{ fontSize: typography.fontSize.xs, opacity: 0.6 }}>Total Points</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">{progress.stats.currentStreak}</div>
-              <div className="text-xs text-white/60">Day Streak</div>
+            <div style={detailStyles.stat}>
+              <div style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold }}>{progress.stats.currentStreak}</div>
+              <div style={{ fontSize: typography.fontSize.xs, opacity: 0.6 }}>Day Streak</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">{progress.stats.totalCompletions}</div>
-              <div className="text-xs text-white/60">Completions</div>
+            <div style={detailStyles.stat}>
+              <div style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold }}>{progress.stats.totalCompletions}</div>
+              <div style={{ fontSize: typography.fontSize.xs, opacity: 0.6 }}>Completions</div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Content Card - overlapping header */}
-      <div className="px-4 -mt-16 relative z-10">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden">
-          {/* Date selector & Leaderboard button */}
-          <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-slate-400">calendar_today</span>
+      {/* Content Card */}
+      <div style={{ padding: `0 ${spacing[4]}`, marginTop: '-64px', position: 'relative', zIndex: 10 }}>
+        <div style={detailStyles.contentCard}>
+          {/* Date selector & Leaderboard */}
+          <div style={detailStyles.toolbar}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2] }}>
+              <span className="material-symbols-outlined" style={{ color: colors.gray[400] }}>calendar_today</span>
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="bg-transparent text-sm font-medium"
+                style={{ background: 'transparent', fontSize: typography.fontSize.sm, fontWeight: typography.fontWeight.medium, border: 'none', color: colors.text.primary }}
               />
             </div>
-            <button
-              onClick={onShowLeaderboard}
-              className="flex items-center gap-1 px-3 py-1.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-lg text-sm font-medium"
-            >
-              <span className="material-symbols-outlined text-sm">leaderboard</span>
+            <button onClick={onShowLeaderboard} style={detailStyles.leaderboardBtn}>
+              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>leaderboard</span>
               Leaderboard
             </button>
           </div>
 
           {/* Today's Progress */}
           {progress && (
-            <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+            <div style={detailStyles.progressBar}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing[2] }}>
+                <span style={{ fontSize: typography.fontSize.sm, fontWeight: typography.fontWeight.medium, color: colors.text.secondary }}>
                   Today's Progress
                 </span>
-                <span className="text-sm font-bold text-primary">
+                <span style={{ fontSize: typography.fontSize.sm, fontWeight: typography.fontWeight.bold, color: colors.primary }}>
                   +{progress.todayProgress.pointsEarned} pts
                 </span>
               </div>
-              <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+              <div style={{ height: '8px', backgroundColor: colors.gray[200], borderRadius: borderRadius.full, overflow: 'hidden' }}>
                 <div 
-                  className="h-full bg-gradient-to-r from-primary to-purple-500 rounded-full transition-all duration-500"
-                  style={{ width: `${progress.todayProgress.percentage}%` }}
+                  style={{ 
+                    height: '100%', 
+                    background: `linear-gradient(to right, ${colors.primary}, #9333EA)`, 
+                    borderRadius: borderRadius.full,
+                    transition: 'width 0.5s ease',
+                    width: `${progress.todayProgress.percentage}%`
+                  }}
                 />
               </div>
-              <div className="mt-1 text-xs text-slate-500 text-right">
+              <div style={{ marginTop: spacing[1], fontSize: typography.fontSize.xs, color: colors.text.secondary, textAlign: 'right' }}>
                 {progress.todayProgress.completed}/{progress.todayProgress.total} completed
               </div>
             </div>
           )}
 
           {/* Elements */}
-          <div className="divide-y divide-slate-100 dark:divide-slate-700">
+          <div>
             {loading ? (
-              // Loading skeleton
               Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="p-4 animate-pulse">
-                  <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-xl" />
-                    <div className="flex-1">
-                      <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-2/3" />
-                      <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/2 mt-2" />
+                <div key={i} style={{ ...detailStyles.elementCard, opacity: 0.5 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: spacing[3] }}>
+                    <div style={{ width: '48px', height: '48px', backgroundColor: colors.gray[200], borderRadius: borderRadius.xl }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ height: '16px', backgroundColor: colors.gray[200], borderRadius: borderRadius.md, width: '66%' }} />
+                      <div style={{ height: '12px', backgroundColor: colors.gray[200], borderRadius: borderRadius.md, width: '50%', marginTop: spacing[2] }} />
                     </div>
                   </div>
                 </div>
               ))
             ) : progress?.elements.map((element) => (
-              <div key={element.id} className="p-4">
-                <div className="flex items-start gap-3 mb-3">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    element.pointsEarned! > 0 
-                      ? 'bg-green-100 dark:bg-green-900/30 text-green-600' 
-                      : 'bg-slate-100 dark:bg-slate-700 text-slate-400'
-                  }`}>
-                    <span className="material-symbols-outlined text-xl">
+              <div key={element.id} style={detailStyles.elementCard}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: spacing[3], marginBottom: spacing[3] }}>
+                  <div style={detailStyles.elementIcon(element.pointsEarned! > 0)}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
                       {element.type === 'check' ? 'check_circle' : 
                        element.type === 'number' ? 'pin' :
                        element.type === 'range' ? 'tune' :
                        element.type === 'timer' ? 'timer' : 'edit_note'}
                     </span>
                   </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-slate-900 dark:text-white">
+                  <div style={{ flex: 1 }}>
+                    <h4 style={{ fontWeight: typography.fontWeight.medium, color: colors.text.primary, margin: 0 }}>
                       {element.title}
-                      {element.isRequired && <span className="text-red-500 ml-1">*</span>}
+                      {element.isRequired && <span style={{ color: colors.error, marginLeft: spacing[1] }}>*</span>}
                     </h4>
                     {element.description && (
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                      <p style={{ fontSize: typography.fontSize.sm, color: colors.text.secondary, marginTop: spacing[0.5] }}>
                         {element.description}
                       </p>
                     )}
-                    <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
-                      <span className="flex items-center gap-1">
-                        <span className="material-symbols-outlined text-sm">star</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2], marginTop: spacing[1], fontSize: typography.fontSize.xs, color: colors.gray[400] }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: spacing[1] }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>star</span>
                         {element.points} pts
                       </span>
                       {element.goal && (
@@ -341,12 +505,10 @@ const ProtocolDetail: React.FC<{
                     </div>
                   </div>
                   {element.pointsEarned! > 0 && (
-                    <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs font-medium rounded-lg">
-                      +{element.pointsEarned}
-                    </span>
+                    <span style={detailStyles.pointsBadge}>+{element.pointsEarned}</span>
                   )}
                 </div>
-                <div className="ml-13 pl-10">
+                <div style={{ paddingLeft: '52px' }}>
                   <ElementInput element={element} onLog={handleLogElement} loading={loading} />
                 </div>
               </div>
@@ -394,102 +556,159 @@ const LeaderboardView: React.FC<{
   }, [protocolId, organizationId, period]);
 
   const getRankStyle = (rank: number) => {
-    if (rank === 1) return 'bg-amber-400 text-amber-900';
-    if (rank === 2) return 'bg-slate-300 text-slate-700';
-    if (rank === 3) return 'bg-amber-600 text-amber-100';
-    return 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400';
+    if (rank === 1) return { backgroundColor: '#FBBF24', color: '#78350F' };
+    if (rank === 2) return { backgroundColor: '#CBD5E1', color: '#334155' };
+    if (rank === 3) return { backgroundColor: '#D97706', color: '#FEF3C7' };
+    return { backgroundColor: colors.gray[100], color: colors.text.secondary };
+  };
+
+  const lbStyles = {
+    container: {
+      minHeight: '100vh',
+      backgroundColor: colors.background.secondary,
+      paddingBottom: spacing[24],
+    },
+    header: {
+      background: 'linear-gradient(to bottom right, #FBBF24, #F97316)',
+      color: 'white',
+      padding: spacing[6],
+    },
+    backBtn: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: spacing[2],
+      color: 'rgba(255,255,255,0.8)',
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      marginBottom: spacing[4],
+    },
+    periodBtn: (active: boolean) => ({
+      padding: `${spacing[1.5]} ${spacing[4]}`,
+      borderRadius: borderRadius.full,
+      fontSize: typography.fontSize.sm,
+      fontWeight: typography.fontWeight.medium,
+      whiteSpace: 'nowrap' as const,
+      backgroundColor: active ? 'white' : 'rgba(255,255,255,0.2)',
+      color: active ? '#D97706' : 'white',
+      border: 'none',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+    }),
+    myRankCard: {
+      margin: `${spacing[4]} ${spacing[4]} 0`,
+      padding: spacing[4],
+      backgroundColor: colors.primaryAlpha(0.1),
+      borderRadius: borderRadius.xl,
+      border: `1px solid ${colors.primaryAlpha(0.2)}`,
+    },
+    entryCard: (isCurrentUser: boolean) => ({
+      padding: spacing[4],
+      borderRadius: borderRadius.xl,
+      backgroundColor: isCurrentUser ? colors.primaryAlpha(0.1) : colors.background.primary,
+      border: isCurrentUser ? `2px solid ${colors.primary}` : 'none',
+      marginBottom: spacing[2],
+    }),
+    rankBadge: (style: { backgroundColor: string; color: string }) => ({
+      width: '40px',
+      height: '40px',
+      borderRadius: borderRadius.full,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontWeight: typography.fontWeight.bold,
+      fontSize: typography.fontSize.sm,
+      ...style,
+    }),
+    avatar: {
+      width: '40px',
+      height: '40px',
+      borderRadius: borderRadius.full,
+      objectFit: 'cover' as const,
+    },
+    avatarPlaceholder: {
+      width: '40px',
+      height: '40px',
+      borderRadius: borderRadius.full,
+      backgroundColor: colors.gray[200],
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-24">
+    <div style={lbStyles.container}>
       {/* Header */}
-      <div className="bg-gradient-to-br from-amber-400 to-orange-500 text-white p-6">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-white/80 hover:text-white mb-4"
-        >
+      <div style={lbStyles.header}>
+        <button onClick={onBack} style={lbStyles.backBtn}>
           <span className="material-symbols-outlined">arrow_back</span>
           <span>Back</span>
         </button>
         
-        <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined text-4xl">leaderboard</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: spacing[3] }}>
+          <span className="material-symbols-outlined" style={{ fontSize: '36px' }}>leaderboard</span>
           <div>
-            <h1 className="text-2xl font-bold">{title}</h1>
-            <p className="text-white/70">Leaderboard</p>
+            <h1 style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold, margin: 0 }}>{title}</h1>
+            <p style={{ opacity: 0.7, margin: 0 }}>Leaderboard</p>
           </div>
         </div>
 
         {/* Period selector */}
-        <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
+        <div style={{ display: 'flex', gap: spacing[2], marginTop: spacing[4], overflowX: 'auto', paddingBottom: spacing[2] }}>
           {(['all', 'monthly', 'weekly', 'daily'] as const).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                period === p 
-                  ? 'bg-white text-amber-600' 
-                  : 'bg-white/20 text-white hover:bg-white/30'
-              }`}
-            >
+            <button key={p} onClick={() => setPeriod(p)} style={lbStyles.periodBtn(period === p)}>
               {p === 'all' ? 'All Time' : p.charAt(0).toUpperCase() + p.slice(1)}
             </button>
           ))}
         </div>
       </div>
 
-      {/* My Rank (if hidden) */}
+      {/* My Rank */}
       {myRank && (
-        <div className="mx-4 mt-4 p-4 bg-primary/10 rounded-xl border border-primary/20">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">
+        <div style={lbStyles.myRankCard}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: spacing[3] }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: borderRadius.full, backgroundColor: colors.primary, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: typography.fontWeight.bold }}>
                 #{myRank.rank}
               </div>
               <div>
-                <div className="font-medium text-slate-900 dark:text-white">Your Rank</div>
-                <div className="text-xs text-slate-500">(Hidden from others)</div>
+                <div style={{ fontWeight: typography.fontWeight.medium, color: colors.text.primary }}>Your Rank</div>
+                <div style={{ fontSize: typography.fontSize.xs, color: colors.text.secondary }}>(Hidden from others)</div>
               </div>
             </div>
-            <div className="text-right">
-              <div className="font-bold text-primary">{myRank.totalPoints.toLocaleString()}</div>
-              <div className="text-xs text-slate-500">points</div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontWeight: typography.fontWeight.bold, color: colors.primary }}>{myRank.totalPoints.toLocaleString()}</div>
+              <div style={{ fontSize: typography.fontSize.xs, color: colors.text.secondary }}>points</div>
             </div>
           </div>
         </div>
       )}
 
       {/* Leaderboard list */}
-      <div className="p-4 space-y-2">
+      <div style={{ padding: spacing[4] }}>
         {loading ? (
           Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="p-4 bg-white dark:bg-slate-800 rounded-xl animate-pulse">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-full" />
-                <div className="flex-1">
-                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3" />
+            <div key={i} style={{ padding: spacing[4], backgroundColor: colors.background.primary, borderRadius: borderRadius.xl, marginBottom: spacing[2], opacity: 0.5 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: spacing[3] }}>
+                <div style={{ width: '40px', height: '40px', backgroundColor: colors.gray[200], borderRadius: borderRadius.full }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ height: '16px', backgroundColor: colors.gray[200], borderRadius: borderRadius.md, width: '33%' }} />
                 </div>
-                <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-16" />
+                <div style={{ height: '20px', backgroundColor: colors.gray[200], borderRadius: borderRadius.md, width: '64px' }} />
               </div>
             </div>
           ))
         ) : leaderboard.length === 0 ? (
-          <div className="text-center py-12 text-slate-500">
-            <span className="material-symbols-outlined text-4xl mb-2">emoji_events</span>
+          <div style={{ textAlign: 'center', padding: `${spacing[12]} 0`, color: colors.text.secondary }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '36px', marginBottom: spacing[2], display: 'block' }}>emoji_events</span>
             <p>No rankings yet. Be the first!</p>
           </div>
         ) : (
           leaderboard.map((entry) => (
-            <div 
-              key={entry.userId}
-              className={`p-4 rounded-xl transition-all ${
-                entry.isCurrentUser 
-                  ? 'bg-primary/10 border-2 border-primary' 
-                  : 'bg-white dark:bg-slate-800'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${getRankStyle(entry.rank)}`}>
+            <div key={entry.userId} style={lbStyles.entryCard(entry.isCurrentUser)}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: spacing[3] }}>
+                <div style={lbStyles.rankBadge(getRankStyle(entry.rank))}>
                   {entry.rank <= 3 ? (
                     <span className="material-symbols-outlined">
                       {entry.rank === 1 ? 'emoji_events' : 'military_tech'}
@@ -500,36 +719,32 @@ const LeaderboardView: React.FC<{
                 </div>
                 
                 {entry.avatarUrl ? (
-                  <img 
-                    src={entry.avatarUrl} 
-                    alt={entry.name}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
+                  <img src={entry.avatarUrl} alt={entry.name} style={lbStyles.avatar} />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-slate-400">person</span>
+                  <div style={lbStyles.avatarPlaceholder}>
+                    <span className="material-symbols-outlined" style={{ color: colors.gray[400] }}>person</span>
                   </div>
                 )}
                 
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-slate-900 dark:text-white truncate">
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: typography.fontWeight.medium, color: colors.text.primary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {entry.name}
                     {entry.isCurrentUser && (
-                      <span className="ml-2 px-2 py-0.5 bg-primary text-white text-xs rounded-full">
+                      <span style={{ marginLeft: spacing[2], padding: `${spacing[0.5]} ${spacing[2]}`, backgroundColor: colors.primary, color: 'white', fontSize: typography.fontSize.xs, borderRadius: borderRadius.full }}>
                         You
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-slate-500">
+                  <div style={{ fontSize: typography.fontSize.xs, color: colors.text.secondary }}>
                     {entry.activeDays} active days
                   </div>
                 </div>
                 
-                <div className="text-right">
-                  <div className="font-bold text-slate-900 dark:text-white">
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontWeight: typography.fontWeight.bold, color: colors.text.primary }}>
                     {entry.totalPoints.toLocaleString()}
                   </div>
-                  <div className="text-xs text-slate-500">points</div>
+                  <div style={{ fontSize: typography.fontSize.xs, color: colors.text.secondary }}>points</div>
                 </div>
               </div>
             </div>
@@ -561,6 +776,45 @@ const ProtocolView: React.FC<ProtocolViewProps> = ({ onBack }) => {
     fetchProtocols();
   }, []);
 
+  const mainStyles = {
+    container: {
+      minHeight: '100vh',
+      backgroundColor: colors.background.secondary,
+      paddingBottom: spacing[24],
+    },
+    header: {
+      backgroundColor: colors.background.primary,
+      padding: spacing[6],
+      boxShadow: shadows.sm,
+    },
+    backBtn: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: spacing[2],
+      color: colors.text.secondary,
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      marginBottom: spacing[4],
+    },
+    list: {
+      padding: spacing[4],
+      display: 'flex',
+      flexDirection: 'column' as const,
+      gap: spacing[3],
+    },
+    skeleton: {
+      padding: spacing[4],
+      backgroundColor: colors.background.primary,
+      borderRadius: borderRadius['2xl'],
+      opacity: 0.5,
+    },
+    emptyState: {
+      textAlign: 'center' as const,
+      padding: `${spacing[12]} 0`,
+    },
+  };
+
   if (showLeaderboard && selectedProtocol) {
     return (
       <LeaderboardView
@@ -582,44 +836,41 @@ const ProtocolView: React.FC<ProtocolViewProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-24">
+    <div style={mainStyles.container}>
       {/* Header */}
-      <div className="bg-white dark:bg-slate-800 p-6 shadow-sm">
+      <div style={mainStyles.header}>
         {onBack && (
-          <button
-            onClick={onBack}
-            className="flex items-center gap-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 mb-4"
-          >
+          <button onClick={onBack} style={mainStyles.backBtn}>
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
         )}
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">My Protocols</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">
+        <h1 style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold, color: colors.text.primary, margin: 0 }}>My Protocols</h1>
+        <p style={{ color: colors.text.secondary, marginTop: spacing[1] }}>
           Complete daily actions to earn points
         </p>
       </div>
 
       {/* Protocol List */}
-      <div className="p-4 space-y-3">
+      <div style={mainStyles.list}>
         {loading ? (
           Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="p-4 bg-white dark:bg-slate-800 rounded-2xl animate-pulse">
-              <div className="flex items-start gap-3">
-                <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-xl" />
-                <div className="flex-1">
-                  <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-1/2" />
-                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-2/3 mt-2" />
+            <div key={i} style={mainStyles.skeleton}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: spacing[3] }}>
+                <div style={{ width: '48px', height: '48px', backgroundColor: colors.gray[200], borderRadius: borderRadius.xl }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ height: '20px', backgroundColor: colors.gray[200], borderRadius: borderRadius.md, width: '50%' }} />
+                  <div style={{ height: '16px', backgroundColor: colors.gray[200], borderRadius: borderRadius.md, width: '66%', marginTop: spacing[2] }} />
                 </div>
               </div>
             </div>
           ))
         ) : protocols.length === 0 ? (
-          <div className="text-center py-12">
-            <span className="material-symbols-outlined text-6xl text-slate-300 dark:text-slate-600 mb-4">
+          <div style={mainStyles.emptyState}>
+            <span className="material-symbols-outlined" style={{ fontSize: '60px', color: colors.gray[300], marginBottom: spacing[4], display: 'block' }}>
               checklist
             </span>
-            <h3 className="font-medium text-slate-600 dark:text-slate-400">No protocols assigned</h3>
-            <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+            <h3 style={{ fontWeight: typography.fontWeight.medium, color: colors.text.secondary }}>No protocols assigned</h3>
+            <p style={{ fontSize: typography.fontSize.sm, color: colors.gray[400], marginTop: spacing[1] }}>
               Ask your organization manager to assign you a protocol
             </p>
           </div>

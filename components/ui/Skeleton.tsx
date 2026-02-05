@@ -1,4 +1,5 @@
 import React from 'react';
+import { colors, spacing, borderRadius } from '../../theme/designSystem';
 
 interface SkeletonProps {
   className?: string;
@@ -15,28 +16,35 @@ const Skeleton: React.FC<SkeletonProps> = ({
   height,
   count = 1
 }) => {
-  const getVariantClasses = () => {
+  const getBaseStyle = (): React.CSSProperties => {
+    const base: React.CSSProperties = {
+      backgroundColor: colors.gray[200],
+      animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+    };
+
     switch (variant) {
       case 'text':
-        return 'h-4 rounded';
+        return { ...base, height: '16px', borderRadius: borderRadius.md };
       case 'circular':
-        return 'rounded-full aspect-square';
+        return { ...base, borderRadius: borderRadius.full, aspectRatio: '1' };
       case 'card':
-        return 'rounded-3xl';
+        return { ...base, borderRadius: borderRadius['3xl'] };
       case 'rectangular':
       default:
-        return 'rounded-2xl';
+        return { ...base, borderRadius: borderRadius['2xl'] };
     }
   };
 
-  const style: React.CSSProperties = {};
-  if (width) style.width = typeof width === 'number' ? `${width}px` : width;
-  if (height) style.height = typeof height === 'number' ? `${height}px` : height;
+  const style: React.CSSProperties = {
+    ...getBaseStyle(),
+    ...(width ? { width: typeof width === 'number' ? `${width}px` : width } : {}),
+    ...(height ? { height: typeof height === 'number' ? `${height}px` : height } : {}),
+  };
 
   const items = Array.from({ length: count }, (_, i) => (
     <div
       key={i}
-      className={`bg-slate-200 dark:bg-slate-700 animate-pulse ${getVariantClasses()} ${className}`}
+      className={className}
       style={style}
       role="progressbar"
       aria-label="Loading..."
@@ -48,53 +56,79 @@ const Skeleton: React.FC<SkeletonProps> = ({
 };
 
 // Pre-built skeleton components for common use cases
-export const TaskCardSkeleton: React.FC = () => (
-  <div className="bg-white dark:bg-card-dark p-5 rounded-2xl border border-slate-100 dark:border-slate-800">
-    <div className="flex items-center gap-4 mb-3">
-      <Skeleton variant="rectangular" className="w-12 h-12 rounded-2xl" />
-      <div className="flex-1 space-y-2">
-        <Skeleton variant="text" className="w-3/4 h-5" />
-        <Skeleton variant="text" className="w-1/2 h-3" />
-      </div>
-      <Skeleton variant="rectangular" className="w-12 h-6 rounded-full" />
-    </div>
-    <div className="flex items-center justify-between pt-3 border-t border-slate-50 dark:border-slate-800">
-      <Skeleton variant="text" className="w-24 h-4" />
-      <div className="flex gap-1">
-        <Skeleton className="w-4 h-1 rounded-full" />
-        <Skeleton className="w-4 h-1 rounded-full" />
-        <Skeleton className="w-4 h-1 rounded-full" />
-        <Skeleton className="w-4 h-1 rounded-full" />
-      </div>
-    </div>
-  </div>
-);
+export const TaskCardSkeleton: React.FC = () => {
+  const cardStyle = {
+    backgroundColor: colors.background.primary,
+    padding: spacing[5],
+    borderRadius: borderRadius['2xl'],
+    border: `1px solid ${colors.gray[100]}`,
+  };
 
-export const ProgressCardSkeleton: React.FC = () => (
-  <div className="min-w-[280px] h-40 bg-slate-200 dark:bg-slate-700 rounded-3xl animate-pulse" />
-);
-
-export const LeaderboardSkeleton: React.FC = () => (
-  <div className="bg-white dark:bg-card-dark rounded-3xl border border-slate-100 dark:border-slate-800 divide-y divide-slate-50 dark:divide-slate-800 overflow-hidden">
-    {[1, 2, 3, 4, 5].map((i) => (
-      <div key={i} className="p-4 flex items-center gap-4">
-        <Skeleton variant="circular" className="w-8 h-8" />
-        <Skeleton variant="circular" className="w-10 h-10" />
-        <div className="flex-1 space-y-2">
-          <Skeleton variant="text" className="w-24 h-4" />
-          <Skeleton variant="text" className="w-16 h-3" />
+  return (
+    <div style={cardStyle}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4], marginBottom: spacing[3] }}>
+        <Skeleton variant="rectangular" width={48} height={48} />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: spacing[2] }}>
+          <Skeleton variant="text" width="75%" height={20} />
+          <Skeleton variant="text" width="50%" height={12} />
+        </div>
+        <Skeleton variant="rectangular" width={48} height={24} />
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: spacing[3], borderTop: `1px solid ${colors.gray[50]}` }}>
+        <Skeleton variant="text" width={96} height={16} />
+        <div style={{ display: 'flex', gap: spacing[1] }}>
+          <Skeleton width={16} height={4} />
+          <Skeleton width={16} height={4} />
+          <Skeleton width={16} height={4} />
+          <Skeleton width={16} height={4} />
         </div>
       </div>
-    ))}
-  </div>
+    </div>
+  );
+};
+
+export const ProgressCardSkeleton: React.FC = () => (
+  <div style={{ minWidth: '280px', height: '160px', backgroundColor: colors.gray[200], borderRadius: borderRadius['3xl'] }} />
 );
 
+export const LeaderboardSkeleton: React.FC = () => {
+  const containerStyle = {
+    backgroundColor: colors.background.primary,
+    borderRadius: borderRadius['3xl'],
+    border: `1px solid ${colors.gray[100]}`,
+    overflow: 'hidden' as const,
+  };
+
+  const itemStyle = {
+    padding: spacing[4],
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing[4],
+    borderBottom: `1px solid ${colors.gray[50]}`,
+  };
+
+  return (
+    <div style={containerStyle}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div key={i} style={{ ...itemStyle, borderBottom: i < 5 ? itemStyle.borderBottom : 'none' }}>
+          <Skeleton variant="circular" width={32} height={32} />
+          <Skeleton variant="circular" width={40} height={40} />
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: spacing[2] }}>
+            <Skeleton variant="text" width={96} height={16} />
+            <Skeleton variant="text" width={64} height={12} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export const FeedItemSkeleton: React.FC = () => (
-  <div className="flex gap-4 p-4 rounded-3xl bg-slate-50 dark:bg-slate-900/50">
-    <Skeleton variant="circular" className="w-10 h-10" />
-    <div className="flex-1 space-y-2">
-      <Skeleton variant="text" className="w-full h-4" />
-      <Skeleton variant="text" className="w-16 h-3" />
+  <div style={{ display: 'flex', gap: spacing[4], padding: spacing[4], borderRadius: borderRadius['3xl'], backgroundColor: colors.gray[50] }}>
+    <Skeleton variant="circular" width={40} height={40} />
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: spacing[2] }}>
+      <Skeleton variant="text" width="100%" height={16} />
+      <Skeleton variant="text" width={64} height={12} />
     </div>
   </div>
 );

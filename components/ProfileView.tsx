@@ -5,6 +5,7 @@ import { useTheme } from '../context/ThemeContext';
 import { userService, challengeService } from '../services';
 import type { UserProfile } from '../services';
 import Skeleton from './ui/Skeleton';
+import { colors, spacing, borderRadius, shadows, typography } from '../theme/designSystem';
 import { 
   ConfirmModal, 
   AvatarUpload, 
@@ -77,11 +78,11 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: propProfile, onLogou
   const [showHelpCenter, setShowHelpCenter] = useState(false);
 
   const settings = [
-    { icon: 'person_outline', label: 'Edit Profile & Privacy', color: 'text-blue-500', action: () => setShowSettings(true) },
-    { icon: 'notifications_active', label: 'Notifications', color: 'text-purple-500', action: () => setShowNotificationSettings(true) },
-    { icon: 'dark_mode', label: 'Appearance', color: 'text-orange-500', action: () => setShowAppearanceSettings(true) },
-    { icon: 'security', label: 'Security & Account', color: 'text-green-500', action: () => setShowSecuritySettings(true) },
-    { icon: 'help_outline', label: 'Help Center', color: 'text-slate-500', action: () => setShowHelpCenter(true) },
+    { icon: 'person_outline', label: 'Edit Profile & Privacy', color: colors.blue[500], action: () => setShowSettings(true) },
+    { icon: 'notifications_active', label: 'Notifications', color: colors.purple[500], action: () => setShowNotificationSettings(true) },
+    { icon: 'dark_mode', label: 'Appearance', color: colors.orange[500], action: () => setShowAppearanceSettings(true) },
+    { icon: 'security', label: 'Security & Account', color: colors.green[500], action: () => setShowSecuritySettings(true) },
+    { icon: 'help_outline', label: 'Help Center', color: colors.gray[500], action: () => setShowHelpCenter(true) },
   ];
 
   if (showSettings && profile) {
@@ -134,85 +135,211 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: propProfile, onLogou
   const displayBio = profile?.bio || 'Habit Builder';
   const avatarUrl = profile?.avatarUrl || profile?.avatar || user?.avatar || user?.image || `https://i.pravatar.cc/200?u=${user?.id || 'default'}`;
 
+  // Styles using design system
+  const styles = {
+    container: {
+      padding: `0 ${spacing[5]}`,
+      paddingBottom: spacing[10],
+    } as React.CSSProperties,
+    profileSection: {
+      display: 'flex',
+      flexDirection: 'column' as const,
+      alignItems: 'center',
+      paddingTop: spacing[4],
+    } as React.CSSProperties,
+    avatarContainer: {
+      position: 'relative' as const,
+      marginBottom: spacing[4],
+    } as React.CSSProperties,
+    avatar: {
+      width: '112px',
+      height: '112px',
+      borderRadius: borderRadius.full,
+      border: `4px solid ${colors.white}`,
+      boxShadow: shadows.xl,
+      overflow: 'hidden',
+    } as React.CSSProperties,
+    editAvatarBtn: {
+      position: 'absolute' as const,
+      bottom: '4px',
+      right: '0',
+      width: '32px',
+      height: '32px',
+      backgroundColor: colors.primary,
+      color: colors.white,
+      borderRadius: borderRadius.full,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      border: `4px solid ${colors.white}`,
+      boxShadow: shadows.lg,
+      cursor: 'pointer',
+    } as React.CSSProperties,
+    name: {
+      fontSize: typography.fontSize['3xl'],
+      fontWeight: typography.fontWeight.black,
+      color: colors.text.primary,
+      margin: 0,
+    } as React.CSSProperties,
+    bio: {
+      fontSize: typography.fontSize.md,
+      fontWeight: typography.fontWeight.medium,
+      color: colors.text.secondary,
+      margin: `${spacing[1]} 0 0 0`,
+    } as React.CSSProperties,
+    email: {
+      fontSize: typography.fontSize.sm,
+      color: colors.gray[500],
+      margin: `${spacing[1]} 0 0 0`,
+    } as React.CSSProperties,
+    statsGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(3, 1fr)',
+      gap: spacing[4],
+      marginTop: spacing[6],
+    } as React.CSSProperties,
+    statCard: {
+      backgroundColor: colors.white,
+      padding: spacing[4],
+      borderRadius: borderRadius['3xl'],
+      textAlign: 'center' as const,
+      border: `1px solid ${colors.gray[100]}`,
+      boxShadow: shadows.sm,
+    } as React.CSSProperties,
+    menuItem: {
+      width: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: spacing[4],
+      backgroundColor: colors.gray[50],
+      borderRadius: borderRadius['2xl'],
+      border: `1px solid ${colors.gray[100]}`,
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+    } as React.CSSProperties,
+    logoutBtn: {
+      width: '100%',
+      padding: spacing[4],
+      borderRadius: borderRadius['2xl'],
+      backgroundColor: colors.errorBg,
+      color: colors.error,
+      fontWeight: typography.fontWeight.bold,
+      fontSize: typography.fontSize.md,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing[2],
+      border: 'none',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+    } as React.CSSProperties,
+  };
+
   return (
-    <div className="px-6 space-y-8 animate-in slide-in-from-bottom-4 duration-500 pb-10">
-      <div className="flex flex-col items-center">
-        <div className="relative">
-          <div className="w-28 h-28 rounded-full border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden mb-4">
+    <div style={styles.container}>
+      {/* Profile Header */}
+      <div style={styles.profileSection}>
+        <div style={styles.avatarContainer}>
+          <div style={styles.avatar}>
             <img 
               src={avatarUrl} 
               alt={`${displayName}'s profile picture`}
-              className="w-full h-full object-cover"
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               onError={(e) => {
                 (e.target as HTMLImageElement).src = 'https://picsum.photos/seed/user/200/200';
               }}
             />
           </div>
           <button 
-            className="absolute bottom-4 right-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center border-4 border-white dark:border-slate-800 shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            style={styles.editAvatarBtn}
             aria-label="Edit profile picture"
             onClick={() => setShowSettings(true)}
           >
-            <span className="material-symbols-outlined text-sm" aria-hidden="true">edit</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '14px' }} aria-hidden="true">edit</span>
           </button>
         </div>
-        <h2 className="text-2xl font-black text-slate-900 dark:text-white">{displayName}</h2>
-        {/* Fixed contrast: text-slate-400 -> text-slate-600 */}
-        <p className="text-slate-600 dark:text-slate-400 font-medium text-sm">{displayBio}</p>
+        <h2 style={styles.name}>{displayName}</h2>
+        <p style={styles.bio}>{displayBio}</p>
         {user?.email && (
-          <p className="text-slate-500 dark:text-slate-500 text-xs mt-1">{user.email}</p>
+          <p style={styles.email}>{user.email}</p>
         )}
       </div>
 
-      <div className="grid grid-cols-3 gap-4" role="region" aria-label="Profile statistics">
+      {/* Stats Grid */}
+      <div style={styles.statsGrid} role="region" aria-label="Profile statistics">
         {isLoading ? (
           <>
-            <Skeleton variant="card" className="h-24" />
-            <Skeleton variant="card" className="h-24" />
-            <Skeleton variant="card" className="h-24" />
+            <Skeleton variant="card" height="96px" />
+            <Skeleton variant="card" height="96px" />
+            <Skeleton variant="card" height="96px" />
           </>
         ) : (
           <>
-            <div className="bg-white dark:bg-card-dark p-4 rounded-3xl text-center border border-slate-100 dark:border-slate-800">
-              <span className="block text-2xl font-black text-orange-500">{profile?.streakCount || 0}</span>
-              {/* Fixed contrast */}
-              <span className="text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400">Day Streak</span>
+            <div style={styles.statCard}>
+              <span style={{ display: 'block', fontSize: typography.fontSize['3xl'], fontWeight: typography.fontWeight.black, color: '#F97316' }}>
+                {profile?.streakCount || 0}
+              </span>
+              <span style={{ fontSize: typography.fontSize.xs, fontWeight: typography.fontWeight.bold, textTransform: 'uppercase', color: colors.text.secondary }}>
+                Day Streak
+              </span>
             </div>
-            <div className="bg-white dark:bg-card-dark p-4 rounded-3xl text-center border border-slate-100 dark:border-slate-800">
-              <span className="block text-2xl font-black text-primary">{(profile?.totalPoints || 0).toLocaleString()}</span>
-              <span className="text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400">Points</span>
+            <div style={styles.statCard}>
+              <span style={{ display: 'block', fontSize: typography.fontSize['3xl'], fontWeight: typography.fontWeight.black, color: colors.primary }}>
+                {(profile?.totalPoints || 0).toLocaleString()}
+              </span>
+              <span style={{ fontSize: typography.fontSize.xs, fontWeight: typography.fontWeight.bold, textTransform: 'uppercase', color: colors.text.secondary }}>
+                Points
+              </span>
             </div>
-            <div className="bg-white dark:bg-card-dark p-4 rounded-3xl text-center border border-slate-100 dark:border-slate-800">
-              <span className="block text-2xl font-black text-green-500">{stats.activeChallenges}</span>
-              <span className="text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400">Challenges</span>
+            <div style={styles.statCard}>
+              <span style={{ display: 'block', fontSize: typography.fontSize['3xl'], fontWeight: typography.fontWeight.black, color: colors.success }}>
+                {stats.activeChallenges}
+              </span>
+              <span style={{ fontSize: typography.fontSize.xs, fontWeight: typography.fontWeight.bold, textTransform: 'uppercase', color: colors.text.secondary }}>
+                Challenges
+              </span>
             </div>
           </>
         )}
       </div>
 
-      <nav className="space-y-2" aria-label="Settings menu">
+      {/* Settings Menu */}
+      <nav style={{ marginTop: spacing[6], display: 'flex', flexDirection: 'column', gap: spacing[2] }} aria-label="Settings menu">
         {settings.map((item, i) => (
           <button 
             key={i} 
             onClick={item.action}
-            className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset"
+            style={styles.menuItem}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = colors.gray[100];
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = colors.gray[50];
+            }}
             aria-label={item.label}
           >
-            <div className="flex items-center gap-4">
-              <span className={`material-symbols-outlined ${item.color}`} aria-hidden="true">{item.icon}</span>
-              <span className="font-bold text-sm text-slate-900 dark:text-white">{item.label}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4] }}>
+              <span className="material-symbols-outlined" style={{ color: item.color }} aria-hidden="true">{item.icon}</span>
+              <span style={{ fontWeight: typography.fontWeight.bold, fontSize: typography.fontSize.md, color: colors.text.primary }}>{item.label}</span>
             </div>
-            {/* Right chevron for better tappable indication */}
-            <span className="material-symbols-outlined text-slate-400" aria-hidden="true">chevron_right</span>
+            <span className="material-symbols-outlined" style={{ color: colors.gray[400] }} aria-hidden="true">chevron_right</span>
           </button>
         ))}
       </nav>
 
+      {/* Logout Button */}
       <button 
         onClick={() => setShowLogoutConfirm(true)}
-        className="w-full p-4 rounded-2xl bg-red-50 dark:bg-red-900/10 text-red-500 font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+        style={styles.logoutBtn}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = '#FEE2E2';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = colors.errorBg;
+        }}
       >
-        <span className="material-symbols-outlined text-sm" aria-hidden="true">logout</span>
+        <span className="material-symbols-outlined" style={{ fontSize: '18px' }} aria-hidden="true">logout</span>
         Log Out
       </button>
 
@@ -261,25 +388,113 @@ const EditProfileModal = ({ profile, email, onClose, onSave }: {
     setFormData({ ...formData, avatarUrl: url });
   };
 
+  const modalStyles = {
+    container: {
+      position: 'fixed' as const,
+      inset: 0,
+      zIndex: 50,
+      backgroundColor: colors.background.primary,
+      display: 'flex',
+      flexDirection: 'column' as const,
+    },
+    header: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: spacing[4],
+      borderBottom: `1px solid ${colors.gray[100]}`,
+    },
+    backBtn: {
+      padding: spacing[2],
+      marginLeft: `-${spacing[2]}`,
+      borderRadius: borderRadius.full,
+      border: 'none',
+      background: 'transparent',
+      cursor: 'pointer',
+      color: colors.text.primary,
+    },
+    saveBtn: {
+      color: colors.primary,
+      fontWeight: typography.fontWeight.bold,
+      fontSize: typography.fontSize.md,
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+    },
+    content: {
+      flex: 1,
+      overflowY: 'auto' as const,
+      padding: spacing[6],
+    },
+    inputGroup: {
+      marginBottom: spacing[4],
+    },
+    label: {
+      display: 'block',
+      fontSize: typography.fontSize.sm,
+      fontWeight: typography.fontWeight.bold,
+      color: colors.text.secondary,
+      marginBottom: spacing[1],
+    },
+    input: {
+      width: '100%',
+      backgroundColor: colors.gray[50],
+      border: `1px solid ${colors.gray[100]}`,
+      borderRadius: borderRadius['2xl'],
+      padding: spacing[4],
+      fontWeight: typography.fontWeight.semibold,
+      fontSize: typography.fontSize.md,
+      outline: 'none',
+      color: colors.text.primary,
+    },
+    settingCard: {
+      backgroundColor: colors.gray[50],
+      padding: spacing[4],
+      borderRadius: borderRadius['2xl'],
+      border: `1px solid ${colors.gray[100]}`,
+      marginBottom: spacing[4],
+    },
+    select: {
+      width: '100%',
+      backgroundColor: colors.white,
+      padding: spacing[3],
+      borderRadius: borderRadius.xl,
+      border: `1px solid ${colors.gray[200]}`,
+      fontSize: typography.fontSize.md,
+      color: colors.text.primary,
+    },
+    menuBtn: {
+      width: '100%',
+      backgroundColor: colors.gray[50],
+      padding: spacing[4],
+      borderRadius: borderRadius['2xl'],
+      border: `1px solid ${colors.gray[100]}`,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      cursor: 'pointer',
+    },
+  };
+
   return (
-    <div className="fixed inset-0 z-50 bg-white dark:bg-slate-950 flex flex-col animate-in slide-in-from-bottom-10">
-      <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
-        <button onClick={onClose} className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+    <div style={modalStyles.container}>
+      <div style={modalStyles.header}>
+        <button onClick={onClose} style={modalStyles.backBtn}>
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
-        <h2 className="font-bold text-lg">Edit Profile</h2>
+        <h2 style={{ fontWeight: typography.fontWeight.bold, fontSize: typography.fontSize.xl, color: colors.text.primary }}>Edit Profile</h2>
         <button 
           onClick={() => handleSubmit()} 
           disabled={loading}
-          className="text-primary font-bold text-sm disabled:opacity-50"
+          style={{ ...modalStyles.saveBtn, opacity: loading ? 0.5 : 1 }}
         >
           {loading ? 'Saving...' : 'Save'}
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div style={modalStyles.content}>
         {/* Avatar Upload Section */}
-        <div className="flex flex-col items-center py-4">
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: spacing[4], paddingBottom: spacing[6] }}>
           <AvatarUpload 
             currentUrl={formData.avatarUrl}
             userName={formData.name}
@@ -287,102 +502,98 @@ const EditProfileModal = ({ profile, email, onClose, onSave }: {
           />
         </div>
 
-        <div className="space-y-4">
-          <label className="block">
-            <span className="text-sm font-bold text-slate-500 mb-1 block">Display Name</span>
-            <input 
-              type="text" 
-              value={formData.name}
-              onChange={e => setFormData({...formData, name: e.target.value})}
-              className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-2xl p-4 font-semibold focus:ring-2 focus:ring-primary outline-none"
-            />
-          </label>
-          
-          <label className="block">
-            <span className="text-sm font-bold text-slate-500 mb-1 block">Bio</span>
-            <textarea 
-              value={formData.bio}
-              onChange={e => setFormData({...formData, bio: e.target.value})}
-              className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-2xl p-4 font-medium focus:ring-2 focus:ring-primary outline-none min-h-[100px]"
-              placeholder="Tell us about yourself..."
-            />
-          </label>
+        <div style={modalStyles.inputGroup}>
+          <span style={modalStyles.label}>Display Name</span>
+          <input 
+            type="text" 
+            value={formData.name}
+            onChange={e => setFormData({...formData, name: e.target.value})}
+            style={modalStyles.input}
+          />
+        </div>
+        
+        <div style={modalStyles.inputGroup}>
+          <span style={modalStyles.label}>Bio</span>
+          <textarea 
+            value={formData.bio}
+            onChange={e => setFormData({...formData, bio: e.target.value})}
+            style={{ ...modalStyles.input, minHeight: '100px', resize: 'vertical' }}
+            placeholder="Tell us about yourself..."
+          />
         </div>
 
-        <div className="border-t border-slate-100 dark:border-slate-800 pt-6 space-y-4">
-          <h3 className="font-black text-lg">Privacy Settings</h3>
+        <div style={{ borderTop: `1px solid ${colors.gray[100]}`, paddingTop: spacing[6], marginTop: spacing[4] }}>
+          <h3 style={{ fontWeight: typography.fontWeight.black, fontSize: typography.fontSize.xl, color: colors.text.primary, marginBottom: spacing[4] }}>Privacy Settings</h3>
           
-          <div className="space-y-4">
-            {/* Profile Visibility */}
-            <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl">
-              <label className="block mb-2 text-sm font-bold">Profile Visibility</label>
-              <select 
-                value={formData.privacyProfileVisibility}
-                onChange={e => setFormData({...formData, privacyProfileVisibility: e.target.value as any})}
-                className="w-full bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700"
-              >
-                <option value="public">Public (Anyone can view)</option>
-                <option value="friends">Friends Only</option>
-                <option value="private">Private (Only me)</option>
-              </select>
-              <p className="text-xs text-slate-400 mt-2">Who can see your profile and activity.</p>
-            </div>
-
-            {/* Activity Feed Privacy */}
-            <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl">
-              <label className="block mb-2 text-sm font-bold">Activity Feed</label>
-              <select 
-                value={formData.privacyActivityFeed}
-                onChange={e => setFormData({...formData, privacyActivityFeed: e.target.value as any})}
-                className="w-full bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700"
-              >
-                <option value="public">Public (Show in global feed)</option>
-                <option value="friends">Friends Only</option>
-                <option value="private">Private (Don't show)</option>
-              </select>
-              <p className="text-xs text-slate-400 mt-2">Controls who sees your activity in the feed.</p>
-            </div>
-
-            <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl">
-              <label className="block mb-2 text-sm font-bold">Public Leaderboard</label>
-              <select 
-                value={formData.privacyPublicLeaderboard}
-                onChange={e => setFormData({...formData, privacyPublicLeaderboard: e.target.value as any})}
-                className="w-full bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700"
-              >
-                <option value="visible">Visible (Everyone sees you)</option>
-                <option value="anonymous">Anonymous (Hidden name/avatar)</option>
-                <option value="hidden">Hidden (Not on leaderboard)</option>
-              </select>
-              <p className="text-xs text-slate-400 mt-2">Controls your appearance on the global leaderboard.</p>
-            </div>
-
-            <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl">
-              <label className="block mb-2 text-sm font-bold">Challenge Leaderboards</label>
-              <select 
-                value={formData.privacyChallengeLeaderboard}
-                onChange={e => setFormData({...formData, privacyChallengeLeaderboard: e.target.value as any})}
-                className="w-full bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700"
-              >
-                <option value="visible">Visible</option>
-                <option value="anonymous">Anonymous inside challenges</option>
-                <option value="hidden">Completely Hidden</option>
-              </select>
-              <p className="text-xs text-slate-400 mt-2">Controls how you appear in challenge rankings.</p>
-            </div>
-
-            {/* Blocked Users */}
-            <button
-              onClick={() => setShowBlockedUsers(true)}
-              className="w-full bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl flex items-center justify-between"
+          {/* Profile Visibility */}
+          <div style={modalStyles.settingCard}>
+            <label style={{ ...modalStyles.label, marginBottom: spacing[2] }}>Profile Visibility</label>
+            <select 
+              value={formData.privacyProfileVisibility}
+              onChange={e => setFormData({...formData, privacyProfileVisibility: e.target.value as any})}
+              style={modalStyles.select}
             >
-              <div className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-red-500">block</span>
-                <span className="font-bold">Blocked Users</span>
-              </div>
-              <span className="material-symbols-outlined text-slate-400">chevron_right</span>
-            </button>
+              <option value="public">Public (Anyone can view)</option>
+              <option value="friends">Friends Only</option>
+              <option value="private">Private (Only me)</option>
+            </select>
+            <p style={{ fontSize: typography.fontSize.sm, color: colors.gray[400], marginTop: spacing[2] }}>Who can see your profile and activity.</p>
           </div>
+
+          {/* Activity Feed Privacy */}
+          <div style={modalStyles.settingCard}>
+            <label style={{ ...modalStyles.label, marginBottom: spacing[2] }}>Activity Feed</label>
+            <select 
+              value={formData.privacyActivityFeed}
+              onChange={e => setFormData({...formData, privacyActivityFeed: e.target.value as any})}
+              style={modalStyles.select}
+            >
+              <option value="public">Public (Show in global feed)</option>
+              <option value="friends">Friends Only</option>
+              <option value="private">Private (Don't show)</option>
+            </select>
+            <p style={{ fontSize: typography.fontSize.sm, color: colors.gray[400], marginTop: spacing[2] }}>Controls who sees your activity in the feed.</p>
+          </div>
+
+          <div style={modalStyles.settingCard}>
+            <label style={{ ...modalStyles.label, marginBottom: spacing[2] }}>Public Leaderboard</label>
+            <select 
+              value={formData.privacyPublicLeaderboard}
+              onChange={e => setFormData({...formData, privacyPublicLeaderboard: e.target.value as any})}
+              style={modalStyles.select}
+            >
+              <option value="visible">Visible (Everyone sees you)</option>
+              <option value="anonymous">Anonymous (Hidden name/avatar)</option>
+              <option value="hidden">Hidden (Not on leaderboard)</option>
+            </select>
+            <p style={{ fontSize: typography.fontSize.sm, color: colors.gray[400], marginTop: spacing[2] }}>Controls your appearance on the global leaderboard.</p>
+          </div>
+
+          <div style={modalStyles.settingCard}>
+            <label style={{ ...modalStyles.label, marginBottom: spacing[2] }}>Challenge Leaderboards</label>
+            <select 
+              value={formData.privacyChallengeLeaderboard}
+              onChange={e => setFormData({...formData, privacyChallengeLeaderboard: e.target.value as any})}
+              style={modalStyles.select}
+            >
+              <option value="visible">Visible</option>
+              <option value="anonymous">Anonymous inside challenges</option>
+              <option value="hidden">Completely Hidden</option>
+            </select>
+            <p style={{ fontSize: typography.fontSize.sm, color: colors.gray[400], marginTop: spacing[2] }}>Controls how you appear in challenge rankings.</p>
+          </div>
+
+          {/* Blocked Users */}
+          <button
+            onClick={() => setShowBlockedUsers(true)}
+            style={modalStyles.menuBtn}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: spacing[3] }}>
+              <span className="material-symbols-outlined" style={{ color: colors.error }}>block</span>
+              <span style={{ fontWeight: typography.fontWeight.bold, color: colors.text.primary }}>Blocked Users</span>
+            </div>
+            <span className="material-symbols-outlined" style={{ color: colors.gray[400] }}>chevron_right</span>
+          </button>
         </div>
       </div>
 
@@ -420,75 +631,118 @@ const SecuritySettingsModal = ({ profile, email, onClose, onLogout }: {
     onLogout();
   };
 
+  const modalStyles = {
+    container: {
+      position: 'fixed' as const,
+      inset: 0,
+      zIndex: 50,
+      backgroundColor: colors.background.primary,
+      display: 'flex',
+      flexDirection: 'column' as const,
+    },
+    header: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: spacing[4],
+      borderBottom: `1px solid ${colors.gray[100]}`,
+    },
+    backBtn: {
+      padding: spacing[2],
+      marginLeft: `-${spacing[2]}`,
+      borderRadius: borderRadius.full,
+      border: 'none',
+      background: 'transparent',
+      cursor: 'pointer',
+      color: colors.text.primary,
+    },
+    content: {
+      flex: 1,
+      overflowY: 'auto' as const,
+      padding: spacing[6],
+    },
+    menuBtn: {
+      width: '100%',
+      padding: spacing[4],
+      backgroundColor: colors.gray[50],
+      borderRadius: borderRadius['2xl'],
+      border: `1px solid ${colors.gray[100]}`,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      cursor: 'pointer',
+      marginBottom: spacing[3],
+    },
+    dangerBtn: {
+      width: '100%',
+      padding: spacing[4],
+      backgroundColor: colors.errorBg,
+      borderRadius: borderRadius['2xl'],
+      border: 'none',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      cursor: 'pointer',
+    },
+  };
+
   return (
-    <div className="fixed inset-0 z-50 bg-white dark:bg-slate-950 flex flex-col animate-in slide-in-from-bottom-10">
-      <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
-        <button onClick={onClose} className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+    <div style={modalStyles.container}>
+      <div style={modalStyles.header}>
+        <button onClick={onClose} style={modalStyles.backBtn}>
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
-        <h2 className="font-bold text-lg">Security & Account</h2>
-        <div className="w-10" />
+        <h2 style={{ fontWeight: typography.fontWeight.bold, fontSize: typography.fontSize.xl, color: colors.text.primary }}>Security & Account</h2>
+        <div style={{ width: '40px' }} />
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      <div style={modalStyles.content}>
         {/* Change Email */}
-        <button
-          onClick={() => setShowChangeEmail(true)}
-          className="w-full p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center justify-between"
-        >
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-blue-500">mail</span>
-            <div className="text-left">
-              <span className="font-bold block">Change Email</span>
-              <span className="text-sm text-slate-500">{email}</span>
+        <button onClick={() => setShowChangeEmail(true)} style={modalStyles.menuBtn}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: spacing[3] }}>
+            <span className="material-symbols-outlined" style={{ color: '#3B82F6' }}>mail</span>
+            <div style={{ textAlign: 'left' }}>
+              <span style={{ fontWeight: typography.fontWeight.bold, display: 'block', color: colors.text.primary }}>Change Email</span>
+              <span style={{ fontSize: typography.fontSize.sm, color: colors.text.secondary }}>{email}</span>
             </div>
           </div>
-          <span className="material-symbols-outlined text-slate-400">chevron_right</span>
+          <span className="material-symbols-outlined" style={{ color: colors.gray[400] }}>chevron_right</span>
         </button>
 
         {/* Change Password */}
-        <button
-          onClick={() => setShowChangePassword(true)}
-          className="w-full p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center justify-between"
-        >
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-green-500">lock</span>
-            <span className="font-bold">Change Password</span>
+        <button onClick={() => setShowChangePassword(true)} style={modalStyles.menuBtn}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: spacing[3] }}>
+            <span className="material-symbols-outlined" style={{ color: colors.success }}>lock</span>
+            <span style={{ fontWeight: typography.fontWeight.bold, color: colors.text.primary }}>Change Password</span>
           </div>
-          <span className="material-symbols-outlined text-slate-400">chevron_right</span>
+          <span className="material-symbols-outlined" style={{ color: colors.gray[400] }}>chevron_right</span>
         </button>
 
         {/* Export Data */}
-        <button
-          onClick={() => setShowExportData(true)}
-          className="w-full p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center justify-between"
-        >
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-purple-500">download</span>
-            <div className="text-left">
-              <span className="font-bold block">Export Your Data</span>
-              <span className="text-sm text-slate-500">Download your personal data (GDPR)</span>
+        <button onClick={() => setShowExportData(true)} style={modalStyles.menuBtn}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: spacing[3] }}>
+            <span className="material-symbols-outlined" style={{ color: '#8B5CF6' }}>download</span>
+            <div style={{ textAlign: 'left' }}>
+              <span style={{ fontWeight: typography.fontWeight.bold, display: 'block', color: colors.text.primary }}>Export Your Data</span>
+              <span style={{ fontSize: typography.fontSize.sm, color: colors.text.secondary }}>Download your personal data (GDPR)</span>
             </div>
           </div>
-          <span className="material-symbols-outlined text-slate-400">chevron_right</span>
+          <span className="material-symbols-outlined" style={{ color: colors.gray[400] }}>chevron_right</span>
         </button>
 
-        <div className="border-t border-slate-100 dark:border-slate-800 pt-4 mt-4">
-          <h3 className="font-bold text-red-500 mb-4">Danger Zone</h3>
+        <div style={{ borderTop: `1px solid ${colors.gray[100]}`, paddingTop: spacing[4], marginTop: spacing[4] }}>
+          <h3 style={{ fontWeight: typography.fontWeight.bold, color: colors.error, marginBottom: spacing[4] }}>Danger Zone</h3>
           
           {/* Delete Account */}
-          <button
-            onClick={() => setShowDeleteAccount(true)}
-            className="w-full p-4 bg-red-50 dark:bg-red-900/10 rounded-2xl flex items-center justify-between"
-          >
-            <div className="flex items-center gap-3">
-              <span className="material-symbols-outlined text-red-500">delete_forever</span>
-              <div className="text-left">
-                <span className="font-bold text-red-500 block">Delete Account</span>
-                <span className="text-sm text-red-400">Permanently delete your account and data</span>
+          <button onClick={() => setShowDeleteAccount(true)} style={modalStyles.dangerBtn}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: spacing[3] }}>
+              <span className="material-symbols-outlined" style={{ color: colors.error }}>delete_forever</span>
+              <div style={{ textAlign: 'left' }}>
+                <span style={{ fontWeight: typography.fontWeight.bold, color: colors.error, display: 'block' }}>Delete Account</span>
+                <span style={{ fontSize: typography.fontSize.sm, color: colors.errorLight }}>Permanently delete your account and data</span>
               </div>
             </div>
-            <span className="material-symbols-outlined text-red-400">chevron_right</span>
+            <span className="material-symbols-outlined" style={{ color: colors.errorLight }}>chevron_right</span>
           </button>
         </div>
       </div>
@@ -532,78 +786,131 @@ const AppearanceSettingsModal: React.FC<{ onClose: () => void }> = ({ onClose })
     { value: 'system', label: 'System', icon: 'settings_suggest', description: 'Follow system preference' },
   ];
 
+  const modalStyles = {
+    container: {
+      position: 'fixed' as const,
+      inset: 0,
+      zIndex: 50,
+      backgroundColor: colors.background.primary,
+      display: 'flex',
+      flexDirection: 'column' as const,
+    },
+    header: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: spacing[4],
+      borderBottom: `1px solid ${colors.gray[100]}`,
+    },
+    backBtn: {
+      padding: spacing[2],
+      marginLeft: `-${spacing[2]}`,
+      borderRadius: borderRadius.full,
+      border: 'none',
+      background: 'transparent',
+      cursor: 'pointer',
+      color: colors.text.primary,
+    },
+    content: {
+      flex: 1,
+      overflowY: 'auto' as const,
+      padding: spacing[6],
+    },
+    sectionTitle: {
+      fontWeight: typography.fontWeight.bold,
+      fontSize: typography.fontSize.sm,
+      color: colors.text.secondary,
+      textTransform: 'uppercase' as const,
+      letterSpacing: '0.5px',
+      marginBottom: spacing[4],
+    },
+    themeOption: (active: boolean) => ({
+      width: '100%',
+      padding: spacing[4],
+      borderRadius: borderRadius['2xl'],
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: active ? colors.primaryAlpha(0.05) : colors.gray[50],
+      border: active ? `2px solid ${colors.primary}` : `1px solid ${colors.gray[100]}`,
+      cursor: 'pointer',
+      marginBottom: spacing[3],
+      transition: 'all 0.2s ease',
+    } as React.CSSProperties),
+    iconBox: (type: string) => ({
+      width: '48px',
+      height: '48px',
+      borderRadius: borderRadius.xl,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: type === 'light' ? '#FEF3C7' : type === 'dark' ? colors.gray[700] : '#DBEAFE',
+      color: type === 'light' ? '#D97706' : type === 'dark' ? colors.gray[300] : '#3B82F6',
+    } as React.CSSProperties),
+    previewCard: {
+      backgroundColor: colors.gray[50],
+      borderRadius: borderRadius['2xl'],
+      padding: spacing[4],
+      border: `1px solid ${colors.gray[100]}`,
+    },
+  };
+
   return (
-    <div className="fixed inset-0 z-50 bg-white dark:bg-slate-950 flex flex-col animate-in slide-in-from-bottom-10">
-      <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
-        <button onClick={onClose} className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+    <div style={modalStyles.container}>
+      <div style={modalStyles.header}>
+        <button onClick={onClose} style={modalStyles.backBtn}>
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
-        <h2 className="font-bold text-lg text-slate-900 dark:text-white">Appearance</h2>
-        <div className="w-10" />
+        <h2 style={{ fontWeight: typography.fontWeight.bold, fontSize: typography.fontSize.xl, color: colors.text.primary }}>Appearance</h2>
+        <div style={{ width: '40px' }} />
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div style={modalStyles.content}>
         <div>
-          <h3 className="font-bold text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
-            Theme
-          </h3>
-          <div className="space-y-3">
-            {themeOptions.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => setTheme(option.value)}
-                className={`w-full p-4 rounded-2xl flex items-center justify-between transition-all ${
-                  theme === option.value
-                    ? 'bg-primary/10 border-2 border-primary'
-                    : 'bg-slate-50 dark:bg-slate-900 border-2 border-transparent'
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                    option.value === 'light' 
-                      ? 'bg-amber-100 text-amber-600' 
-                      : option.value === 'dark'
-                      ? 'bg-slate-700 text-slate-300'
-                      : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                  }`}>
-                    <span className="material-symbols-outlined text-2xl">{option.icon}</span>
-                  </div>
-                  <div className="text-left">
-                    <span className="font-bold block text-slate-900 dark:text-white">{option.label}</span>
-                    <span className="text-sm text-slate-500 dark:text-slate-400">{option.description}</span>
-                  </div>
+          <h3 style={modalStyles.sectionTitle}>Theme</h3>
+          {themeOptions.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => setTheme(option.value)}
+              style={modalStyles.themeOption(theme === option.value)}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4] }}>
+                <div style={modalStyles.iconBox(option.value)}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>{option.icon}</span>
                 </div>
-                {theme === option.value && (
-                  <span className="material-symbols-outlined text-primary">check_circle</span>
-                )}
-              </button>
-            ))}
-          </div>
+                <div style={{ textAlign: 'left' }}>
+                  <span style={{ fontWeight: typography.fontWeight.bold, display: 'block', color: colors.text.primary }}>{option.label}</span>
+                  <span style={{ fontSize: typography.fontSize.sm, color: colors.text.secondary }}>{option.description}</span>
+                </div>
+              </div>
+              {theme === option.value && (
+                <span className="material-symbols-outlined" style={{ color: colors.primary }}>check_circle</span>
+              )}
+            </button>
+          ))}
         </div>
 
         {/* Preview */}
-        <div>
-          <h3 className="font-bold text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
-            Preview
-          </h3>
-          <div className="bg-slate-50 dark:bg-slate-900 rounded-2xl p-4 space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                <span className="material-symbols-outlined text-primary">check_circle</span>
+        <div style={{ marginTop: spacing[6] }}>
+          <h3 style={modalStyles.sectionTitle}>Preview</h3>
+          <div style={modalStyles.previewCard}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: spacing[3], marginBottom: spacing[3] }}>
+              <div style={{ width: '40px', height: '40px', backgroundColor: colors.primaryAlpha(0.1), borderRadius: borderRadius.xl, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span className="material-symbols-outlined" style={{ color: colors.primary }}>check_circle</span>
               </div>
               <div>
-                <p className="font-bold text-slate-900 dark:text-white">Sample Task</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Daily habit example</p>
+                <p style={{ fontWeight: typography.fontWeight.bold, color: colors.text.primary, margin: 0 }}>Sample Task</p>
+                <p style={{ fontSize: typography.fontSize.sm, color: colors.text.secondary, margin: 0 }}>Daily habit example</p>
               </div>
             </div>
-            <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-              <div className="h-full w-3/4 bg-primary rounded-full" />
+            <div style={{ height: '8px', backgroundColor: colors.gray[200], borderRadius: borderRadius.full, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: '75%', backgroundColor: colors.primary, borderRadius: borderRadius.full }} />
             </div>
-            <div className="flex gap-2">
-              <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full text-xs font-bold">
+            <div style={{ display: 'flex', gap: spacing[2], marginTop: spacing[3] }}>
+              <span style={{ padding: `${spacing[1]} ${spacing[3]}`, backgroundColor: colors.successBg, color: colors.success, borderRadius: borderRadius.full, fontSize: typography.fontSize.sm, fontWeight: typography.fontWeight.bold }}>
                 Completed
               </span>
-              <span className="px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full text-xs font-bold">
+              <span style={{ padding: `${spacing[1]} ${spacing[3]}`, backgroundColor: colors.warningBg, color: colors.warning, borderRadius: borderRadius.full, fontSize: typography.fontSize.sm, fontWeight: typography.fontWeight.bold }}>
                 In Progress
               </span>
             </div>
@@ -654,68 +961,131 @@ const NotificationSettingsModal = ({ onClose }: { onClose: () => void }) => {
     { key: 'achievements', icon: 'military_tech', label: 'Achievements', description: 'When you earn badges or milestones' },
   ];
 
+  const modalStyles = {
+    container: {
+      position: 'fixed' as const,
+      inset: 0,
+      zIndex: 50,
+      backgroundColor: colors.background.primary,
+      display: 'flex',
+      flexDirection: 'column' as const,
+    },
+    header: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: spacing[4],
+      borderBottom: `1px solid ${colors.gray[100]}`,
+    },
+    backBtn: {
+      padding: spacing[2],
+      marginLeft: `-${spacing[2]}`,
+      borderRadius: borderRadius.full,
+      border: 'none',
+      background: 'transparent',
+      cursor: 'pointer',
+      color: colors.text.primary,
+    },
+    saveBtn: {
+      color: colors.primary,
+      fontWeight: typography.fontWeight.bold,
+      fontSize: typography.fontSize.md,
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+    },
+    content: {
+      flex: 1,
+      overflowY: 'auto' as const,
+      padding: spacing[6],
+    },
+    toggleRow: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: spacing[4],
+      backgroundColor: colors.gray[50],
+      borderRadius: borderRadius['2xl'],
+      border: `1px solid ${colors.gray[100]}`,
+      marginBottom: spacing[3],
+    },
+    toggle: (active: boolean) => ({
+      width: '48px',
+      height: '28px',
+      borderRadius: borderRadius.full,
+      backgroundColor: active ? colors.primary : colors.gray[300],
+      position: 'relative' as const,
+      cursor: 'pointer',
+      transition: 'background-color 0.2s ease',
+      border: 'none',
+    } as React.CSSProperties),
+    toggleKnob: (active: boolean) => ({
+      position: 'absolute' as const,
+      top: '4px',
+      left: active ? '24px' : '4px',
+      width: '20px',
+      height: '20px',
+      backgroundColor: colors.white,
+      borderRadius: borderRadius.full,
+      boxShadow: shadows.sm,
+      transition: 'left 0.2s ease',
+    } as React.CSSProperties),
+  };
+
   return (
-    <div className="fixed inset-0 z-50 bg-white dark:bg-slate-950 flex flex-col animate-in slide-in-from-bottom-10">
-      <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
-        <button onClick={onClose} className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+    <div style={modalStyles.container}>
+      <div style={modalStyles.header}>
+        <button onClick={onClose} style={modalStyles.backBtn}>
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
-        <h2 className="font-bold text-lg">Notifications</h2>
-        <button 
-          onClick={handleSave}
-          disabled={loading}
-          className="text-primary font-bold text-sm disabled:opacity-50"
-        >
+        <h2 style={{ fontWeight: typography.fontWeight.bold, fontSize: typography.fontSize.xl, color: colors.text.primary }}>Notifications</h2>
+        <button onClick={handleSave} disabled={loading} style={{ ...modalStyles.saveBtn, opacity: loading ? 0.5 : 1 }}>
           {loading ? 'Saving...' : 'Save'}
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      <div style={modalStyles.content}>
         {toggleItems.map(item => (
-          <div 
-            key={item.key}
-            className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl"
-          >
-            <div className="flex items-center gap-4">
-              <span className="material-symbols-outlined text-primary">{item.icon}</span>
+          <div key={item.key} style={modalStyles.toggleRow}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4] }}>
+              <span className="material-symbols-outlined" style={{ color: colors.primary }}>{item.icon}</span>
               <div>
-                <p className="font-bold text-slate-900 dark:text-white">{item.label}</p>
-                <p className="text-xs text-slate-500">{item.description}</p>
+                <p style={{ fontWeight: typography.fontWeight.bold, color: colors.text.primary, margin: 0 }}>{item.label}</p>
+                <p style={{ fontSize: typography.fontSize.sm, color: colors.text.secondary, margin: 0 }}>{item.description}</p>
               </div>
             </div>
             <button
               onClick={() => handleToggle(item.key as keyof typeof settings)}
-              className={`w-12 h-7 rounded-full transition-colors relative ${
-                settings[item.key as keyof typeof settings] ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-700'
-              }`}
+              style={modalStyles.toggle(settings[item.key as keyof typeof settings] as boolean)}
             >
-              <span 
-                className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                  settings[item.key as keyof typeof settings] ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
+              <span style={modalStyles.toggleKnob(settings[item.key as keyof typeof settings] as boolean)} />
             </button>
           </div>
         ))}
 
         {/* Reminder Time */}
         {settings.dailyReminder && (
-          <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl">
-            <label className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <span className="material-symbols-outlined text-primary">schedule</span>
-                <div>
-                  <p className="font-bold text-slate-900 dark:text-white">Reminder Time</p>
-                  <p className="text-xs text-slate-500">When to send daily reminders</p>
-                </div>
+          <div style={modalStyles.toggleRow}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4] }}>
+              <span className="material-symbols-outlined" style={{ color: colors.primary }}>schedule</span>
+              <div>
+                <p style={{ fontWeight: typography.fontWeight.bold, color: colors.text.primary, margin: 0 }}>Reminder Time</p>
+                <p style={{ fontSize: typography.fontSize.sm, color: colors.text.secondary, margin: 0 }}>When to send daily reminders</p>
               </div>
-              <input
-                type="time"
-                value={settings.reminderTime}
-                onChange={e => setSettings(prev => ({ ...prev, reminderTime: e.target.value }))}
-                className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 font-medium"
-              />
-            </label>
+            </div>
+            <input
+              type="time"
+              value={settings.reminderTime}
+              onChange={e => setSettings(prev => ({ ...prev, reminderTime: e.target.value }))}
+              style={{
+                backgroundColor: colors.white,
+                border: `1px solid ${colors.gray[200]}`,
+                borderRadius: borderRadius.xl,
+                padding: `${spacing[2]} ${spacing[3]}`,
+                fontWeight: typography.fontWeight.medium,
+                color: colors.text.primary,
+              }}
+            />
           </div>
         )}
       </div>
@@ -742,74 +1112,142 @@ const HelpCenterModal = ({ onClose }: { onClose: () => void }) => {
     window.open('mailto:feedback@habitpulse.com?subject=Feedback', '_blank');
   };
 
+  const modalStyles = {
+    container: {
+      position: 'fixed' as const,
+      inset: 0,
+      zIndex: 50,
+      backgroundColor: colors.background.primary,
+      display: 'flex',
+      flexDirection: 'column' as const,
+    },
+    header: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: spacing[4],
+      borderBottom: `1px solid ${colors.gray[100]}`,
+    },
+    backBtn: {
+      padding: spacing[2],
+      marginLeft: `-${spacing[2]}`,
+      borderRadius: borderRadius.full,
+      border: 'none',
+      background: 'transparent',
+      cursor: 'pointer',
+      color: colors.text.primary,
+    },
+    content: {
+      flex: 1,
+      overflowY: 'auto' as const,
+      padding: spacing[6],
+    },
+    sectionTitle: {
+      fontWeight: typography.fontWeight.bold,
+      fontSize: typography.fontSize.sm,
+      color: colors.text.secondary,
+      textTransform: 'uppercase' as const,
+      letterSpacing: '0.5px',
+      marginBottom: spacing[4],
+    },
+    topicBtn: {
+      width: '100%',
+      padding: spacing[4],
+      backgroundColor: colors.gray[50],
+      borderRadius: borderRadius['2xl'],
+      border: `1px solid ${colors.gray[100]}`,
+      display: 'flex',
+      alignItems: 'center',
+      gap: spacing[4],
+      cursor: 'pointer',
+      marginBottom: spacing[2],
+      transition: 'background-color 0.2s ease',
+    },
+    iconBox: {
+      width: '40px',
+      height: '40px',
+      backgroundColor: colors.primaryAlpha(0.1),
+      borderRadius: borderRadius.xl,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    contactBtn: {
+      width: '100%',
+      padding: spacing[4],
+      backgroundColor: colors.primaryAlpha(0.1),
+      borderRadius: borderRadius['2xl'],
+      border: 'none',
+      display: 'flex',
+      alignItems: 'center',
+      gap: spacing[4],
+      cursor: 'pointer',
+      marginBottom: spacing[2],
+    },
+    feedbackBtn: {
+      width: '100%',
+      padding: spacing[4],
+      backgroundColor: colors.gray[50],
+      borderRadius: borderRadius['2xl'],
+      border: `1px solid ${colors.gray[100]}`,
+      display: 'flex',
+      alignItems: 'center',
+      gap: spacing[4],
+      cursor: 'pointer',
+    },
+  };
+
   return (
-    <div className="fixed inset-0 z-50 bg-white dark:bg-slate-950 flex flex-col animate-in slide-in-from-bottom-10">
-      <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
-        <button onClick={onClose} className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+    <div style={modalStyles.container}>
+      <div style={modalStyles.header}>
+        <button onClick={onClose} style={modalStyles.backBtn}>
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
-        <h2 className="font-bold text-lg">Help Center</h2>
-        <div className="w-10" />
+        <h2 style={{ fontWeight: typography.fontWeight.bold, fontSize: typography.fontSize.xl, color: colors.text.primary }}>Help Center</h2>
+        <div style={{ width: '40px' }} />
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div style={modalStyles.content}>
         {/* Help Topics */}
-        <div>
-          <h3 className="font-bold text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
-            Help Topics
-          </h3>
-          <div className="space-y-2">
-            {helpTopics.map((topic, index) => (
-              <button
-                key={index}
-                className="w-full p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center gap-4 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              >
-                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                  <span className="material-symbols-outlined text-primary">{topic.icon}</span>
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="font-bold text-slate-900 dark:text-white">{topic.title}</p>
-                  <p className="text-xs text-slate-500">{topic.description}</p>
-                </div>
-                <span className="material-symbols-outlined text-slate-400">chevron_right</span>
-              </button>
-            ))}
-          </div>
+        <div style={{ marginBottom: spacing[6] }}>
+          <h3 style={modalStyles.sectionTitle}>Help Topics</h3>
+          {helpTopics.map((topic, index) => (
+            <button key={index} style={modalStyles.topicBtn}>
+              <div style={modalStyles.iconBox}>
+                <span className="material-symbols-outlined" style={{ color: colors.primary }}>{topic.icon}</span>
+              </div>
+              <div style={{ flex: 1, textAlign: 'left' }}>
+                <p style={{ fontWeight: typography.fontWeight.bold, color: colors.text.primary, margin: 0 }}>{topic.title}</p>
+                <p style={{ fontSize: typography.fontSize.sm, color: colors.text.secondary, margin: 0 }}>{topic.description}</p>
+              </div>
+              <span className="material-symbols-outlined" style={{ color: colors.gray[400] }}>chevron_right</span>
+            </button>
+          ))}
         </div>
 
         {/* Contact */}
-        <div>
-          <h3 className="font-bold text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
-            Contact Us
-          </h3>
-          <div className="space-y-2">
-            <button
-              onClick={handleContactSupport}
-              className="w-full p-4 bg-primary/10 rounded-2xl flex items-center gap-4"
-            >
-              <span className="material-symbols-outlined text-primary">support_agent</span>
-              <div className="flex-1 text-left">
-                <p className="font-bold text-primary">Contact Support</p>
-                <p className="text-xs text-slate-500">Get help from our team</p>
-              </div>
-            </button>
-            <button
-              onClick={handleFeedback}
-              className="w-full p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center gap-4"
-            >
-              <span className="material-symbols-outlined text-slate-600 dark:text-slate-400">feedback</span>
-              <div className="flex-1 text-left">
-                <p className="font-bold text-slate-900 dark:text-white">Send Feedback</p>
-                <p className="text-xs text-slate-500">Help us improve the app</p>
-              </div>
-            </button>
-          </div>
+        <div style={{ marginBottom: spacing[6] }}>
+          <h3 style={modalStyles.sectionTitle}>Contact Us</h3>
+          <button onClick={handleContactSupport} style={modalStyles.contactBtn}>
+            <span className="material-symbols-outlined" style={{ color: colors.primary }}>support_agent</span>
+            <div style={{ flex: 1, textAlign: 'left' }}>
+              <p style={{ fontWeight: typography.fontWeight.bold, color: colors.primary, margin: 0 }}>Contact Support</p>
+              <p style={{ fontSize: typography.fontSize.sm, color: colors.text.secondary, margin: 0 }}>Get help from our team</p>
+            </div>
+          </button>
+          <button onClick={handleFeedback} style={modalStyles.feedbackBtn}>
+            <span className="material-symbols-outlined" style={{ color: colors.gray[600] }}>feedback</span>
+            <div style={{ flex: 1, textAlign: 'left' }}>
+              <p style={{ fontWeight: typography.fontWeight.bold, color: colors.text.primary, margin: 0 }}>Send Feedback</p>
+              <p style={{ fontSize: typography.fontSize.sm, color: colors.text.secondary, margin: 0 }}>Help us improve the app</p>
+            </div>
+          </button>
         </div>
 
         {/* App Info */}
-        <div className="text-center pt-4 border-t border-slate-100 dark:border-slate-800">
-          <p className="text-sm text-slate-500">HabitPulse v1.0.0</p>
-          <p className="text-xs text-slate-400 mt-1">Made with ❤️ for habit builders</p>
+        <div style={{ textAlign: 'center', paddingTop: spacing[4], borderTop: `1px solid ${colors.gray[100]}` }}>
+          <p style={{ fontSize: typography.fontSize.sm, color: colors.text.secondary, margin: 0 }}>HabitPulse v1.0.0</p>
+          <p style={{ fontSize: typography.fontSize.xs, color: colors.gray[400], marginTop: spacing[1] }}>Made with ❤️ for habit builders</p>
         </div>
       </div>
     </div>

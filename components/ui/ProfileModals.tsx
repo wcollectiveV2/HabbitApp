@@ -1,6 +1,93 @@
 import React, { useState, useRef } from 'react';
 import { userService } from '../../services';
 import type { UserProfile } from '../../services';
+import { colors, spacing, borderRadius, typography, shadows } from '../../theme/designSystem';
+
+// Shared modal styles
+const modalOverlayStyle: React.CSSProperties = {
+  position: 'fixed',
+  inset: 0,
+  zIndex: 50,
+  backgroundColor: 'rgba(0,0,0,0.5)',
+  backdropFilter: 'blur(4px)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: spacing[4],
+};
+
+const modalCardStyle: React.CSSProperties = {
+  backgroundColor: colors.white,
+  borderRadius: borderRadius['3xl'],
+  width: '100%',
+  maxWidth: '384px',
+  padding: spacing[6],
+  boxShadow: shadows.xl,
+};
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  backgroundColor: colors.gray[50],
+  border: `1px solid ${colors.gray[200]}`,
+  borderRadius: borderRadius.xl,
+  padding: `${spacing[3]} ${spacing[4]}`,
+  fontSize: typography.fontSize.md,
+  color: colors.text.primary,
+  outline: 'none',
+};
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: typography.fontSize.sm,
+  fontWeight: typography.fontWeight.bold,
+  color: colors.text.secondary,
+  marginBottom: spacing[1],
+};
+
+const errorStyle: React.CSSProperties = {
+  padding: spacing[3],
+  backgroundColor: colors.errorBg,
+  color: colors.error,
+  fontSize: typography.fontSize.sm,
+  borderRadius: borderRadius.xl,
+  marginBottom: spacing[4],
+};
+
+const primaryBtnStyle: React.CSSProperties = {
+  flex: 1,
+  padding: spacing[3],
+  backgroundColor: colors.primary,
+  color: colors.white,
+  borderRadius: borderRadius.xl,
+  fontWeight: typography.fontWeight.bold,
+  border: 'none',
+  cursor: 'pointer',
+  fontSize: typography.fontSize.md,
+};
+
+const secondaryBtnStyle: React.CSSProperties = {
+  flex: 1,
+  padding: spacing[3],
+  backgroundColor: colors.gray[100],
+  color: colors.text.primary,
+  borderRadius: borderRadius.xl,
+  fontWeight: typography.fontWeight.bold,
+  border: 'none',
+  cursor: 'pointer',
+  fontSize: typography.fontSize.md,
+};
+
+const dangerBtnStyle: React.CSSProperties = {
+  flex: 1,
+  padding: spacing[3],
+  backgroundColor: colors.error,
+  color: colors.white,
+  borderRadius: borderRadius.xl,
+  fontWeight: typography.fontWeight.bold,
+  border: 'none',
+  cursor: 'pointer',
+  fontSize: typography.fontSize.md,
+};
 
 interface AvatarUploadProps {
   currentUrl?: string;
@@ -17,38 +104,29 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({ currentUrl, userName, onUpl
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       alert('Please select an image file');
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       alert('Image size must be less than 5MB');
       return;
     }
 
-    // Create preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setPreview(reader.result as string);
     };
     reader.readAsDataURL(file);
 
-    // Upload to server (using base64 for now, can be replaced with S3/Cloudinary)
     setUploading(true);
     try {
-      // For now, we'll use the base64 URL directly
-      // In production, this should upload to a proper storage service
       const base64 = await new Promise<string>((resolve) => {
         const r = new FileReader();
         r.onloadend = () => resolve(r.result as string);
         r.readAsDataURL(file);
       });
-      
-      // Note: In production, replace with actual upload:
-      // const uploadedUrl = await uploadToStorage(file);
       onUpload(base64);
     } catch (err) {
       console.error('Upload failed:', err);
@@ -61,26 +139,63 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({ currentUrl, userName, onUpl
   const displayUrl = preview || currentUrl || `https://i.pravatar.cc/200?u=${userName}`;
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <div className="relative">
-        <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white dark:border-slate-800 shadow-xl">
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: spacing[4] }}>
+      <div style={{ position: 'relative' }}>
+        <div style={{
+          width: '96px',
+          height: '96px',
+          borderRadius: borderRadius.full,
+          overflow: 'hidden',
+          border: `4px solid ${colors.white}`,
+          boxShadow: shadows.xl,
+        }}>
           <img 
             src={displayUrl} 
             alt="Profile"
-            className="w-full h-full object-cover"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         </div>
         {uploading && (
-          <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
-            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: borderRadius.full,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <div style={{
+              width: '24px',
+              height: '24px',
+              border: `2px solid ${colors.white}`,
+              borderTopColor: 'transparent',
+              borderRadius: borderRadius.full,
+              animation: 'spin 1s linear infinite',
+            }} />
           </div>
         )}
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="absolute bottom-0 right-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center shadow-lg"
           disabled={uploading}
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            right: 0,
+            width: '32px',
+            height: '32px',
+            backgroundColor: colors.primary,
+            color: colors.white,
+            borderRadius: borderRadius.full,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: shadows.lg,
+            border: 'none',
+            cursor: 'pointer',
+          }}
         >
-          <span className="material-symbols-outlined text-sm">photo_camera</span>
+          <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>photo_camera</span>
         </button>
       </div>
       <input
@@ -88,12 +203,19 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({ currentUrl, userName, onUpl
         type="file"
         accept="image/*"
         onChange={handleFileChange}
-        className="hidden"
+        style={{ display: 'none' }}
       />
       <button
         onClick={() => fileInputRef.current?.click()}
-        className="text-primary text-sm font-bold"
         disabled={uploading}
+        style={{
+          color: colors.primary,
+          fontSize: typography.fontSize.sm,
+          fontWeight: typography.fontWeight.bold,
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+        }}
       >
         Change Photo
       </button>
@@ -133,62 +255,48 @@ const ChangeEmailModal: React.FC<ChangeEmailModalProps> = ({ currentEmail, onClo
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-sm p-6 animate-in zoom-in-95">
-        <h3 className="font-bold text-lg mb-4">Change Email</h3>
+    <div style={modalOverlayStyle}>
+      <div style={modalCardStyle}>
+        <h3 style={{ fontWeight: typography.fontWeight.bold, fontSize: typography.fontSize.xl, marginBottom: spacing[4], color: colors.text.primary }}>Change Email</h3>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-500 text-sm rounded-xl">
-              {error}
-            </div>
-          )}
+        <form onSubmit={handleSubmit}>
+          {error && <div style={errorStyle}>{error}</div>}
 
-          <div>
-            <label className="text-sm font-bold text-slate-500 mb-1 block">Current Email</label>
+          <div style={{ marginBottom: spacing[4] }}>
+            <label style={labelStyle}>Current Email</label>
             <input
               type="email"
               value={currentEmail}
               disabled
-              className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl px-4 py-3 text-slate-500"
+              style={{ ...inputStyle, backgroundColor: colors.gray[100], color: colors.text.secondary }}
             />
           </div>
 
-          <div>
-            <label className="text-sm font-bold text-slate-500 mb-1 block">New Email</label>
+          <div style={{ marginBottom: spacing[4] }}>
+            <label style={labelStyle}>New Email</label>
             <input
               type="email"
               value={newEmail}
               onChange={e => setNewEmail(e.target.value)}
               placeholder="Enter new email"
-              className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none"
+              style={inputStyle}
             />
           </div>
 
-          <div>
-            <label className="text-sm font-bold text-slate-500 mb-1 block">Current Password</label>
+          <div style={{ marginBottom: spacing[4] }}>
+            <label style={labelStyle}>Current Password</label>
             <input
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="Confirm your password"
-              className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none"
+              style={inputStyle}
             />
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 p-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 p-3 bg-primary text-white rounded-xl font-bold disabled:opacity-50"
-            >
+          <div style={{ display: 'flex', gap: spacing[3], paddingTop: spacing[2] }}>
+            <button type="button" onClick={onClose} style={secondaryBtnStyle}>Cancel</button>
+            <button type="submit" disabled={loading} style={{ ...primaryBtnStyle, opacity: loading ? 0.5 : 1 }}>
               {loading ? 'Updating...' : 'Update'}
             </button>
           </div>
@@ -238,63 +346,49 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ onClose, onSa
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-sm p-6 animate-in zoom-in-95">
-        <h3 className="font-bold text-lg mb-4">Change Password</h3>
+    <div style={modalOverlayStyle}>
+      <div style={modalCardStyle}>
+        <h3 style={{ fontWeight: typography.fontWeight.bold, fontSize: typography.fontSize.xl, marginBottom: spacing[4], color: colors.text.primary }}>Change Password</h3>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-500 text-sm rounded-xl">
-              {error}
-            </div>
-          )}
+        <form onSubmit={handleSubmit}>
+          {error && <div style={errorStyle}>{error}</div>}
 
-          <div>
-            <label className="text-sm font-bold text-slate-500 mb-1 block">Current Password</label>
+          <div style={{ marginBottom: spacing[4] }}>
+            <label style={labelStyle}>Current Password</label>
             <input
               type="password"
               value={oldPassword}
               onChange={e => setOldPassword(e.target.value)}
               placeholder="Enter current password"
-              className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none"
+              style={inputStyle}
             />
           </div>
 
-          <div>
-            <label className="text-sm font-bold text-slate-500 mb-1 block">New Password</label>
+          <div style={{ marginBottom: spacing[4] }}>
+            <label style={labelStyle}>New Password</label>
             <input
               type="password"
               value={newPassword}
               onChange={e => setNewPassword(e.target.value)}
               placeholder="Enter new password"
-              className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none"
+              style={inputStyle}
             />
           </div>
 
-          <div>
-            <label className="text-sm font-bold text-slate-500 mb-1 block">Confirm New Password</label>
+          <div style={{ marginBottom: spacing[4] }}>
+            <label style={labelStyle}>Confirm New Password</label>
             <input
               type="password"
               value={confirmPassword}
               onChange={e => setConfirmPassword(e.target.value)}
               placeholder="Confirm new password"
-              className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none"
+              style={inputStyle}
             />
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 p-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 p-3 bg-primary text-white rounded-xl font-bold disabled:opacity-50"
-            >
+          <div style={{ display: 'flex', gap: spacing[3], paddingTop: spacing[2] }}>
+            <button type="button" onClick={onClose} style={secondaryBtnStyle}>Cancel</button>
+            <button type="submit" disabled={loading} style={{ ...primaryBtnStyle, opacity: loading ? 0.5 : 1 }}>
               {loading ? 'Updating...' : 'Update'}
             </button>
           </div>
@@ -336,64 +430,60 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({ onClose, onDele
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-sm p-6 animate-in zoom-in-95">
-        <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-          <span className="material-symbols-outlined text-red-500">warning</span>
+    <div style={modalOverlayStyle}>
+      <div style={modalCardStyle}>
+        <div style={{
+          width: '48px',
+          height: '48px',
+          backgroundColor: colors.errorBg,
+          borderRadius: borderRadius.full,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto',
+          marginBottom: spacing[4],
+        }}>
+          <span className="material-symbols-outlined" style={{ color: colors.error }}>warning</span>
         </div>
         
-        <h3 className="font-bold text-lg text-center mb-2">Delete Account?</h3>
-        <p className="text-sm text-slate-500 text-center mb-4">
+        <h3 style={{ fontWeight: typography.fontWeight.bold, fontSize: typography.fontSize.xl, textAlign: 'center', marginBottom: spacing[2], color: colors.text.primary }}>Delete Account?</h3>
+        <p style={{ fontSize: typography.fontSize.sm, color: colors.text.secondary, textAlign: 'center', marginBottom: spacing[4] }}>
           This action is permanent and cannot be undone. All your data will be deleted.
         </p>
 
-        {error && (
-          <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-500 text-sm rounded-xl mb-4">
-            {error}
-          </div>
-        )}
+        {error && <div style={errorStyle}>{error}</div>}
 
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-bold text-slate-500 mb-1 block">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-4 py-3 focus:ring-2 focus:ring-red-500 outline-none"
-            />
-          </div>
+        <div style={{ marginBottom: spacing[4] }}>
+          <label style={labelStyle}>Password</label>
+          <input
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            placeholder="Enter your password"
+            style={inputStyle}
+          />
+        </div>
 
-          <div>
-            <label className="text-sm font-bold text-slate-500 mb-1 block">
-              Type "DELETE" to confirm
-            </label>
-            <input
-              type="text"
-              value={confirmText}
-              onChange={e => setConfirmText(e.target.value)}
-              placeholder="DELETE"
-              className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-4 py-3 focus:ring-2 focus:ring-red-500 outline-none"
-            />
-          </div>
+        <div style={{ marginBottom: spacing[4] }}>
+          <label style={labelStyle}>Type "DELETE" to confirm</label>
+          <input
+            type="text"
+            value={confirmText}
+            onChange={e => setConfirmText(e.target.value)}
+            placeholder="DELETE"
+            style={inputStyle}
+          />
+        </div>
 
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 p-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleDelete}
-              disabled={loading || confirmText !== 'DELETE'}
-              className="flex-1 p-3 bg-red-500 text-white rounded-xl font-bold disabled:opacity-50"
-            >
-              {loading ? 'Deleting...' : 'Delete Account'}
-            </button>
-          </div>
+        <div style={{ display: 'flex', gap: spacing[3], paddingTop: spacing[2] }}>
+          <button type="button" onClick={onClose} style={secondaryBtnStyle}>Cancel</button>
+          <button
+            onClick={handleDelete}
+            disabled={loading || confirmText !== 'DELETE'}
+            style={{ ...dangerBtnStyle, opacity: (loading || confirmText !== 'DELETE') ? 0.5 : 1 }}
+          >
+            {loading ? 'Deleting...' : 'Delete Account'}
+          </button>
         </div>
       </div>
     </div>
@@ -411,7 +501,6 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ onClose }) => {
   const handleExport = async () => {
     setLoading(true);
     try {
-      // Fetch all user data
       const [profile, stats] = await Promise.all([
         userService.getProfile(),
         userService.getStats()
@@ -421,10 +510,8 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ onClose }) => {
         exportedAt: new Date().toISOString(),
         profile,
         stats,
-        // Add more data as needed
       };
 
-      // Create and download JSON file
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -444,73 +531,92 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ onClose }) => {
     }
   };
 
+  const iconBoxStyle: React.CSSProperties = {
+    width: '48px',
+    height: '48px',
+    backgroundColor: '#DBEAFE',
+    borderRadius: borderRadius.full,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: '0 auto',
+    marginBottom: spacing[4],
+  };
+
+  const checklistItem: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing[2],
+    fontSize: typography.fontSize.sm,
+    color: colors.text.secondary,
+    marginBottom: spacing[1],
+  };
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-sm p-6 animate-in zoom-in-95">
-        <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-          <span className="material-symbols-outlined text-blue-500">download</span>
+    <div style={modalOverlayStyle}>
+      <div style={modalCardStyle}>
+        <div style={iconBoxStyle}>
+          <span className="material-symbols-outlined" style={{ color: '#3B82F6' }}>download</span>
         </div>
         
-        <h3 className="font-bold text-lg text-center mb-2">Export Your Data</h3>
-        <p className="text-sm text-slate-500 text-center mb-4">
+        <h3 style={{ fontWeight: typography.fontWeight.bold, fontSize: typography.fontSize.xl, textAlign: 'center', marginBottom: spacing[2], color: colors.text.primary }}>Export Your Data</h3>
+        <p style={{ fontSize: typography.fontSize.sm, color: colors.text.secondary, textAlign: 'center', marginBottom: spacing[4] }}>
           Download all your personal data in a portable JSON format (GDPR compliant).
         </p>
 
         {exported ? (
-          <div className="space-y-4">
-            <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl flex items-center gap-3">
-              <span className="material-symbols-outlined text-green-500">check_circle</span>
-              <span className="text-green-700 dark:text-green-400 font-medium">
+          <>
+            <div style={{
+              padding: spacing[4],
+              backgroundColor: colors.successBg,
+              borderRadius: borderRadius.xl,
+              display: 'flex',
+              alignItems: 'center',
+              gap: spacing[3],
+              marginBottom: spacing[4],
+            }}>
+              <span className="material-symbols-outlined" style={{ color: colors.success }}>check_circle</span>
+              <span style={{ color: colors.success, fontWeight: typography.fontWeight.medium }}>
                 Data exported successfully!
               </span>
             </div>
-            <button
-              onClick={onClose}
-              className="w-full p-3 bg-primary text-white rounded-xl font-bold"
-            >
-              Done
-            </button>
-          </div>
+            <button onClick={onClose} style={{ ...primaryBtnStyle, width: '100%' }}>Done</button>
+          </>
         ) : (
-          <div className="space-y-4">
-            <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl space-y-2">
-              <p className="text-sm font-medium">Your export will include:</p>
-              <ul className="text-sm text-slate-500 space-y-1">
-                <li className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-xs">check</span>
-                  Profile information
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-xs">check</span>
-                  Task history
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-xs">check</span>
-                  Challenge progress
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-xs">check</span>
-                  Statistics & achievements
-                </li>
-              </ul>
+          <>
+            <div style={{
+              padding: spacing[4],
+              backgroundColor: colors.gray[50],
+              borderRadius: borderRadius.xl,
+              border: `1px solid ${colors.gray[100]}`,
+              marginBottom: spacing[4],
+            }}>
+              <p style={{ fontSize: typography.fontSize.sm, fontWeight: typography.fontWeight.medium, color: colors.text.primary, marginBottom: spacing[2] }}>Your export will include:</p>
+              <div style={checklistItem}>
+                <span className="material-symbols-outlined" style={{ fontSize: '14px', color: colors.success }}>check</span>
+                Profile information
+              </div>
+              <div style={checklistItem}>
+                <span className="material-symbols-outlined" style={{ fontSize: '14px', color: colors.success }}>check</span>
+                Task history
+              </div>
+              <div style={checklistItem}>
+                <span className="material-symbols-outlined" style={{ fontSize: '14px', color: colors.success }}>check</span>
+                Challenge progress
+              </div>
+              <div style={checklistItem}>
+                <span className="material-symbols-outlined" style={{ fontSize: '14px', color: colors.success }}>check</span>
+                Statistics & achievements
+              </div>
             </div>
 
-            <div className="flex gap-3">
-              <button
-                onClick={onClose}
-                className="flex-1 p-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleExport}
-                disabled={loading}
-                className="flex-1 p-3 bg-primary text-white rounded-xl font-bold disabled:opacity-50"
-              >
+            <div style={{ display: 'flex', gap: spacing[3] }}>
+              <button onClick={onClose} style={secondaryBtnStyle}>Cancel</button>
+              <button onClick={handleExport} disabled={loading} style={{ ...primaryBtnStyle, opacity: loading ? 0.5 : 1 }}>
                 {loading ? 'Exporting...' : 'Export Data'}
               </button>
             </div>
-          </div>
+          </>
         )}
       </div>
     </div>
@@ -526,58 +632,98 @@ const BlockedUsersModal: React.FC<BlockedUsersModalProps> = ({ onClose }) => {
   const [loading, setLoading] = useState(true);
 
   React.useEffect(() => {
-    // Fetch blocked users
-    // In a real implementation, this would call the API
     setLoading(false);
     setBlockedUsers([]);
   }, []);
 
   const handleUnblock = async (userId: string) => {
-    // In real implementation, call API to unblock user
     setBlockedUsers(prev => prev.filter(u => u.id !== userId));
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-sm max-h-[80vh] overflow-hidden animate-in zoom-in-95">
-        <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
-          <h3 className="font-bold text-lg">Blocked Users</h3>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+    <div style={modalOverlayStyle}>
+      <div style={{
+        ...modalCardStyle,
+        maxHeight: '80vh',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingBottom: spacing[4],
+          borderBottom: `1px solid ${colors.gray[100]}`,
+          marginBottom: spacing[4],
+        }}>
+          <h3 style={{ fontWeight: typography.fontWeight.bold, fontSize: typography.fontSize.xl, color: colors.text.primary }}>Blocked Users</h3>
+          <button
+            onClick={onClose}
+            style={{
+              padding: spacing[2],
+              borderRadius: borderRadius.full,
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+              color: colors.text.primary,
+            }}
+          >
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
 
-        <div className="p-4 overflow-y-auto max-h-[60vh]">
+        <div style={{ flex: 1, overflowY: 'auto', maxHeight: '60vh' }}>
           {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: `${spacing[8]} 0` }}>
+              <div style={{
+                width: '24px',
+                height: '24px',
+                border: `2px solid ${colors.primary}`,
+                borderTopColor: 'transparent',
+                borderRadius: borderRadius.full,
+                animation: 'spin 1s linear infinite',
+              }} />
             </div>
           ) : blockedUsers.length === 0 ? (
-            <div className="text-center py-8">
-              <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">block</span>
-              <p className="text-slate-500">No blocked users</p>
+            <div style={{ textAlign: 'center', padding: `${spacing[8]} 0` }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '48px', color: colors.gray[300], display: 'block', marginBottom: spacing[2] }}>block</span>
+              <p style={{ color: colors.text.secondary }}>No blocked users</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {blockedUsers.map(user => (
-                <div key={user.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <img 
-                      src={user.avatar || `https://i.pravatar.cc/40?u=${user.id}`}
-                      alt={user.name}
-                      className="w-10 h-10 rounded-full"
-                    />
-                    <span className="font-medium">{user.name}</span>
-                  </div>
-                  <button
-                    onClick={() => handleUnblock(user.id)}
-                    className="text-primary text-sm font-bold"
-                  >
-                    Unblock
-                  </button>
+            blockedUsers.map(user => (
+              <div key={user.id} style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: spacing[3],
+                backgroundColor: colors.gray[50],
+                borderRadius: borderRadius.xl,
+                marginBottom: spacing[2],
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing[3] }}>
+                  <img 
+                    src={user.avatar || `https://i.pravatar.cc/40?u=${user.id}`}
+                    alt={user.name}
+                    style={{ width: '40px', height: '40px', borderRadius: borderRadius.full }}
+                  />
+                  <span style={{ fontWeight: typography.fontWeight.medium, color: colors.text.primary }}>{user.name}</span>
                 </div>
-              ))}
-            </div>
+                <button
+                  onClick={() => handleUnblock(user.id)}
+                  style={{
+                    color: colors.primary,
+                    fontSize: typography.fontSize.sm,
+                    fontWeight: typography.fontWeight.bold,
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Unblock
+                </button>
+              </div>
+            ))
           )}
         </div>
       </div>

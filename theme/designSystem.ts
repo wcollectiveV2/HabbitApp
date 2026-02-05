@@ -5,6 +5,8 @@
  * Update values here to change the entire app's appearance.
  */
 
+import type React from 'react';
+
 // =============================================================================
 // COLORS
 // =============================================================================
@@ -35,6 +37,37 @@ export const colors = {
   error: '#EF4444',
   errorLight: '#FCA5A5',
   errorBg: '#FEF2F2',
+
+  // Standard Colors (Tailwind Palette)
+  blue: {
+    50: '#EFF6FF',
+    100: '#DBEAFE',
+    500: '#3B82F6',
+    600: '#2563EB',
+  },
+  green: {
+    50: '#F0FDF4',
+    100: '#DCFCE7',
+    500: '#22C55E',
+    600: '#16A34A',
+    900: '#14532D',
+  },
+  red: {
+    50: '#FEF2F2',
+    100: '#FEE2E2',
+    500: '#EF4444',
+    600: '#DC2626',
+    900: '#7F1D1D',
+  },
+  yellow: {
+    500: '#EAB308',
+  },
+  orange: {
+    500: '#F97316',
+  },
+  purple: {
+    500: '#A855F7',
+  },
 
   // Neutral / Gray scale
   white: '#FFFFFF',
@@ -273,6 +306,21 @@ export const components = {
       fontWeight: typography.fontWeight.semibold,
       fontSize: typography.fontSize.md,
     },
+    danger: {
+      backgroundColor: colors.errorBg,
+      color: colors.error,
+      padding: `${spacing[4]} ${spacing[6]}`,
+      borderRadius: borderRadius.xl,
+      fontWeight: typography.fontWeight.bold,
+      fontSize: typography.fontSize.md,
+    },
+    // Settings menu item style
+    menuItem: {
+      backgroundColor: colors.gray[50],
+      padding: spacing[4],
+      borderRadius: borderRadius['2xl'],
+      border: `1px solid ${colors.gray[100]}`,
+    },
   },
 
   // Input fields
@@ -329,7 +377,7 @@ export const components = {
 /**
  * Get a complete button style object
  */
-export const getButtonStyle = (variant: 'primary' | 'secondary' | 'ghost' = 'primary'): React.CSSProperties => ({
+export const getButtonStyle = (variant: 'primary' | 'secondary' | 'ghost' | 'danger' = 'primary'): React.CSSProperties => ({
   ...components.button[variant],
   border: 'none',
   cursor: 'pointer',
@@ -337,6 +385,22 @@ export const getButtonStyle = (variant: 'primary' | 'secondary' | 'ghost' = 'pri
   alignItems: 'center',
   justifyContent: 'center',
   gap: spacing[2],
+  transition: transitions.all,
+});
+
+/**
+ * Get menu item style (for settings lists)
+ */
+export const getMenuItemStyle = (active = false): React.CSSProperties => ({
+  width: '100%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: spacing[4],
+  backgroundColor: active ? colors.primaryAlpha(0.05) : colors.gray[50],
+  borderRadius: borderRadius['2xl'],
+  border: active ? `2px solid ${colors.primary}` : `1px solid ${colors.gray[100]}`,
+  cursor: 'pointer',
   transition: transitions.all,
 });
 

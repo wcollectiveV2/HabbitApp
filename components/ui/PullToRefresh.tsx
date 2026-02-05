@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, ReactNode } from 'react';
+import { colors, borderRadius, shadows } from '../../theme/designSystem';
 
 interface PullToRefreshProps {
   onRefresh: () => Promise<void>;
@@ -62,37 +63,69 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({
   const progress = Math.min(1, pullDistance / threshold);
   const showIndicator = pullDistance > 10 || isRefreshing;
 
+  const styles = {
+    container: {
+      position: 'relative' as const,
+      overflow: 'auto',
+    },
+    indicator: {
+      position: 'absolute' as const,
+      left: 0,
+      right: 0,
+      top: 0,
+      display: 'flex',
+      justifyContent: 'center',
+      transition: 'transform 0.2s ease',
+      zIndex: 10,
+      opacity: showIndicator ? 1 : 0,
+      transform: `translateY(${Math.max(0, pullDistance - 40)}px)`,
+    },
+    indicatorCircle: {
+      width: '40px',
+      height: '40px',
+      borderRadius: borderRadius.full,
+      backgroundColor: colors.background.primary,
+      boxShadow: shadows.lg,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    spinner: {
+      width: '20px',
+      height: '20px',
+      border: `2px solid ${colors.primary}4D`,
+      borderTopColor: colors.primary,
+      borderRadius: borderRadius.full,
+      animation: 'spin 1s linear infinite',
+    },
+  };
+
   return (
     <div
       ref={containerRef}
-      className={`relative overflow-auto ${className}`}
+      className={className}
+      style={styles.container}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
       {/* Pull indicator */}
       <div 
-        className={`absolute left-0 right-0 flex justify-center transition-transform duration-200 z-10 ${
-          showIndicator ? 'opacity-100' : 'opacity-0'
-        }`}
-        style={{ 
-          transform: `translateY(${Math.max(0, pullDistance - 40)}px)`,
-          top: 0
-        }}
+        style={styles.indicator}
         role="status"
         aria-label={isRefreshing ? 'Refreshing...' : 'Pull to refresh'}
       >
-        <div className={`w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-lg flex items-center justify-center transition-all ${
-          isRefreshing ? 'animate-pulse' : ''
-        }`}>
+        <div style={styles.indicatorCircle}>
           {isRefreshing ? (
-            <span className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+            <div style={styles.spinner} />
           ) : (
             <span 
-              className="material-symbols-outlined text-primary transition-transform duration-200"
+              className="material-symbols-outlined"
               style={{ 
+                color: colors.primary,
                 transform: `rotate(${progress * 180}deg)`,
-                opacity: progress
+                opacity: progress,
+                transition: 'transform 0.2s ease',
               }}
             >
               arrow_downward

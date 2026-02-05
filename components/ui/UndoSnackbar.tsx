@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { colors, spacing, typography, borderRadius, shadows, zIndex } from '../../theme/designSystem';
 
 interface UndoSnackbarProps {
   message: string;
@@ -8,6 +9,75 @@ interface UndoSnackbarProps {
   onDismiss: () => void;
   isVisible: boolean;
 }
+
+const styles = {
+  container: (isExiting: boolean) => ({
+    position: 'fixed' as const,
+    bottom: '128px',
+    left: spacing[4],
+    right: spacing[4],
+    zIndex: 200,
+    transition: 'all 0.3s ease',
+    opacity: isExiting ? 0 : 1,
+    transform: isExiting ? 'translateY(16px)' : 'translateY(0)',
+  }),
+  snackbar: {
+    backgroundColor: '#1E293B',
+    borderRadius: borderRadius['2xl'],
+    padding: spacing[4],
+    boxShadow: shadows['2xl'],
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing[4],
+    overflow: 'hidden',
+    position: 'relative' as const,
+  },
+  progressBar: {
+    position: 'absolute' as const,
+    bottom: 0,
+    left: 0,
+    height: '4px',
+    backgroundColor: colors.primary,
+    transition: 'all 0.1s linear',
+  },
+  leftContent: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing[3],
+    flex: 1,
+  },
+  message: {
+    color: 'white',
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.medium,
+  },
+  buttonsArea: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing[2],
+  },
+  undoBtn: {
+    padding: `${spacing[2]} ${spacing[4]}`,
+    color: colors.primary,
+    fontWeight: typography.fontWeight.bold,
+    fontSize: typography.fontSize.sm,
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.05em',
+    borderRadius: borderRadius.xl,
+    border: 'none',
+    background: 'transparent',
+    cursor: 'pointer',
+  },
+  dismissBtn: {
+    padding: spacing[2],
+    color: colors.gray[400],
+    borderRadius: borderRadius.full,
+    border: 'none',
+    background: 'transparent',
+    cursor: 'pointer',
+  },
+};
 
 const UndoSnackbar: React.FC<UndoSnackbarProps> = ({
   message,
@@ -62,40 +132,24 @@ const UndoSnackbar: React.FC<UndoSnackbarProps> = ({
   if (!isVisible) return null;
 
   return (
-    <div
-      role="alert"
-      aria-live="polite"
-      className={`fixed bottom-32 left-4 right-4 z-[200] transition-all duration-300 ${
-        isExiting ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
-      }`}
-    >
-      <div className="bg-slate-900 dark:bg-slate-800 rounded-2xl p-4 shadow-2xl flex items-center justify-between gap-4 overflow-hidden">
+    <div role="alert" aria-live="polite" style={styles.container(isExiting)}>
+      <div style={styles.snackbar}>
         {/* Progress bar at the bottom */}
-        <div 
-          className="absolute bottom-0 left-0 h-1 bg-primary transition-all duration-100 ease-linear"
-          style={{ width: `${progress}%` }}
-        />
+        <div style={{ ...styles.progressBar, width: `${progress}%` }} />
         
-        <div className="flex items-center gap-3 flex-1">
-          <span className="material-symbols-outlined text-green-400" aria-hidden="true">
+        <div style={styles.leftContent}>
+          <span className="material-symbols-outlined" style={{ color: '#4ADE80' }} aria-hidden="true">
             check_circle
           </span>
-          <span className="text-white text-sm font-medium">{message}</span>
+          <span style={styles.message}>{message}</span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleUndo}
-            className="px-4 py-2 text-primary font-bold text-sm uppercase tracking-wide hover:bg-primary/10 rounded-xl transition-colors"
-          >
+        <div style={styles.buttonsArea}>
+          <button onClick={handleUndo} style={styles.undoBtn}>
             {actionLabel}
           </button>
-          <button
-            onClick={handleDismiss}
-            className="p-2 text-slate-400 hover:text-white transition-colors rounded-full"
-            aria-label="Dismiss"
-          >
-            <span className="material-symbols-outlined text-lg">close</span>
+          <button onClick={handleDismiss} style={styles.dismissBtn} aria-label="Dismiss">
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
           </button>
         </div>
       </div>

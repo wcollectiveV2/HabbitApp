@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { aiService } from '../services';
 import { useAuth } from '../context/AuthContext';
+import { colors, spacing, typography, borderRadius, shadows, zIndex } from '../theme/designSystem';
 
 interface Message {
   role: 'user' | 'model';
@@ -23,6 +24,171 @@ const HabitCoach: React.FC<HabitCoachProps> = ({ userName }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const displayName = userName || profile?.name?.split(' ')[0] || user?.name?.split(' ')[0] || 'there';
+
+  const styles = {
+    fabBtn: {
+      position: 'fixed' as const,
+      bottom: '7rem',
+      right: spacing[6],
+      width: '56px',
+      height: '56px',
+      backgroundColor: colors.primary,
+      color: 'white',
+      borderRadius: borderRadius.full,
+      boxShadow: shadows.lg,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: zIndex.popover,
+      border: 'none',
+      cursor: 'pointer',
+      transition: 'transform 0.2s ease',
+    },
+    container: {
+      position: 'fixed' as const,
+      inset: 0,
+      zIndex: 100,
+      backgroundColor: colors.background.primary,
+      display: 'flex',
+      flexDirection: 'column' as const,
+    },
+    header: {
+      padding: spacing[6],
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      borderBottom: `1px solid ${colors.gray[100]}`,
+    },
+    headerLeft: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: spacing[3],
+    },
+    avatarBox: {
+      width: '40px',
+      height: '40px',
+      backgroundColor: `${colors.primary}15`,
+      color: colors.primary,
+      borderRadius: borderRadius.full,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    closeBtn: {
+      width: '40px',
+      height: '40px',
+      borderRadius: borderRadius.full,
+      border: 'none',
+      background: 'transparent',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: colors.text.primary,
+    },
+    errorBox: {
+      margin: `0 ${spacing[6]}`,
+      marginTop: spacing[4],
+      padding: spacing[3],
+      backgroundColor: `${colors.error}10`,
+      color: colors.error,
+      fontSize: typography.fontSize.sm,
+      borderRadius: borderRadius.xl,
+    },
+    messagesArea: {
+      flex: 1,
+      overflowY: 'auto' as const,
+      padding: spacing[6],
+      display: 'flex',
+      flexDirection: 'column' as const,
+      gap: spacing[4],
+    },
+    userMessage: {
+      maxWidth: '80%',
+      padding: spacing[4],
+      borderRadius: borderRadius.xl,
+      fontSize: typography.fontSize.sm,
+      fontWeight: typography.fontWeight.medium,
+      backgroundColor: colors.primary,
+      color: 'white',
+      borderTopRightRadius: 0,
+      boxShadow: `0 4px 12px ${colors.primary}33`,
+    },
+    aiMessage: {
+      maxWidth: '80%',
+      padding: spacing[4],
+      borderRadius: borderRadius.xl,
+      fontSize: typography.fontSize.sm,
+      fontWeight: typography.fontWeight.medium,
+      backgroundColor: colors.gray[100],
+      color: colors.text.primary,
+      borderTopLeftRadius: 0,
+    },
+    typingIndicator: {
+      backgroundColor: colors.gray[100],
+      padding: spacing[4],
+      borderRadius: borderRadius.xl,
+      borderTopLeftRadius: 0,
+      display: 'flex',
+      gap: spacing[1],
+    },
+    typingDot: {
+      width: '6px',
+      height: '6px',
+      backgroundColor: colors.gray[400],
+      borderRadius: borderRadius.full,
+    },
+    suggestionsArea: {
+      paddingTop: spacing[4],
+      display: 'flex',
+      flexDirection: 'column' as const,
+      gap: spacing[2],
+    },
+    suggestionBtn: {
+      display: 'block',
+      width: '100%',
+      textAlign: 'left' as const,
+      padding: spacing[3],
+      backgroundColor: colors.gray[50],
+      border: 'none',
+      borderRadius: borderRadius.xl,
+      fontSize: typography.fontSize.sm,
+      color: colors.text.secondary,
+      cursor: 'pointer',
+      transition: 'background-color 0.2s ease',
+    },
+    inputArea: {
+      padding: spacing[6],
+      borderTop: `1px solid ${colors.gray[100]}`,
+      backgroundColor: colors.background.primary,
+    },
+    inputRow: {
+      display: 'flex',
+      gap: spacing[2],
+    },
+    textInput: {
+      flex: 1,
+      backgroundColor: colors.gray[100],
+      border: 'none',
+      borderRadius: borderRadius.xl,
+      padding: `${spacing[3]} ${spacing[5]}`,
+      fontSize: typography.fontSize.sm,
+      color: colors.text.primary,
+      outline: 'none',
+    },
+    sendBtn: {
+      width: '48px',
+      height: '48px',
+      backgroundColor: colors.primary,
+      color: 'white',
+      borderRadius: borderRadius.xl,
+      border: 'none',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  };
 
   // Initialize with greeting when opened
   useEffect(() => {
@@ -81,67 +247,69 @@ const HabitCoach: React.FC<HabitCoachProps> = ({ userName }) => {
     <>
       <button 
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-28 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center z-40 active:scale-90 transition-transform"
+        style={styles.fabBtn}
       >
         <span className="material-symbols-outlined">smart_toy</span>
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-[100] bg-white dark:bg-background-dark flex flex-col animate-in slide-in-from-bottom duration-300">
-          <header className="p-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center">
+        <div style={styles.container}>
+          <header style={styles.header}>
+            <div style={styles.headerLeft}>
+              <div style={styles.avatarBox}>
                 <span className="material-symbols-outlined">smart_toy</span>
               </div>
               <div>
-                <h3 className="font-bold">Habit Coach</h3>
-                <p className={`text-[10px] font-bold uppercase ${isTyping ? 'text-amber-500' : 'text-green-500'}`}>
+                <h3 style={{ fontWeight: typography.fontWeight.bold, color: colors.text.primary, margin: 0 }}>Habit Coach</h3>
+                <p style={{ 
+                  fontSize: '10px', 
+                  fontWeight: typography.fontWeight.bold, 
+                  textTransform: 'uppercase' as const,
+                  color: isTyping ? '#F59E0B' : '#22C55E',
+                  margin: 0
+                }}>
                   {isTyping ? 'Thinking...' : 'Online'}
                 </p>
               </div>
             </div>
-            <button onClick={() => setIsOpen(false)} className="w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center">
+            <button onClick={() => setIsOpen(false)} style={styles.closeBtn}>
               <span className="material-symbols-outlined">close</span>
             </button>
           </header>
 
           {error && (
-            <div className="mx-6 mt-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-xl">
+            <div style={styles.errorBox}>
               {error}
             </div>
           )}
 
-          <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
+          <div ref={scrollRef} style={styles.messagesArea}>
             {messages.map((m, i) => (
-              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] p-4 rounded-2xl text-sm font-medium ${
-                  m.role === 'user' 
-                  ? 'bg-primary text-white rounded-tr-none shadow-lg shadow-primary/20' 
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-tl-none'
-                }`}>
+              <div key={i} style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                <div style={m.role === 'user' ? styles.userMessage : styles.aiMessage}>
                   {m.text}
                 </div>
               </div>
             ))}
             {isTyping && (
-              <div className="flex justify-start">
-                <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-2xl rounded-tl-none flex gap-1">
-                  <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
-                  <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-75"></div>
-                  <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-150"></div>
+              <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                <div style={styles.typingIndicator}>
+                  <div style={{ ...styles.typingDot, animation: 'bounce 1s infinite' }}></div>
+                  <div style={{ ...styles.typingDot, animation: 'bounce 1s infinite 0.1s' }}></div>
+                  <div style={{ ...styles.typingDot, animation: 'bounce 1s infinite 0.2s' }}></div>
                 </div>
               </div>
             )}
             
             {/* Suggested questions when no user messages yet */}
             {messages.length <= 1 && !isTyping && (
-              <div className="space-y-2 pt-4">
-                <p className="text-xs text-slate-400 font-medium">Try asking:</p>
+              <div style={styles.suggestionsArea}>
+                <p style={{ fontSize: typography.fontSize.xs, color: colors.gray[400], fontWeight: typography.fontWeight.medium, margin: 0 }}>Try asking:</p>
                 {suggestedQuestions.map((q, i) => (
                   <button
                     key={i}
                     onClick={() => setInput(q)}
-                    className="block w-full text-left p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    style={styles.suggestionBtn}
                   >
                     {q}
                   </button>
@@ -150,20 +318,20 @@ const HabitCoach: React.FC<HabitCoachProps> = ({ userName }) => {
             )}
           </div>
 
-          <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-background-dark">
-            <div className="flex gap-2">
+          <div style={styles.inputArea}>
+            <div style={styles.inputRow}>
               <input 
                 type="text" 
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                 placeholder="Ask your coach anything..."
-                className="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl px-5 text-sm focus:ring-2 focus:ring-primary"
+                style={styles.textInput}
               />
               <button 
                 onClick={handleSend}
                 disabled={!input.trim() || isTyping}
-                className="w-12 h-12 bg-primary text-white rounded-2xl flex items-center justify-center disabled:opacity-50"
+                style={{ ...styles.sendBtn, opacity: (!input.trim() || isTyping) ? 0.5 : 1 }}
               >
                  <span className="material-symbols-outlined">send</span>
               </button>

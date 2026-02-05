@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Task } from '../../types';
 import { taskService } from '../../services';
+import { colors, spacing, borderRadius, shadows, typography, transitions } from '../../theme/designSystem';
 
 interface EditTaskModalProps {
   isOpen: boolean;
@@ -9,6 +10,233 @@ interface EditTaskModalProps {
   onTaskUpdated: () => void;
   onTaskDeleted: () => void;
 }
+
+const styles = {
+  overlay: {
+    position: 'fixed' as const,
+    inset: 0,
+    zIndex: 50,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backdropFilter: 'blur(4px)',
+    display: 'flex',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  modal: {
+    backgroundColor: colors.white,
+    borderTopLeftRadius: borderRadius['3xl'],
+    borderTopRightRadius: borderRadius['3xl'],
+    width: '100%',
+    maxWidth: '32rem',
+    maxHeight: '90vh',
+    overflow: 'hidden',
+    boxShadow: shadows.xl,
+    position: 'relative' as const,
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing[4],
+    borderBottom: `1px solid ${colors.gray[100]}`,
+  },
+  closeBtn: {
+    padding: spacing[2],
+    marginLeft: `-${spacing[2]}`,
+    borderRadius: borderRadius.full,
+    border: 'none',
+    backgroundColor: 'transparent',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: transitions.colors,
+  },
+  headerTitle: {
+    fontWeight: typography.fontWeight.bold,
+    fontSize: typography.fontSize.lg,
+    color: colors.gray[900],
+  },
+  saveBtn: {
+    color: colors.primaryDark,
+    fontWeight: typography.fontWeight.bold,
+    fontSize: typography.fontSize.sm,
+    border: 'none',
+    backgroundColor: 'transparent',
+    cursor: 'pointer',
+    padding: `${spacing[2]} ${spacing[3]}`,
+    borderRadius: borderRadius.lg,
+    transition: transitions.colors,
+  },
+  saveBtnDisabled: {
+    opacity: 0.5,
+    cursor: 'not-allowed',
+  },
+  form: {
+    padding: spacing[4],
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: spacing[4],
+  },
+  errorBox: {
+    padding: spacing[3],
+    backgroundColor: colors.red[50],
+    color: colors.red[500],
+    fontSize: typography.fontSize.sm,
+    borderRadius: borderRadius.xl,
+  },
+  iconTitleRow: {
+    display: 'flex',
+    gap: spacing[3],
+  },
+  iconBox: {
+    width: '3.5rem',
+    height: '3.5rem',
+    borderRadius: borderRadius['2xl'],
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    backgroundColor: `${colors.primary}15`,
+    color: colors.primaryDark,
+  },
+  input: {
+    flex: 1,
+    backgroundColor: colors.gray[50],
+    borderRadius: borderRadius['2xl'],
+    padding: `${spacing[3]} ${spacing[4]}`,
+    fontWeight: typography.fontWeight.semibold,
+    fontSize: typography.fontSize.base,
+    border: `1px solid ${colors.gray[200]}`,
+    outline: 'none',
+  },
+  textarea: {
+    width: '100%',
+    backgroundColor: colors.gray[50],
+    borderRadius: borderRadius['2xl'],
+    padding: `${spacing[3]} ${spacing[4]}`,
+    fontWeight: typography.fontWeight.medium,
+    fontSize: typography.fontSize.base,
+    border: `1px solid ${colors.gray[200]}`,
+    outline: 'none',
+    resize: 'none' as const,
+    fontFamily: 'inherit',
+  },
+  infoBox: {
+    padding: spacing[4],
+    backgroundColor: colors.gray[50],
+    borderRadius: borderRadius['2xl'],
+  },
+  infoHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing[2],
+  },
+  infoLabel: {
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.gray[500],
+  },
+  infoValue: {
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.gray[900],
+  },
+  progressBar: {
+    display: 'flex',
+    gap: '0.25rem',
+  },
+  progressBlock: (isActive: boolean) => ({
+    flex: 1,
+    height: '0.5rem',
+    borderRadius: borderRadius.full,
+    backgroundColor: isActive ? colors.primary : colors.gray[200],
+  }),
+  statusBox: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing[4],
+    backgroundColor: colors.gray[50],
+    borderRadius: borderRadius['2xl'],
+  },
+  statusLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing[3],
+  },
+  statusText: {
+    fontWeight: typography.fontWeight.bold,
+    color: colors.gray[900],
+  },
+  deleteBtn: {
+    width: '100%',
+    padding: spacing[4],
+    backgroundColor: colors.red[50],
+    color: colors.red[500],
+    fontWeight: typography.fontWeight.bold,
+    borderRadius: borderRadius['2xl'],
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing[2],
+    border: 'none',
+    cursor: 'pointer',
+    transition: transitions.colors,
+  },
+  confirmOverlay: {
+    position: 'absolute' as const,
+    inset: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing[4],
+  },
+  confirmBox: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius['2xl'],
+    padding: spacing[6],
+    maxWidth: '24rem',
+    width: '100%',
+  },
+  confirmTitle: {
+    fontWeight: typography.fontWeight.bold,
+    fontSize: typography.fontSize.lg,
+    marginBottom: spacing[2],
+    color: colors.gray[900],
+  },
+  confirmText: {
+    color: colors.gray[500],
+    fontSize: typography.fontSize.sm,
+    marginBottom: spacing[4],
+  },
+  confirmBtns: {
+    display: 'flex',
+    gap: spacing[3],
+  },
+  cancelBtn: {
+    flex: 1,
+    padding: spacing[3],
+    backgroundColor: colors.gray[100],
+    borderRadius: borderRadius.xl,
+    fontWeight: typography.fontWeight.bold,
+    border: 'none',
+    cursor: 'pointer',
+    color: colors.gray[700],
+  },
+  confirmDeleteBtn: {
+    flex: 1,
+    padding: spacing[3],
+    backgroundColor: colors.red[500],
+    color: colors.white,
+    borderRadius: borderRadius.xl,
+    fontWeight: typography.fontWeight.bold,
+    border: 'none',
+    cursor: 'pointer',
+  },
+};
 
 const EditTaskModal: React.FC<EditTaskModalProps> = ({ 
   isOpen, 
@@ -66,48 +294,53 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
   if (!isOpen || !task) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center animate-in fade-in">
+    <div style={styles.overlay} onClick={onClose}>
       <div 
-        className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl w-full max-w-lg max-h-[90vh] overflow-hidden animate-in slide-in-from-bottom-10"
+        style={styles.modal}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+        <div style={styles.header}>
           <button 
             onClick={onClose}
-            className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+            style={styles.closeBtn}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.gray[100]}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           >
             <span className="material-symbols-outlined">close</span>
           </button>
-          <h2 className="font-bold text-lg">Edit Task</h2>
+          <h2 style={styles.headerTitle}>Edit Task</h2>
           <button 
             onClick={handleSubmit}
             disabled={loading || !title.trim()}
-            className="text-primary font-bold text-sm disabled:opacity-50"
+            style={{
+              ...styles.saveBtn,
+              ...(loading || !title.trim() ? styles.saveBtnDisabled : {}),
+            }}
           >
             {loading ? 'Saving...' : 'Save'}
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-4 space-y-4">
+        <form onSubmit={handleSubmit} style={styles.form}>
           {error && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-500 text-sm rounded-xl">
+            <div style={styles.errorBox}>
               {error}
             </div>
           )}
 
           {/* Icon & Title */}
-          <div className="flex gap-3">
-            <div className={`w-14 h-14 rounded-2xl ${task.iconBg} ${task.iconColor} flex items-center justify-center flex-shrink-0`}>
-              <span className="material-symbols-outlined text-2xl">{task.icon}</span>
+          <div style={styles.iconTitleRow}>
+            <div style={styles.iconBox}>
+              <span className="material-symbols-outlined" style={{ fontSize: '1.5rem' }}>{task.icon}</span>
             </div>
             <input
               type="text"
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="Task title"
-              className="flex-1 bg-slate-50 dark:bg-slate-800 rounded-2xl px-4 py-3 font-semibold focus:ring-2 focus:ring-primary outline-none"
+              style={styles.input}
             />
           </div>
 
@@ -117,36 +350,37 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
             onChange={e => setDescription(e.target.value)}
             placeholder="Description"
             rows={2}
-            className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl px-4 py-3 font-medium focus:ring-2 focus:ring-primary outline-none resize-none"
+            style={styles.textarea}
           />
 
           {/* Task Progress Info */}
-          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-bold text-slate-500">Progress</span>
-              <span className="text-sm font-bold text-slate-900 dark:text-white">
+          <div style={styles.infoBox}>
+            <div style={styles.infoHeader}>
+              <span style={styles.infoLabel}>Progress</span>
+              <span style={styles.infoValue}>
                 {task.currentProgress}/{task.totalProgress}
               </span>
             </div>
-            <div className="flex gap-1">
+            <div style={styles.progressBar}>
               {Array.from({ length: task.progressBlocks }).map((_, i) => (
                 <div 
                   key={i}
-                  className={`flex-1 h-2 rounded-full ${
-                    i < task.activeBlocks ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'
-                  }`}
+                  style={styles.progressBlock(i < task.activeBlocks)}
                 />
               ))}
             </div>
           </div>
 
           {/* Status Toggle */}
-          <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-            <div className="flex items-center gap-3">
-              <span className={`material-symbols-outlined ${task.completed ? 'text-green-500' : 'text-slate-400'}`}>
+          <div style={styles.statusBox}>
+            <div style={styles.statusLeft}>
+              <span 
+                className="material-symbols-outlined" 
+                style={{ color: task.completed ? colors.green[500] : colors.gray[400] }}
+              >
                 {task.completed ? 'check_circle' : 'radio_button_unchecked'}
               </span>
-              <span className="font-bold text-slate-900 dark:text-white">
+              <span style={styles.statusText}>
                 {task.completed ? 'Completed' : 'In Progress'}
               </span>
             </div>
@@ -156,32 +390,35 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
           <button
             type="button"
             onClick={() => setShowDeleteConfirm(true)}
-            className="w-full p-4 bg-red-50 dark:bg-red-900/10 text-red-500 font-bold rounded-2xl flex items-center justify-center gap-2"
+            style={styles.deleteBtn}
           >
-            <span className="material-symbols-outlined text-sm">delete</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>delete</span>
             Delete Task
           </button>
         </form>
 
         {/* Delete Confirmation */}
         {showDeleteConfirm && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full">
-              <h3 className="font-bold text-lg mb-2">Delete Task?</h3>
-              <p className="text-slate-500 text-sm mb-4">
+          <div style={styles.confirmOverlay}>
+            <div style={styles.confirmBox}>
+              <h3 style={styles.confirmTitle}>Delete Task?</h3>
+              <p style={styles.confirmText}>
                 This action cannot be undone. The task will be permanently deleted.
               </p>
-              <div className="flex gap-3">
+              <div style={styles.confirmBtns}>
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 p-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold"
+                  style={styles.cancelBtn}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDelete}
                   disabled={loading}
-                  className="flex-1 p-3 bg-red-500 text-white rounded-xl font-bold disabled:opacity-50"
+                  style={{
+                    ...styles.confirmDeleteBtn,
+                    ...(loading ? { opacity: 0.5 } : {}),
+                  }}
                 >
                   {loading ? 'Deleting...' : 'Delete'}
                 </button>
