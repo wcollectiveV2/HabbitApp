@@ -411,6 +411,7 @@ export const getMenuItemStyle = (active = false): React.CSSProperties => ({
 export const getInputStyle = (): React.CSSProperties => ({
   width: '100%',
   backgroundColor: components.input.backgroundColor,
+  color: components.input.color,
   border: 'none',
   borderRadius: components.input.borderRadius,
   padding: components.input.padding,
