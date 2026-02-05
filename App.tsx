@@ -12,6 +12,7 @@ import LoginView from './components/LoginView';
 import SignupView from './components/SignupView';
 import ChallengeDetailView from './components/ChallengeDetailView';
 import OnboardingView from './components/OnboardingView';
+import NotFoundView from './components/NotFoundView';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { taskService, challengeService } from './services';
@@ -757,7 +758,7 @@ const AppContent: React.FC = () => {
           <Route path="/habits" element={<HabitView />} />
           <Route path="/social" element={<SocialView />} />
           <Route path="/profile" element={<ProfileView onLogout={handleLogout} profile={profile} />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFoundView />} />
         </Routes>
       </Layout>
         
