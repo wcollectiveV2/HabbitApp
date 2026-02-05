@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Task } from '../types';
-import { aiService, userService } from '../services';
+import { userService } from '../services';
 import type { UserProfile } from '../services';
-import Skeleton from './ui/Skeleton';
-import { WeeklyCalendar } from './ui';
 
 interface HomeViewProps {
   tasks: Task[];
@@ -11,39 +9,15 @@ interface HomeViewProps {
 }
 
 const HomeView: React.FC<HomeViewProps> = ({ tasks, profile }) => {
-  const [tip, setTip] = useState<string>("Loading your personalized tip...");
-  const [isLoadingTip, setIsLoadingTip] = useState(true);
-  const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [tip] = useState<string>("Small steps every day lead to big results along the way.");
   const [stats, setStats] = useState({
     streakCount: 0,
     totalPoints: 0,
     completedPercent: 0
   });
-  const [activity, setActivity] = useState<{ date: string; completed: boolean }[]>([]);
-
-  useEffect(() => {
-    // AI Feature disabled
-    setTip("Stay focused on your goals today!");
-    setIsLoadingTip(false);
-    /*
-    const fetchTip = async () => {
-      setIsLoadingTip(true);
-      try {
-        const dailyTip = await aiService.getDailyTip();
-        setTip(dailyTip.content);
-      } catch (err) {
-        console.error('Failed to fetch daily tip:', err);
-        setTip("Stay focused on your goals today!");
-      }
-      setIsLoadingTip(false);
-    };
-    fetchTip();
-    */
-  }, []);
 
   useEffect(() => {
     const fetchStats = async () => {
-      setIsLoadingStats(true);
       try {
         const userStats = await userService.getStats();
         const completed = tasks.filter(t => t.completed).length;
@@ -54,7 +28,6 @@ const HomeView: React.FC<HomeViewProps> = ({ tasks, profile }) => {
           completedPercent: Math.round((completed / total) * 100)
         });
       } catch (err) {
-        // Use profile data as fallback
         const completed = tasks.filter(t => t.completed).length;
         const total = tasks.length || 1;
         setStats({
@@ -63,112 +36,198 @@ const HomeView: React.FC<HomeViewProps> = ({ tasks, profile }) => {
           completedPercent: Math.round((completed / total) * 100)
         });
       }
-      setIsLoadingStats(false);
     };
     fetchStats();
   }, [tasks, profile]);
 
-  useEffect(() => {
-    // Build weekly activity from tasks or fetch from API
-    const fetchActivity = async () => {
-      try {
-        const activityData = await userService.getActivity();
-        // Map to weekly format
-        const today = new Date();
-        const weekActivity = [];
-        for (let i = 6; i >= 0; i--) {
-          const date = new Date(today);
-          date.setDate(date.getDate() - i);
-          const dateStr = date.toISOString().split('T')[0];
-          const dayData = activityData.find((a: any) => a.date === dateStr);
-          weekActivity.push({
-            date: dateStr,
-            completed: dayData ? dayData.count > 0 : false
-          });
-        }
-        setActivity(weekActivity);
-      } catch {
-        // Fallback to empty activity if API fails - NO MOCK DATA
-        setActivity([]);
-      }
-    };
-    fetchActivity();
-  }, []);
-
-  const displayStats = [
-    { label: 'Streak', value: String(stats.streakCount), unit: 'Days', icon: 'local_fire_department', color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-900/20' },
-    { label: 'Points', value: stats.totalPoints >= 1000 ? `${(stats.totalPoints / 1000).toFixed(1)}k` : String(stats.totalPoints), unit: 'XP', icon: 'stars', color: 'text-yellow-500', bg: 'bg-yellow-50 dark:bg-yellow-900/20' },
-    { label: 'Completed', value: String(stats.completedPercent), unit: '%', icon: 'task_alt', color: 'text-green-500', bg: 'bg-green-50 dark:bg-green-900/20' },
-  ];
-
-  const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-  const today = new Date().getDay();
-
-  const firstName = profile?.name?.split(' ')[0] || 'there';
+  const completedToday = tasks.filter(t => t.completed).length;
 
   return (
-    <div className="px-6 space-y-8 animate-in fade-in duration-500 pb-10">
-      <div>
-        <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-          {getGreeting()}, <span className="text-primary">{firstName}</span>
-        </h2>
-        {/* Fixed contrast: text-slate-400 -> text-slate-600 */}
-        <p className="text-slate-600 dark:text-slate-400 font-medium">You're closer to your goal today!</p>
-      </div>
-
-      <div className="grid grid-cols-3 gap-3" role="region" aria-label="Your stats">
-        {isLoadingStats ? (
-          <>
-            <Skeleton variant="card" className="h-28" />
-            <Skeleton variant="card" className="h-28" />
-            <Skeleton variant="card" className="h-28" />
-          </>
-        ) : (
-          displayStats.map((stat, i) => (
-            <div 
-              key={i} 
-              className="bg-white dark:bg-card-dark p-4 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col items-center"
-              role="group"
-              aria-label={`${stat.label}: ${stat.value} ${stat.unit}`}
-            >
-              <div className={`w-10 h-10 rounded-2xl ${stat.bg} ${stat.color} flex items-center justify-center mb-3`} aria-hidden="true">
-                <span className="material-symbols-outlined">{stat.icon}</span>
-              </div>
-              <span className="text-lg font-black text-slate-900 dark:text-white">{stat.value}</span>
-              {/* Fixed contrast: text-slate-400 -> text-slate-600 */}
-              <span className="text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400">{stat.unit}</span>
+    <div style={{ paddingBottom: '100px' }} className="animate-fade-in">
+      
+      {/* Hero Card - Streak */}
+      <div style={{
+        background: 'linear-gradient(135deg, #5D5FEF 0%, #8B5CF6 100%)',
+        borderRadius: '24px',
+        padding: '24px',
+        color: '#FFFFFF',
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: '0 10px 40px rgba(93,95,239,0.3)',
+        marginBottom: '20px',
+      }}>
+        {/* Decorative elements */}
+        <div style={{
+          position: 'absolute',
+          top: '-30px',
+          right: '-30px',
+          width: '120px',
+          height: '120px',
+          borderRadius: '50%',
+          background: 'rgba(255,255,255,0.1)',
+        }} />
+        <div style={{
+          position: 'absolute',
+          bottom: '-20px',
+          left: '-20px',
+          width: '80px',
+          height: '80px',
+          borderRadius: '50%',
+          background: 'rgba(0,0,0,0.1)',
+        }} />
+        
+        <div style={{ position: 'relative', zIndex: 10 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+            <div>
+              <h2 style={{ fontSize: '48px', fontWeight: 900, margin: 0, lineHeight: 1 }}>
+                {stats.streakCount}
+              </h2>
+              <p style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', opacity: 0.8, margin: '4px 0 0 0', letterSpacing: '1px' }}>
+                Day Streak
+              </p>
             </div>
-          ))
-        )}
+            <div style={{
+              width: '56px',
+              height: '56px',
+              background: 'rgba(255,255,255,0.2)',
+              borderRadius: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '32px', color: '#FDE047' }}>
+                local_fire_department
+              </span>
+            </div>
+          </div>
+          
+          {/* Progress bar */}
+          <div style={{
+            background: 'rgba(0,0,0,0.2)',
+            borderRadius: '12px',
+            padding: '16px',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', opacity: 0.7, marginBottom: '8px' }}>
+              <span>Daily Goal</span>
+              <span>{stats.completedPercent}%</span>
+            </div>
+            <div style={{ height: '10px', background: 'rgba(255,255,255,0.2)', borderRadius: '5px', overflow: 'hidden' }}>
+              <div style={{
+                height: '100%',
+                width: `${stats.completedPercent}%`,
+                background: 'linear-gradient(90deg, #FDE047 0%, #FBBF24 100%)',
+                borderRadius: '5px',
+                transition: 'width 1s ease-out',
+                boxShadow: '0 0 10px rgba(253,224,71,0.5)',
+              }} />
+            </div>
+          </div>
+        </div>
       </div>
 
-      <WeeklyCalendar onDayClick={(date, activity) => console.log('Day clicked:', date, activity)} />
-
-      <div 
-        className={`bg-blue-50 dark:bg-blue-900/10 p-5 rounded-3xl border border-blue-200 dark:border-blue-900/30 flex items-center gap-4 transition-all ${isLoadingTip ? 'animate-pulse opacity-70' : ''}`}
-        role="region"
-        aria-label="Habit insight"
-      >
-        <div className="w-12 h-12 bg-blue-500 rounded-full flex-shrink-0 flex items-center justify-center text-white shadow-lg shadow-blue-500/30" aria-hidden="true">
-          <span className="material-symbols-outlined">auto_awesome</span>
+      {/* Stats Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+        <div style={{
+          background: '#FFFFFF',
+          borderRadius: '20px',
+          padding: '20px',
+          textAlign: 'center',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+          border: '1px solid #F1F5F9',
+        }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '50%',
+            background: '#FEF3C7',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 12px',
+          }}>
+            <span className="material-symbols-outlined" style={{ color: '#F59E0B', fontSize: '24px' }}>stars</span>
+          </div>
+          <div style={{ fontSize: '28px', fontWeight: 800, color: '#1E293B' }}>
+            {stats.totalPoints >= 1000 ? `${(stats.totalPoints / 1000).toFixed(1)}k` : stats.totalPoints}
+          </div>
+          <div style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' }}>
+            Total Points
+          </div>
         </div>
-        <div>
-          {/* Fixed contrast */}
-          <h4 className="font-bold text-blue-900 dark:text-blue-300 text-sm uppercase tracking-tighter">Habit Insight</h4>
-          <p className="text-sm text-blue-800 dark:text-blue-400 leading-snug">
-            {tip}
+        
+        <div style={{
+          background: '#FFFFFF',
+          borderRadius: '20px',
+          padding: '20px',
+          textAlign: 'center',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+          border: '1px solid #F1F5F9',
+        }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '50%',
+            background: '#D1FAE5',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 12px',
+          }}>
+            <span className="material-symbols-outlined" style={{ color: '#10B981', fontSize: '24px' }}>check_circle</span>
+          </div>
+          <div style={{ fontSize: '28px', fontWeight: 800, color: '#1E293B' }}>
+            {completedToday}
+          </div>
+          <div style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' }}>
+            Completed Today
+          </div>
+        </div>
+      </div>
+
+      {/* Tip Card */}
+      <div style={{
+        background: '#EFF6FF',
+        borderRadius: '20px',
+        padding: '20px',
+        display: 'flex',
+        gap: '16px',
+        alignItems: 'flex-start',
+        border: '1px solid #DBEAFE',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          position: 'absolute',
+          right: '-10px',
+          top: '-10px',
+          opacity: 0.1,
+        }}>
+          <span className="material-symbols-outlined" style={{ fontSize: '100px', color: '#3B82F6' }}>format_quote</span>
+        </div>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          borderRadius: '50%',
+          background: '#DBEAFE',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}>
+          <span className="material-symbols-outlined" style={{ color: '#3B82F6', fontSize: '20px' }}>auto_awesome</span>
+        </div>
+        <div style={{ position: 'relative', zIndex: 10 }}>
+          <p style={{ fontSize: '14px', fontWeight: 500, color: '#475569', fontStyle: 'italic', lineHeight: 1.5, margin: 0 }}>
+            "{tip}"
+          </p>
+          <p style={{ fontSize: '10px', fontWeight: 700, color: '#3B82F6', textTransform: 'uppercase', marginTop: '8px', letterSpacing: '0.5px' }}>
+            Daily Mindset
           </p>
         </div>
       </div>
+
     </div>
   );
 };
-
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Morning';
-  if (hour < 17) return 'Afternoon';
-  return 'Evening';
-}
 
 export default HomeView;

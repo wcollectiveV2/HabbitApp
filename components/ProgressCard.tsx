@@ -18,131 +18,186 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
   onQuickLog 
 }) => {
   const isDark = challenge.theme === 'dark';
-  const radius = 24;
+  const radius = 26;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (challenge.progress / 100) * circumference;
+
+  const cardStyle: React.CSSProperties = {
+    minWidth: '280px',
+    padding: '20px',
+    borderRadius: '24px',
+    position: 'relative',
+    overflow: 'hidden',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    background: isDark 
+      ? 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)' 
+      : 'linear-gradient(135deg, #5D5FEF 0%, #8B5CF6 100%)',
+    color: '#FFFFFF',
+    boxShadow: isDark 
+      ? '0 10px 40px rgba(15,23,42,0.4)' 
+      : '0 10px 40px rgba(93,95,239,0.4)',
+  };
 
   return (
     <div 
       onClick={onClick}
-      className={`min-w-[280px] snap-center p-5 rounded-3xl relative overflow-hidden shadow-xl cursor-pointer transition-all active:scale-[0.98] hover:shadow-2xl ${
-        isDark ? 'bg-slate-900 text-white shadow-slate-900/20' : 'bg-primary text-white shadow-primary/30'
-      }`}
+      style={cardStyle}
       role="article"
       aria-label={`Challenge: ${challenge.title}, ${challenge.progress}% complete`}
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onClick?.();
-        }
-      }}
     >
-      <div className="relative z-10 flex flex-col h-full justify-between">
-        <div className="flex justify-between items-start">
+      {/* Decorative circles */}
+      <div style={{
+        position: 'absolute',
+        top: '-30px',
+        right: '-30px',
+        width: '100px',
+        height: '100px',
+        borderRadius: '50%',
+        background: 'rgba(255,255,255,0.1)',
+      }} />
+      <div style={{
+        position: 'absolute',
+        bottom: '-20px',
+        left: '-20px',
+        width: '60px',
+        height: '60px',
+        borderRadius: '50%',
+        background: 'rgba(255,255,255,0.05)',
+      }} />
+
+      <div style={{ position: 'relative', zIndex: 10 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h3 className="font-bold text-xl leading-tight whitespace-pre-line">
-              {challenge.title.replace(' ', '\n')}
+            <h3 style={{ 
+              fontSize: '18px', 
+              fontWeight: 700, 
+              lineHeight: 1.3,
+              margin: 0,
+              marginBottom: '4px',
+            }}>
+              {challenge.title}
             </h3>
-            <p className={`text-xs mt-1 font-medium ${isDark ? 'text-white/60' : 'text-white/80'}`}>
+            <p style={{ 
+              fontSize: '13px', 
+              opacity: 0.8,
+              margin: 0,
+              fontWeight: 500,
+            }}>
               {challenge.timeLeft}
             </p>
           </div>
-          {/* Progress circle with ARIA */}
-          <div 
-            className="relative w-16 h-16"
-            role="progressbar"
-            aria-valuenow={challenge.progress}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label={`${challenge.progress}% complete`}
-          >
-            <svg className="w-full h-full transform -rotate-90" aria-hidden="true">
+          
+          {/* Progress circle */}
+          <div style={{ position: 'relative', width: '64px', height: '64px' }}>
+            <svg width="64" height="64" style={{ transform: 'rotate(-90deg)' }}>
               <circle 
-                className={isDark ? 'text-white/10' : 'text-white/20'} 
-                cx="32" cy="32" fill="transparent" r={radius} 
-                stroke="currentColor" strokeWidth="6" 
+                cx="32" cy="32" r={radius}
+                fill="transparent" 
+                stroke="rgba(255,255,255,0.2)" 
+                strokeWidth="5" 
               />
               <circle 
-                className={isDark ? 'text-primary' : 'text-white'} 
-                cx="32" cy="32" fill="transparent" r={radius} 
-                stroke="currentColor" strokeWidth="6" 
+                cx="32" cy="32" r={radius}
+                fill="transparent" 
+                stroke="#FFFFFF" 
+                strokeWidth="5" 
                 strokeDasharray={circumference}
                 strokeDashoffset={offset}
                 strokeLinecap="round"
-                style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+                style={{ transition: 'stroke-dashoffset 0.8s ease' }}
               />
             </svg>
-            <span 
-              className={`absolute inset-0 flex items-center justify-center text-[10px] font-black ${isDark ? 'text-primary' : 'text-white'}`}
-              aria-hidden="true"
-            >
+            <span style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '12px',
+              fontWeight: 800,
+            }}>
               {challenge.progress}%
             </span>
           </div>
         </div>
         
-        <div className="mt-6 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex -space-x-2">
-              {challenge.participants.map((p, i) => (
+        <div style={{ 
+          marginTop: '20px', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between' 
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex' }}>
+              {challenge.participants.slice(0, 3).map((p, i) => (
                 <img 
                   key={i}
-                  className={`w-6 h-6 rounded-full border-2 bg-slate-100 object-cover ${isDark ? 'border-slate-900' : 'border-primary'}`}
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    border: '2px solid',
+                    borderColor: isDark ? '#1E293B' : '#5D5FEF',
+                    marginLeft: i > 0 ? '-8px' : 0,
+                    objectFit: 'cover',
+                  }}
                   src={p}
-                  alt={`Participant ${i + 1}`}
+                  alt=""
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = `https://i.pravatar.cc/50?u=${i}`;
                   }}
                 />
               ))}
               {challenge.extraParticipants > 0 && (
-                <div 
-                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-[8px] font-bold ${
-                    isDark ? 'border-slate-900 bg-slate-800' : 'border-primary bg-primary/50'
-                  }`}
-                  aria-label={`And ${challenge.extraParticipants} more participants`}
-                >
+                <div style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '50%',
+                  border: '2px solid',
+                  borderColor: isDark ? '#1E293B' : '#5D5FEF',
+                  marginLeft: '-8px',
+                  background: 'rgba(255,255,255,0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '9px',
+                  fontWeight: 700,
+                }}>
                   +{challenge.extraParticipants}
                 </div>
               )}
             </div>
-            <span className={`text-[10px] font-bold uppercase tracking-tighter ${isDark ? 'opacity-60' : 'opacity-90'}`}>
+            <span style={{ 
+              fontSize: '10px', 
+              fontWeight: 700, 
+              textTransform: 'uppercase',
+              opacity: 0.8,
+              letterSpacing: '0.5px',
+            }}>
               {challenge.joinedText}
             </span>
           </div>
-
-          {/* Quick log button */}
-          {onQuickLog && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onQuickLog();
-              }}
-              className={`p-2 rounded-full transition-colors ${
-                isDark ? 'hover:bg-white/10 active:bg-white/20' : 'hover:bg-white/20 active:bg-white/30'
-              }`}
-              aria-label="Quick log today's action"
-            >
-              <span className="material-symbols-outlined text-lg">add_task</span>
-            </button>
-          )}
         </div>
 
-        {/* Pagination indicator */}
+        {/* Pagination dots */}
         {totalCount > 1 && (
-          <div className="flex justify-center gap-1.5 mt-4" role="tablist" aria-label="Challenge cards">
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            gap: '6px', 
+            marginTop: '16px' 
+          }}>
             {Array.from({ length: totalCount }).map((_, i) => (
               <div
                 key={i}
-                className={`h-1 rounded-full transition-all ${
-                  i === currentIndex 
-                    ? `w-4 ${isDark ? 'bg-primary' : 'bg-white'}` 
-                    : `w-1 ${isDark ? 'bg-white/20' : 'bg-white/40'}`
-                }`}
-                role="tab"
-                aria-selected={i === currentIndex}
-                aria-label={`Card ${i + 1} of ${totalCount}`}
+                style={{
+                  width: i === currentIndex ? '16px' : '6px',
+                  height: '6px',
+                  borderRadius: '3px',
+                  background: i === currentIndex ? '#FFFFFF' : 'rgba(255,255,255,0.3)',
+                  transition: 'all 0.3s ease',
+                }}
               />
             ))}
           </div>

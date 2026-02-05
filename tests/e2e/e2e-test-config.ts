@@ -311,11 +311,46 @@ export async function login(
   await page.fill('input[type="password"]', user.password);
   await page.click('button[type="submit"]');
   
+  // Handle Onboarding if it appears (Wait for either Skip button or Dashboard)
+  try {
+    const skipButton = page.locator('button:has-text("Skip")');
+    const dashboardElement = page.locator('text=Habit Insight').or(page.locator('text=Current Progress'));
+    
+    // Race condition: either skip button appears OR dashboard appears
+    // We give checking for skip button a short timeout
+    await Promise.race([
+      skipButton.waitFor({ state: 'visible', timeout: 5000 }),
+      dashboardElement.waitFor({ state: 'visible', timeout: 10000 })
+    ]);
+
+    if (await skipButton.isVisible()) {
+      await skipButton.click();
+    }
+
+    // Handle potential Discover Modal (opens after onboarding)
+    // Aggressive Modal Closing to ensure Dashboard is visible
+    await page.keyboard.press('Escape');
+    const closeDiscoverButton = page.locator('button[aria-label="Close discover view"]');
+    if (await closeDiscoverButton.count() > 0) {
+      await closeDiscoverButton.first().dispatchEvent('click');
+    }
+
+  } catch (e) {
+    // If timeout occurs, we assume we might be on dashboard or something failed later
+    // The final assertion will catch if we are not on dashboard
+    console.log('Onboarding check processed or skipped');
+  }
+
+  // Double check modal is gone before verifying dashboard
+  const closeConfirm = page.locator('button[aria-label="Close discover view"]');
+  if (await closeConfirm.count() > 0) {
+      await closeConfirm.first().dispatchEvent('click');
+  }
+
   // Wait for dashboard to load (real API response)
   await expect(
-    page.locator('text=Stay focused on your goals today!')
-      .or(page.locator('text=Streak'))
-      .or(page.locator('text=Points'))
+    page.locator('text=Habit Insight')
+      .or(page.locator('text=Current Progress'))
   ).toBeVisible({ timeout: 15000 });
 }
 
@@ -482,7 +517,7 @@ export async function getAuthToken(
   user: { email: string; password: string } = TEST_USERS.testUser
 ): Promise<string> {
   const request = 'request' in context ? context.request : context;
-  const backendUrl = process.env.VITE_API_URL || 'http://localhost:3001';
+  const backendUrl = process.env.VITE_API_URL || 'http://localhost:3000';
   
   const response = await request.post(`${backendUrl}/api/auth/login`, {
     data: {
@@ -509,7 +544,7 @@ export async function apiRequest(
   data?: any
 ) {
   const request = 'request' in context ? context.request : context;
-  const backendUrl = process.env.VITE_API_URL || 'http://localhost:3001';
+  const backendUrl = process.env.VITE_API_URL || 'http://localhost:3000';
   const fullUrl = endpoint.startsWith('http') ? endpoint : `${backendUrl}${endpoint}`;
   
   const options: any = {

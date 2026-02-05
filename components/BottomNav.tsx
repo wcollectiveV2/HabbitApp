@@ -8,49 +8,81 @@ interface BottomNavProps {
 }
 
 const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab }) => {
-  const tabs: { id: Tab; icon: string; label: string; fill?: boolean }[] = [
-    { id: 'home', icon: 'grid_view', label: 'Home' },
-    { id: 'habits', icon: 'self_improvement', label: 'Habits', fill: true },
-    { id: 'active', icon: 'emoji_events', label: 'Active', fill: true },
+  const tabs: { id: Tab; icon: string; label: string }[] = [
+    { id: 'home', icon: 'home', label: 'Home' },
+    { id: 'habits', icon: 'self_improvement', label: 'Habits' },
+    { id: 'active', icon: 'emoji_events', label: 'Active' },
     { id: 'social', icon: 'leaderboard', label: 'Social' },
     { id: 'me', icon: 'person', label: 'Me' },
   ];
 
   return (
-    <>
-      <nav 
-        className="fixed bottom-6 left-5 right-5 h-20 bg-slate-900/95 dark:bg-black/95 backdrop-blur-xl rounded-[2.5rem] p-2 flex items-center justify-between shadow-2xl z-50 overflow-hidden"
-        role="tablist"
-        aria-label="Main navigation"
-      >
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              role="tab"
-              aria-selected={isActive}
-              aria-label={`${tab.label} tab${isActive ? ' (current)' : ''}`}
-              className={`flex-1 h-full rounded-full flex flex-col items-center justify-center transition-all transform active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
-                isActive ? 'bg-primary text-white' : 'text-slate-500 hover:text-white'
-              }`}
+    <nav 
+      style={{
+        position: 'fixed',
+        bottom: '20px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: 'calc(100% - 40px)',
+        maxWidth: '400px',
+        height: '70px',
+        background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
+        borderRadius: '35px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-around',
+        padding: '0 8px',
+        boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+        zIndex: 9999,
+      }}
+      role="tablist"
+      aria-label="Main navigation"
+    >
+      {tabs.map((tab) => {
+        const isActive = activeTab === tab.id;
+        return (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            role="tab"
+            aria-selected={isActive}
+            style={{
+              flex: 1,
+              height: '54px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '2px',
+              border: 'none',
+              borderRadius: '27px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              background: isActive ? '#5D5FEF' : 'transparent',
+              color: isActive ? '#FFFFFF' : '#64748B',
+            }}
+          >
+            <span 
+              className="material-symbols-outlined"
+              style={{ 
+                fontSize: '22px',
+                fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0"
+              }}
             >
-              <span 
-                className="material-symbols-outlined"
-                style={tab.fill ? { fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" } : {}}
-                aria-hidden="true"
-              >
-                {tab.icon}
-              </span>
-              <span className="text-[10px] font-bold uppercase tracking-wider mt-1">{tab.label}</span>
-            </button>
-          );
-        })}
-      </nav>
-      {/* Home Indicator Mimic */}
-      <div className="fixed bottom-1 left-1/2 -translate-x-1/2 w-32 h-1.5 bg-slate-900/10 dark:bg-white/10 rounded-full z-[60]" aria-hidden="true"></div>
-    </>
+              {tab.icon}
+            </span>
+            <span style={{ 
+              fontSize: '9px', 
+              fontWeight: 700, 
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px'
+            }}>
+              {tab.label}
+            </span>
+          </button>
+        );
+      })}
+    </nav>
   );
 };
 

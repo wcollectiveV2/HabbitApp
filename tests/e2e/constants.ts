@@ -5,7 +5,8 @@
 // Service URLs
 export const FRONTEND_URL = process.env.E2E_BASE_URL || 'http://localhost:3000';
 export const ADMIN_DASHBOARD_URL = process.env.E2E_ADMIN_URL || 'http://localhost:3002';
-export const BACKEND_API_URL = process.env.E2E_API_URL || 'http://localhost:3001';
+// Point to frontend proxy for default API access in tests to match user request
+export const BACKEND_API_URL = process.env.E2E_API_URL || 'http://localhost:3000';
 
 // API Endpoints
 export const API_ENDPOINTS = {

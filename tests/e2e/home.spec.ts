@@ -11,7 +11,7 @@ import {
   login, 
   navigateTo,
   waitForTasks 
-} from '../e2e-test-config';
+} from './e2e-test-config';
 
 // ============================================================================
 // HELPER FUNCTIONS

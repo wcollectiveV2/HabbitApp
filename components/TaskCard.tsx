@@ -9,45 +9,22 @@ interface TaskCardProps {
   onDecrement?: (id: string) => void;
 }
 
-const getPriorityBadge = (priority?: string) => {
+const getPriorityStyles = (priority?: string) => {
   switch (priority) {
     case 'high':
-      return { bg: 'bg-red-100 dark:bg-red-900/20', text: 'text-red-600 dark:text-red-400', label: 'High' };
+      return { bg: '#FEE2E2', color: '#DC2626', label: 'High' };
     case 'medium':
-      return { bg: 'bg-yellow-100 dark:bg-yellow-900/20', text: 'text-yellow-600 dark:text-yellow-400', label: 'Medium' };
+      return { bg: '#FEF3C7', color: '#D97706', label: 'Medium' };
     case 'low':
-      return { bg: 'bg-green-100 dark:bg-green-900/20', text: 'text-green-600 dark:text-green-400', label: 'Low' };
+      return { bg: '#D1FAE5', color: '#059669', label: 'Low' };
     default:
       return null;
   }
 };
 
-const formatDueDate = (dueDate?: string) => {
-  if (!dueDate) return null;
-  const date = new Date(dueDate);
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  
-  if (date.toDateString() === today.toDateString()) {
-    return { label: 'Today', isOverdue: false };
-  }
-  if (date.toDateString() === tomorrow.toDateString()) {
-    return { label: 'Tomorrow', isOverdue: false };
-  }
-  if (date < today) {
-    return { label: 'Overdue', isOverdue: true };
-  }
-  return { 
-    label: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), 
-    isOverdue: false 
-  };
-};
-
 const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onIncrement, onDecrement }) => {
   const progressPercent = Math.round((task.currentProgress / task.totalProgress) * 100);
-  const priorityBadge = getPriorityBadge(task.priority);
-  const dueDateInfo = formatDueDate(task.dueDate);
+  const priorityBadge = getPriorityStyles(task.priority);
   const isCounterTask = task.type === 'counter';
 
   const handleToggleClick = (e: React.MouseEvent) => {
@@ -65,142 +42,172 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onIncrement, onDecr
     onDecrement?.(task.id);
   };
 
+  const cardStyle: React.CSSProperties = {
+    background: '#FFFFFF',
+    padding: '16px',
+    borderRadius: '20px',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+    border: '1px solid #F1F5F9',
+    transition: 'all 0.2s ease',
+    opacity: task.completed ? 0.7 : 1,
+  };
+
+  const iconContainerStyle: React.CSSProperties = {
+    width: '48px',
+    height: '48px',
+    borderRadius: '14px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: task.completed ? '#E2E8F0' : '#EEF2FF',
+    color: task.completed ? '#94A3B8' : '#5D5FEF',
+    flexShrink: 0,
+  };
+
   return (
-    <div 
-      className={`bg-white dark:bg-card-dark p-5 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100 dark:border-slate-800 transition-all duration-300 ${
-        task.completed ? 'opacity-100 scale-[0.98]' : 'opacity-100'
-      }`}
-      role="article"
-      aria-label={`Task: ${task.title}${task.completed ? ' (completed)' : ''}`}
-    >
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-4">
-          {/* Task type icon indicator */}
-          <div 
-            className={`w-12 h-12 flex items-center justify-center rounded-2xl ${task.iconBg} ${task.iconColor}`}
-            aria-hidden="true"
-          >
-            <span className="material-symbols-outlined text-3xl">{task.icon}</span>
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className={`font-bold text-lg leading-tight text-slate-900 dark:text-white ${task.completed ? 'line-through decoration-slate-400 dark:decoration-slate-500' : ''}`}>
-                {task.title}
-              </h3>
-              {/* Priority Badge */}
-              {priorityBadge && (
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${priorityBadge.bg} ${priorityBadge.text}`}>
-                  {priorityBadge.label}
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              {/* Fixed contrast: text-slate-400 -> text-slate-600 */}
-              <p className="text-slate-600 dark:text-slate-400 text-xs font-medium">{task.challengeName}</p>
-              {/* Due Date */}
-              {dueDateInfo && (
-                <span className={`flex items-center gap-1 text-[10px] font-bold ${
-                  dueDateInfo.isOverdue 
-                    ? 'text-red-500' 
-                    : 'text-slate-500 dark:text-slate-400'
-                }`}>
-                  <span className="material-symbols-outlined text-xs">schedule</span>
-                  {dueDateInfo.label}
-                </span>
-              )}
-            </div>
-          </div>
+    <div style={cardStyle}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        <div style={iconContainerStyle}>
+          <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>
+            {task.icon}
+          </span>
         </div>
-        {/* Counter Controls or Toggle button */}
+        
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <h3 style={{ 
+              fontSize: '16px', 
+              fontWeight: 700, 
+              color: '#1E293B',
+              margin: 0,
+              textDecoration: task.completed ? 'line-through' : 'none',
+              opacity: task.completed ? 0.6 : 1,
+            }}>
+              {task.title}
+            </h3>
+            {priorityBadge && (
+              <span style={{
+                fontSize: '10px',
+                fontWeight: 700,
+                padding: '3px 8px',
+                borderRadius: '20px',
+                background: priorityBadge.bg,
+                color: priorityBadge.color,
+              }}>
+                {priorityBadge.label}
+              </span>
+            )}
+          </div>
+          <p style={{ 
+            fontSize: '12px', 
+            color: '#64748B', 
+            margin: '4px 0 0 0',
+            fontWeight: 500,
+          }}>
+            {task.challengeName}
+          </p>
+        </div>
+
+        {/* Toggle or Counter */}
         {isCounterTask ? (
-          <div className="flex items-center gap-2">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button
               onClick={handleDecrement}
               disabled={(task.currentValue || 0) <= 0}
-              className={`w-10 h-10 flex items-center justify-center rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-                (task.currentValue || 0) <= 0
-                  ? 'bg-slate-100 dark:bg-slate-800 text-slate-300 dark:text-slate-600 cursor-not-allowed'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 active:scale-95'
-              }`}
-              aria-label={`Decrease ${task.title} count`}
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                border: 'none',
+                background: '#F1F5F9',
+                color: (task.currentValue || 0) <= 0 ? '#CBD5E1' : '#475569',
+                cursor: (task.currentValue || 0) <= 0 ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
-              <span className="material-symbols-outlined text-xl">remove</span>
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>remove</span>
             </button>
-            <div className="text-center min-w-[60px]">
-              <span className="text-lg font-bold text-slate-900 dark:text-white">
+            <div style={{ textAlign: 'center', minWidth: '50px' }}>
+              <span style={{ fontSize: '18px', fontWeight: 700, color: '#1E293B' }}>
                 {task.currentValue || 0}
               </span>
               {task.goal && (
-                <span className="text-slate-500 dark:text-slate-400 text-sm">
-                  /{task.goal}
-                </span>
-              )}
-              {task.unit && (
-                <span className="block text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                  {task.unit}
-                </span>
+                <span style={{ fontSize: '14px', color: '#94A3B8' }}>/{task.goal}</span>
               )}
             </div>
             <button
               onClick={handleIncrement}
-              className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-white hover:bg-primary-dark active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-              aria-label={`Increase ${task.title} count`}
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                border: 'none',
+                background: '#5D5FEF',
+                color: '#FFFFFF',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
-              <span className="material-symbols-outlined text-xl">add</span>
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
             </button>
           </div>
         ) : (
-          /* Toggle button with minimum 48x48 touch target */
           <button 
             onClick={handleToggleClick}
-            className={`min-w-[48px] min-h-[48px] flex items-center justify-center rounded-full relative transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2`}
-            role="switch"
-            aria-checked={task.completed}
-            aria-label={`Mark ${task.title} as ${task.completed ? 'incomplete' : 'complete'}`}
+            style={{
+              width: '28px',
+              height: '28px',
+              borderRadius: '50%',
+              border: task.completed ? 'none' : '2px solid #CBD5E1',
+              background: task.completed ? '#5D5FEF' : 'transparent',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease',
+              flexShrink: 0,
+            }}
           >
-            <div className={`w-12 h-6 rounded-full relative flex items-center p-1 transition-colors ${
-              task.completed ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'
-            }`}>
-              <div className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform ${
-                task.completed ? 'translate-x-6' : 'translate-x-0'
-              }`}>
-                {task.completed && (
-                  <span className="material-symbols-outlined text-primary text-[10px] flex items-center justify-center h-full">
-                    check
-                  </span>
-                )}
-              </div>
-            </div>
+            {task.completed && (
+              <span className="material-symbols-outlined" style={{ 
+                fontSize: '18px', 
+                color: '#FFFFFF',
+                fontWeight: 700,
+              }}>
+                check
+              </span>
+            )}
           </button>
         )}
       </div>
       
-      <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
-        <div className="flex items-center gap-2">
-          {/* Fixed contrast: text-slate-400 -> text-slate-600 */}
-          <span className="text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400 tracking-wider">Progress</span>
-          <span className="text-xs font-extrabold text-slate-900 dark:text-slate-100">
-            {task.currentProgress}/{task.totalProgress} days
-          </span>
-        </div>
-        {/* Progress bar with ARIA attributes and improved contrast */}
-        <div 
-          className="flex gap-1"
-          role="progressbar"
-          aria-valuenow={progressPercent}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-label={`Progress: ${task.currentProgress} of ${task.totalProgress} days`}
-        >
+      {/* Progress bar */}
+      <div style={{ 
+        marginTop: '14px', 
+        paddingTop: '14px', 
+        borderTop: '1px solid #F1F5F9',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}>
+        <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600 }}>
+          {task.currentProgress}/{task.totalProgress} days
+        </span>
+        <div style={{ display: 'flex', gap: '4px' }}>
           {Array.from({ length: task.progressBlocks }).map((_, i) => (
             <div 
               key={i}
-              className={`w-4 h-1.5 rounded-full transition-colors border ${
-                i < task.activeBlocks 
-                  ? 'bg-primary border-primary' 
-                  : 'bg-slate-200 dark:bg-slate-700 border-slate-300 dark:border-slate-600'
-              }`}
-              aria-hidden="true"
+              style={{
+                width: '20px',
+                height: '6px',
+                borderRadius: '3px',
+                background: i < task.activeBlocks ? '#5D5FEF' : '#E2E8F0',
+                transition: 'background 0.3s ease',
+              }}
             />
           ))}
         </div>

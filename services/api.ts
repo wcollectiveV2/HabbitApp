@@ -53,7 +53,20 @@ class ApiClient {
     if (!response.ok) {
       throw new Error(await response.text());
     }
-    return response.json();
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return response.json();
+    }
+    const text = await response.text();
+    try {
+        return JSON.parse(text);
+    } catch {
+        // If parsing fails but it wasn't JSON content-type anyway, 
+        // it might be HTML/Text. Returning as is might be unsafe if T is expected to be object, 
+        // but it helps debugging.
+        console.warn('Response was not JSON:', text.substring(0, 100));
+        return text as unknown as T;
+    }
   }
 
   async post<T>(endpoint: string, data?: any): Promise<T> {

@@ -9,32 +9,58 @@ interface HeaderProps {
   avatarUrl?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ title = 'Active Challenges', userName, avatarUrl }) => {
+const Header: React.FC<HeaderProps> = ({ title = 'My Progress', userName, avatarUrl }) => {
   const { user, profile } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   
-  const displayAvatar = avatarUrl || profile?.avatar || user?.avatar || `https://i.pravatar.cc/200?u=${user?.id || 'default'}`;
+  const displayAvatar = avatarUrl || profile?.avatar || user?.avatar || `https://i.pravatar.cc/100?u=${user?.id || 'default'}`;
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-6 pt-4 pb-2 flex items-center justify-between">
-        <h1 className="text-2xl font-extrabold text-primary tracking-tight">{title}</h1>
-        <div className="flex gap-2">
+      <header style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+        background: 'rgba(255,255,255,0.9)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        padding: '16px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderBottom: '1px solid rgba(0,0,0,0.05)',
+      }}>
+        <h1 style={{
+          fontSize: '24px',
+          fontWeight: 800,
+          color: '#5D5FEF',
+          margin: 0,
+          letterSpacing: '-0.5px',
+        }}>
+          {title}
+        </h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <NotificationBell onClick={() => setShowNotifications(true)} />
-          <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border-2 border-primary/20 cursor-pointer active:scale-95 transition-transform">
+          <div style={{
+            width: '44px',
+            height: '44px',
+            borderRadius: '50%',
+            overflow: 'hidden',
+            border: '3px solid #5D5FEF',
+            boxShadow: '0 4px 12px rgba(93,95,239,0.3)',
+          }}>
             <img 
               alt={userName || 'User'} 
-              className="w-full h-full object-cover" 
               src={displayAvatar}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               onError={(e) => {
-                (e.target as HTMLImageElement).src = 'https://picsum.photos/seed/user/200/200';
+                (e.target as HTMLImageElement).src = 'https://i.pravatar.cc/100?u=default';
               }}
             />
           </div>
         </div>
       </header>
       
-      {/* Notification Center Modal */}
       <NotificationCenter 
         isOpen={showNotifications} 
         onClose={() => setShowNotifications(false)} 

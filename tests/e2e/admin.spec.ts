@@ -7,7 +7,7 @@ import { test, expect, Page } from '@playwright/test';
 import { 
   TEST_USERS, 
   login
-} from '../e2e-test-config';
+} from './e2e-test-config';
 
 // ============================================================================
 // ADMIN DASHBOARD TESTS

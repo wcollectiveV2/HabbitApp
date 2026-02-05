@@ -1,0 +1,19 @@
+This is a screenshot description request for the AI.
+The user is complaining about "missplaced" design.
+They are running the app on desktop (localhost:3000).
+The app is a mobile-first design (implied by BottomNav and mobile-like layouts).
+
+Key Observations:
+1. `App.tsx` has a `div` wrapper with `min-h-screen pb-40`.
+2. `BottomNav` is `fixed bottom-6 left-5 right-5` (floating bar).
+3. `Header` is `sticky top-0 z-50`.
+4. The `ActiveView` content (default tab) has `px-6` padding.
+
+Potential "Missplaced" Issues on Desktop:
+1. **Full width stretch**: On a wide desktop screen, the `BottomNav` will stretch from `left-5` to `right-5`. That's extremely wide for a mobile nav bar. It will look like a very long thin bar across the bottom.
+2. **Cards stretching**: `TaskCard` and `ProgressCard` inputs inside `ActiveView` might be stretching to full width if they don't have max-widths.
+3. **Centered vs Left Aligned**: Mobile apps are usually full width. On desktop, usually you want to center the app in a mobile-sized container (like a max-width-md mx-auto).
+
+Hypothesis: The app is not constrained to a mobile viewport width on desktop, causing elements to stretch awkwardly.
+
+I will attempt to fix this by wrapping the main app content in a max-width container to simulate a mobile view on desktop.

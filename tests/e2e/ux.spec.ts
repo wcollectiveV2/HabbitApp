@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { login } from '../e2e-test-config';
+import { login } from './e2e-test-config';
 
 test.describe('UX & UI Feedback', () => {
   test.beforeEach(async ({ page }) => {
