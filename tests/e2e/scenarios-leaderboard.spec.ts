@@ -10,13 +10,13 @@ test.describe('A-LEAD-01: View Leaderboards', () => {
         
         // Go to a challenge/protocol
         // Assuming "Yoga" challenge is joined
-        await page.click('button:has-text("Discover")'); // Or from home if joined
+        await page.click('button:has-text("Join a Challenge")'); // Button on home
         // If joined, it should be on home? Or under "Habits"?
         // Let's assume searching finds it
         const searchInput = page.locator('input[placeholder*="Search"]').or(page.locator('[placeholder*="earch"]'));
         await searchInput.fill('Yoga');
         await page.waitForTimeout(500);
-        await page.click('text=Yoga');
+        await page.click('text=Yoga', { force: true });
 
         // Look for leaderboard tab or section
         const leaderboardTab = page.locator('button:has-text("Leaderboard")');

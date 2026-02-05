@@ -6,6 +6,51 @@ import { TEST_USERS, TEST_TASKS, login } from './e2e-test-config';
 
 test.describe('A-PROT-01: Action Completion', () => {
     test.beforeEach(async ({ page }) => {
+        // Mock Tasks API
+        await page.route('**/api/tasks/today', async route => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    date: new Date().toISOString(),
+                    completedCount: 0,
+                    totalCount: 2,
+                    streakDay: 1,
+                    tasks: [
+                        {
+                            id: 'task-morning-run',
+                            title: 'Morning Run',
+                            type: 'check',
+                            status: 'pending',
+                            currentValue: 0
+                        },
+                        {
+                            id: 'task-drink-water',
+                            title: 'Drink Water',
+                            type: 'counter',
+                            goal: 8,
+                            unit: 'Cup',
+                            status: 'pending',
+                            currentValue: 0
+                        }
+                    ]
+                })
+            });
+        });
+
+        // Mock Task Update API
+        await page.route('**/api/tasks/*', async route => {
+             if (route.request().method() === 'PATCH') {
+                await route.fulfill({
+                    status: 200,
+                    contentType: 'application/json',
+                    body: JSON.stringify({ status: 'success' })
+                });
+             } else {
+                 await route.continue();
+             }
+        });
+
         await login(page, TEST_USERS.testUser);
         await expect(page.locator('text=Good').or(page.locator('text=Hello'))).toBeVisible({ timeout: 15000 });
     });
@@ -107,7 +152,72 @@ test.describe('A-PROT-02: Validation', () => {
 });
 
 test.describe('A-PROT-03: Offline Mode', () => {
-    test.beforeEach(async ({ page }) => {
+    test.beforeEach(async ({ page }) => {        // Mock Tasks API
+        await page.route('**/api/tasks/today', async route => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    date: new Date().toISOString(),
+                    completedCount: 0,
+                    totalCount: 2,
+                    streakDay: 1,
+                    tasks: [
+                        {
+                            id: 'task-morning-run',
+                            title: 'Morning Run',
+                            type: 'check',
+                            status: 'pending',
+                            currentValue: 0,
+                            icon: 'directions_run'
+                        },
+                        {
+                            id: 'task-drink-water',
+                            title: 'Drink Water',
+                            type: 'counter',
+                            goal: 8,
+                            unit: 'Cup',
+                            status: 'pending',
+                            currentValue: 0,
+                            secondaryValueString: '0/8',
+                            icon: 'water_drop'
+                        }
+                    ]
+                })
+            });
+        });
+
+        // Mock Habits API (in case Home uses this)
+        await page.route('**/api/habits', async route => {
+             await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify([
+                    {
+                        id: 'habit-1',
+                        name: 'Morning Run',
+                        category: 'fitness', 
+                        frequency: 'daily',
+                        targetCount: 1,
+                        completionsToday: 0,
+                        completedToday: false
+                    }
+                ])
+             });
+        });
+
+        // Mock Task Update API
+        await page.route('**/api/tasks/*', async route => {
+             if (route.request().method() === 'PATCH') {
+                await route.fulfill({
+                    status: 200,
+                    contentType: 'application/json',
+                    body: JSON.stringify({ status: 'success' })
+                });
+             } else {
+                 await route.continue();
+             }
+        });
          await login(page, TEST_USERS.testUser);
          await expect(page.locator('text=Good').or(page.locator('text=Hello'))).toBeVisible();
     });

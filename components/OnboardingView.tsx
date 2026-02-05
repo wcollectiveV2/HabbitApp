@@ -71,11 +71,22 @@ const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete, onSkip }) =
   const isLastSlide = currentSlide === slides.length - 1;
 
   const styles = {
+    outerWrapper: {
+      minHeight: '100vh',
+      width: '100%',
+      display: 'flex',
+      justifyContent: 'center',
+      backgroundColor: '#f8fafc',
+    },
     container: {
+      width: '100%',
+      maxWidth: '480px',
       minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column' as const,
       backgroundColor: colors.background.primary,
+      position: 'relative' as const,
+      boxShadow: shadows.xl,
     },
     skipBtnArea: {
       position: 'absolute' as const,
@@ -149,6 +160,8 @@ const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete, onSkip }) =
       display: 'flex',
       flexDirection: 'column' as const,
       gap: spacing[6],
+      position: 'relative' as const,
+      zIndex: 10,
     },
     dotsRow: {
       display: 'flex',
@@ -192,7 +205,8 @@ const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete, onSkip }) =
   };
 
   return (
-    <div style={styles.container}>
+    <div style={styles.outerWrapper}>
+      <div style={styles.container}>
       {/* Skip button */}
       <div style={styles.skipBtnArea}>
         <button onClick={onSkip} style={styles.skipBtn} aria-label="Skip onboarding">
@@ -252,6 +266,7 @@ const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete, onSkip }) =
           </button>
         </div>
       </div>
+    </div>
     </div>
   );
 };

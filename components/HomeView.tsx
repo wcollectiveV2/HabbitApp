@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Task } from '../types';
 import { userService } from '../services';
-import type { UserProfile } from '../services';
+import type { UserProfile, ChallengeTask } from '../services';
 import { colors, spacing, borderRadius, typography, shadows, transitions } from '../theme/designSystem';
 
 interface HomeViewProps {
   tasks: Task[];
+  challengeTasks?: ChallengeTask[];
   profile?: UserProfile | null;
 }
 
-const HomeView: React.FC<HomeViewProps> = ({ tasks, profile }) => {
+const HomeView: React.FC<HomeViewProps> = ({ tasks, challengeTasks = [], profile }) => {
   const [tip] = useState<string>("Small steps every day lead to big results along the way.");
   const [stats, setStats] = useState({
     streakCount: 0,
@@ -19,29 +20,35 @@ const HomeView: React.FC<HomeViewProps> = ({ tasks, profile }) => {
 
   useEffect(() => {
     const fetchStats = async () => {
+      const completedTasks = tasks.filter(t => t.completed).length;
+      const completedChallenges = challengeTasks.filter(t => t.isCompleted).length;
+      const totalCompleted = completedTasks + completedChallenges;
+      
+      const totalDailyTasks = tasks.length;
+      const totalChallengeTasks = challengeTasks.length;
+      const grandTotal = (totalDailyTasks + totalChallengeTasks) || 1;
+      
+      const calculatedPercent = Math.round((totalCompleted / grandTotal) * 100);
+
       try {
         const userStats = await userService.getStats();
-        const completed = tasks.filter(t => t.completed).length;
-        const total = tasks.length || 1;
         setStats({
           streakCount: userStats.streakCount || profile?.streakCount || 0,
           totalPoints: userStats.totalPoints || profile?.totalPoints || 0,
-          completedPercent: Math.round((completed / total) * 100)
+          completedPercent: calculatedPercent
         });
       } catch (err) {
-        const completed = tasks.filter(t => t.completed).length;
-        const total = tasks.length || 1;
         setStats({
           streakCount: profile?.streakCount || 0,
           totalPoints: profile?.totalPoints || 0,
-          completedPercent: Math.round((completed / total) * 100)
+          completedPercent: calculatedPercent
         });
       }
     };
     fetchStats();
-  }, [tasks, profile]);
+  }, [tasks, challengeTasks, profile]);
 
-  const completedToday = tasks.filter(t => t.completed).length;
+  const completedToday = tasks.filter(t => t.completed).length + challengeTasks.filter(t => t.isCompleted).length;
 
   return (
     <div style={{ paddingBottom: '100px' }} className="animate-fade-in">

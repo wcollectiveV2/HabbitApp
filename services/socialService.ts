@@ -57,7 +57,7 @@ export interface FollowStats {
 
 export const socialService = {
   async getLeaderboard(params?: {
-    scope?: 'global' | 'friends';
+    scope?: 'global' | 'friends' | 'organization';
     period?: 'daily' | 'weekly' | 'monthly' | 'allTime';
     limit?: number;
     offset?: number;

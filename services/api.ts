@@ -2,9 +2,9 @@
  * API Base Client for HabitPulse
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 // Auth API uses the same backend with /api prefix
-const AUTH_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const AUTH_API_URL = import.meta.env.VITE_API_URL || '/api';
 
 class ApiClient {
   private baseUrl: string;
@@ -78,7 +78,7 @@ class ApiClient {
     });
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'Request failed' }));
-      throw new Error(error.message || 'Request failed');
+      throw new Error(error.error || error.message || 'Request failed');
     }
     return response.json();
   }

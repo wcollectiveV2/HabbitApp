@@ -27,10 +27,11 @@ interface FeedItem {
 
 const SocialView: React.FC = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [userRankEntry, setUserRankEntry] = useState<LeaderboardEntry | null>(null);
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(true);
   const [isLoadingFeed, setIsLoadingFeed] = useState(true);
-  const [leaderboardType, setLeaderboardType] = useState<'global' | 'friends'>('global');
+  const [leaderboardType, setLeaderboardType] = useState<'global' | 'organization'>('global');
   const [leaderboardPeriod, setLeaderboardPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'allTime'>('weekly');
   const [followLoading, setFollowLoading] = useState<Record<string, boolean>>({});
 
@@ -53,9 +54,26 @@ const SocialView: React.FC = () => {
           isFollowing: entry.isFollowing ?? false
         })) || [];
         setLeaderboard(mapped);
+
+        if (data.currentUserRank) {
+           const entry = data.currentUserRank;
+           setUserRankEntry({
+              rank: entry.rank,
+              userId: String(entry.userId || entry.user_id),
+              name: entry.name || entry.userName || entry.user_name || 'Anonymous',
+              avatar: entry.avatar || entry.userAvatar || entry.user_avatar || `https://i.pravatar.cc/150?u=${entry.userId || entry.user_id}`,
+              points: entry.points || entry.totalPoints || 0,
+              isCurrentUser: true,
+              isFollowing: false
+           });
+        } else {
+           setUserRankEntry(null);
+        }
+
       } catch (err) {
         console.error('Failed to fetch leaderboard:', err);
         setLeaderboard([]);
+        setUserRankEntry(null);
       }
       setIsLoadingLeaderboard(false);
     };
@@ -102,7 +120,7 @@ const SocialView: React.FC = () => {
   };
 
   const toggleLeaderboardType = () => {
-    setLeaderboardType(prev => prev === 'global' ? 'friends' : 'global');
+    setLeaderboardType(prev => prev === 'global' ? 'organization' : 'global');
   };
 
   const styles = {
@@ -229,9 +247,9 @@ const SocialView: React.FC = () => {
                 cursor: 'pointer',
                 padding: `${spacing[1]} ${spacing[2]}`,
               }}
-              aria-label={`Switch to ${leaderboardType === 'global' ? 'friends' : 'global'} leaderboard`}
+              aria-label={`Switch to ${leaderboardType === 'global' ? 'organization' : 'global'} leaderboard`}
             >
-              {leaderboardType === 'global' ? 'Global' : 'Friends'}
+              {leaderboardType === 'global' ? 'Global' : 'Organization'}
             </button>
           </div>
           
@@ -279,21 +297,47 @@ const SocialView: React.FC = () => {
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2] }}>
-                  {!user.isCurrentUser && (
-                    <button 
-                      onClick={() => handleFollow(user.userId)}
-                      disabled={followLoading[user.userId]}
-                      style={{ ...styles.followBtn(user.isFollowing || false), opacity: followLoading[user.userId] ? 0.5 : 1 }}
-                    >
-                      {followLoading[user.userId] ? '...' : (user.isFollowing ? 'Following' : 'Follow')}
-                    </button>
-                  )}
                   {user.isCurrentUser && (
                     <span style={styles.youBadge}>You</span>
                   )}
                 </div>
               </div>
             ))}
+            
+            {userRankEntry && !leaderboard.some(u => u.isCurrentUser) && (
+              <>
+                <div style={{ padding: spacing[2], textAlign: 'center', color: colors.text.secondary, fontWeight: 'bold' }}>...</div>
+                <div 
+                  style={{
+                    ...styles.leaderboardItem(true),
+                    borderTop: `1px solid ${colors.gray[100]}`,
+                    borderBottom: 'none',
+                  }}
+                  role="listitem"
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4] }}>
+                    <div style={styles.rankBadge(userRankEntry.rank)} aria-label={`Rank ${userRankEntry.rank}`}>
+                      {userRankEntry.rank}
+                    </div>
+                    <img 
+                      src={userRankEntry.avatar} 
+                      style={{ width: '40px', height: '40px', borderRadius: borderRadius.full, backgroundColor: colors.gray[100], objectFit: 'cover' }}
+                      alt={`${userRankEntry.name}'s avatar`}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = `https://i.pravatar.cc/100?u=${userRankEntry.userId}`;
+                      }}
+                    />
+                    <div>
+                      <h4 style={{ fontWeight: typography.fontWeight.bold, fontSize: typography.fontSize.sm, color: colors.text.primary, margin: 0 }}>{userRankEntry.name}</h4>
+                      <p style={{ fontSize: '10px', fontWeight: typography.fontWeight.bold, color: colors.text.secondary, textTransform: 'uppercase', margin: 0 }}>{userRankEntry.points.toLocaleString()} Points</p>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2] }}>
+                    <span style={styles.youBadge}>You</span>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <EmptyState

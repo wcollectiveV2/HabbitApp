@@ -9,9 +9,10 @@ import { colors, spacing, borderRadius, typography, shadows } from '../theme/des
 interface DiscoverViewProps {
   onClose?: () => void;
   onJoin?: () => void;
+  onViewDetail?: (id: string) => void;
 }
 
-const DiscoverView: React.FC<DiscoverViewProps> = ({ onClose, onJoin }) => {
+const DiscoverView: React.FC<DiscoverViewProps> = ({ onClose, onJoin, onViewDetail }) => {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -327,7 +328,12 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ onClose, onJoin }) => {
           </>
         ) : challenges.length > 0 ? (
           challenges.map((challenge) => (
-            <article key={challenge.id} style={styles.challengeCard} role="listitem">
+            <article 
+              key={challenge.id} 
+              style={{ ...styles.challengeCard, cursor: onViewDetail ? 'pointer' : 'default' }} 
+              role="listitem"
+              onClick={() => onViewDetail && onViewDetail(challenge.id.toString())}
+            >
               <div style={styles.cardContent}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing[4] }}>
                   <div style={{ flex: 1 }}>
@@ -369,7 +375,10 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ onClose, onJoin }) => {
                   </div>
                   
                   <button
-                    onClick={() => handleJoinClick(challenge)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleJoinClick(challenge);
+                    }}
                     disabled={joiningId === challenge.id || (challenge as any).isJoined}
                     style={{ ...styles.joinBtn((challenge as any).isJoined), opacity: joiningId === challenge.id ? 0.5 : 1 }}
                     aria-label={`${(challenge as any).isJoined ? 'Already joined' : 'Join'} ${challenge.title}`}

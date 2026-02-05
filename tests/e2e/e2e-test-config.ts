@@ -304,12 +304,12 @@ export async function login(
   await page.goto('/');
 
   // Increase timeout significantly
-  await expect(
-    page.locator('input[type="email"]')
+  const loginOrDashboard = page.locator('input[type="email"]')
       .or(page.locator('text=Hello there'))
       .or(page.locator('text=Today\'s Progress'))
-      .or(page.locator('text=Current Progress'))
-  ).toBeVisible({ timeout: 30000 });
+      .or(page.locator('text=Current Progress'));
+      
+  await expect(loginOrDashboard.first()).toBeVisible({ timeout: 30000 });
 
   // Check if we are already logged in
   const dashboardVisible = await page.locator('text=Hello there')
@@ -363,11 +363,23 @@ export async function login(
   }
 
   // Wait for dashboard to load (real API response)
-  await expect(
-    page.locator('text=Hello there')
+  // Use first() to avoid strict mode violation if multiple match
+  const apiHabitsPromise = page.waitForResponse(response => response.url().includes('/api/habits') && response.status() >= 400).catch(() => null);
+
+  const dashboardLocator = page.locator('text=Hello there')
       .or(page.locator('text=Current Progress'))
-      .or(page.locator('text=Today\'s Progress')) // Added for HabitView
-  ).toBeVisible({ timeout: 15000 });
+      .or(page.locator('text=Today\'s Progress'));
+      
+  try {
+      await expect(dashboardLocator.first()).toBeVisible({ timeout: 15000 });
+  } catch (e) {
+      const errorResponse = await apiHabitsPromise;
+      if (errorResponse) {
+          console.log(`[API ERROR /habits] Status: ${errorResponse.status()}`);
+          console.log(`[API ERROR /habits] Body: ${await errorResponse.text()}`);
+      }
+      throw e;
+  }
 }
 
 /**
@@ -413,7 +425,8 @@ export async function loginToAdminDashboard(
  */
 export async function logout(page: Page) {
   // Go to profile
-  const meTab = page.locator('button:has-text("Me")');
+  // Use explicit role locator to avoid ambiguity with other tabs/buttons containing "Me" (Home has 'me', self_improvement has 'me')
+  const meTab = page.getByRole('tab', { name: /^Me$/i }).or(page.locator('button:has-text("Me")').first()); 
   if (await meTab.isVisible()) {
     await meTab.click();
     await page.waitForTimeout(500);

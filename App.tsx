@@ -1,16 +1,13 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import Header from './components/Header';
 import ProgressCard from './components/ProgressCard';
 import TaskCard from './components/TaskCard';
-import BottomNav from './components/BottomNav';
 import HomeView from './components/HomeView';
 import HabitView from './components/HabitView';
 import SocialView from './components/SocialView';
 import ProfileView from './components/ProfileView';
 import DiscoverView from './components/DiscoverView';
-import HabitCoach from './components/HabitCoach';
 import LoginView from './components/LoginView';
 import SignupView from './components/SignupView';
 import ChallengeDetailView from './components/ChallengeDetailView';
@@ -18,9 +15,10 @@ import OnboardingView from './components/OnboardingView';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { taskService, challengeService } from './services';
+import type { ChallengeTask } from './services/challengeService';
 import { Tab, AuthMode } from './types';
 import type { Task as UITask, Challenge as UIChallenge } from './types';
-import { UndoSnackbar, PullToRefresh, EmptyState, CreateTaskModal, EditTaskModal } from './components/ui';
+import { EmptyState } from './components/ui';
 import { TaskCardSkeleton, ProgressCardSkeleton } from './components/ui/Skeleton';
 
 // Transform API task to UI task format
@@ -60,31 +58,33 @@ const transformChallenge = (apiChallenge: any): UIChallenge => ({
 
 // Check if user has completed onboarding
 const ONBOARDING_KEY = 'habitpulse_onboarding_complete';
-const hasCompletedOnboarding = (): boolean => {
-  return localStorage.getItem(ONBOARDING_KEY) === 'true';
+const hasCompletedOnboarding = (userId: string): boolean => {
+  return localStorage.getItem(`${ONBOARDING_KEY}_${userId}`) === 'true';
 };
-const setOnboardingComplete = (): void => {
-  localStorage.setItem(ONBOARDING_KEY, 'true');
+const setOnboardingComplete = (userId: string): void => {
+  localStorage.setItem(`${ONBOARDING_KEY}_${userId}`, 'true');
 };
 
 import Layout from './components/Layout';
 
 const ActiveView: React.FC<{ 
-  tasks: UITask[], 
+  tasks: UITask[],
   challenges: UIChallenge[],
+  challengeTasks: ChallengeTask[],
   onToggle: (id: string) => void,
   onTaskClick: (task: UITask) => void,
   onIncrement: (id: string) => void,
   onDecrement: (id: string) => void,
+  onChallengeTaskComplete: (task: ChallengeTask, value?: number) => void,
   loading: boolean,
   onOpenDiscover: () => void,
   onChallengeClick: (challengeId: string) => void,
-  onRefresh: () => Promise<void>,
-  onCreateTask: () => void
-}> = ({ tasks, challenges, onToggle, onTaskClick, onIncrement, onDecrement, loading, onOpenDiscover, onChallengeClick, onRefresh, onCreateTask }) => {
+}> = ({ tasks, challenges, challengeTasks, onToggle, onTaskClick, onIncrement, onDecrement, onChallengeTaskComplete, loading, onOpenDiscover, onChallengeClick }) => {
   const [currentChallengeIndex, setCurrentChallengeIndex] = useState(0);
+  const [numericInputTaskId, setNumericInputTaskId] = useState<number | null>(null);
+  const [numericInputValue, setNumericInputValue] = useState<string>('');
 
-  const pendingTasks = tasks.filter(t => !t.completed).length;
+  const pendingChallengeTasks = challengeTasks.filter(t => !t.isCompleted).length;
 
   return (
     <div style={{ paddingBottom: '100px' }} className="animate-fade-in">
@@ -265,7 +265,7 @@ const ActiveView: React.FC<{
             alignItems: 'center',
             gap: '10px',
           }}>
-            Today's Focus
+            Current Progress
             <span style={{
               background: '#EEF2FF',
               color: '#5D5FEF',
@@ -274,7 +274,7 @@ const ActiveView: React.FC<{
               padding: '4px 10px',
               borderRadius: '20px',
             }}>
-              {pendingTasks}
+              {pendingChallengeTasks}
             </span>
           </h2>
         </div>
@@ -285,56 +285,224 @@ const ActiveView: React.FC<{
               <TaskCardSkeleton />
               <TaskCardSkeleton />
             </>
-          ) : tasks.length > 0 ? (
-            tasks.map((task) => (
-              <div key={task.id} onClick={() => onTaskClick(task)} style={{ cursor: 'pointer' }}>
-                <TaskCard 
-                  task={task} 
-                  onToggle={(e) => {
-                    e?.stopPropagation?.();
-                    onToggle(task.id);
+          ) : challengeTasks.length > 0 ? (
+            <>
+              {/* Challenge Tasks */}
+              {challengeTasks.map((task) => (
+                <div
+                  key={`challenge-task-${task.id}`}
+                  style={{
+                    background: '#FFFFFF',
+                    borderRadius: '20px',
+                    padding: '16px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                    border: '1px solid #F1F5F9',
                   }}
-                  onIncrement={() => onIncrement(task.id)}
-                  onDecrement={() => onDecrement(task.id)}
-                />
-              </div>
-            ))
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {/* Checkbox / Complete button */}
+                    <button
+                      onClick={() => {
+                        if (task.type === 'numeric') {
+                          setNumericInputTaskId(task.id);
+                          setNumericInputValue(String(task.currentValue || ''));
+                        } else {
+                          onChallengeTaskComplete(task);
+                        }
+                      }}
+                      style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '14px',
+                        border: 'none',
+                        background: task.isCompleted 
+                          ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' 
+                          : 'linear-gradient(135deg, #5D5FEF 0%, #8B5CF6 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        boxShadow: task.isCompleted
+                          ? '0 4px 12px rgba(16,185,129,0.3)'
+                          : '0 4px 12px rgba(93,95,239,0.3)',
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ color: '#FFFFFF', fontSize: '20px' }}>
+                        {task.isCompleted ? 'check' : (task.type === 'numeric' ? 'edit' : 'add')}
+                      </span>
+                    </button>
+                    
+                    {/* Task Info */}
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <span style={{ 
+                          fontSize: '15px', 
+                          fontWeight: 600, 
+                          color: task.isCompleted ? '#10B981' : '#1E293B',
+                          textDecoration: task.isCompleted ? 'line-through' : 'none',
+                        }}>
+                          {task.title}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#5D5FEF' }}>
+                          {task.challengeIcon || 'emoji_events'}
+                        </span>
+                        <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 500 }}>
+                          {task.challengeTitle}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Progress indicator for numeric tasks */}
+                    {task.type === 'numeric' && (
+                      <div style={{ 
+                        textAlign: 'right',
+                        minWidth: '70px',
+                      }}>
+                        <div style={{ 
+                          fontSize: '14px', 
+                          fontWeight: 700, 
+                          color: task.isCompleted ? '#10B981' : '#5D5FEF',
+                        }}>
+                          {task.currentValue}/{task.targetValue}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 500 }}>
+                          {task.unit || 'units'}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Completed badge for boolean tasks */}
+                    {task.type !== 'numeric' && task.isCompleted && (
+                      <span style={{
+                        background: '#D1FAE5',
+                        color: '#059669',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        padding: '4px 10px',
+                        borderRadius: '20px',
+                      }}>
+                        ✓ Done
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* Numeric input section */}
+                  {numericInputTaskId === task.id && (
+                    <div style={{ 
+                      marginTop: '12px', 
+                      paddingTop: '12px', 
+                      borderTop: '1px solid #F1F5F9',
+                      display: 'flex',
+                      gap: '8px',
+                      alignItems: 'center',
+                    }}>
+                      <input
+                        type="number"
+                        value={numericInputValue}
+                        onChange={(e) => setNumericInputValue(e.target.value)}
+                        placeholder={`Enter ${task.unit || 'value'}`}
+                        autoFocus
+                        style={{
+                          flex: 1,
+                          padding: '10px 14px',
+                          borderRadius: '12px',
+                          border: '1px solid #E2E8F0',
+                          fontSize: '16px',
+                          fontWeight: 600,
+                          textAlign: 'center',
+                          outline: 'none',
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && numericInputValue) {
+                            onChallengeTaskComplete(task, parseInt(numericInputValue));
+                            setNumericInputTaskId(null);
+                            setNumericInputValue('');
+                          } else if (e.key === 'Escape') {
+                            setNumericInputTaskId(null);
+                            setNumericInputValue('');
+                          }
+                        }}
+                      />
+                      <span style={{ color: '#64748B', fontSize: '14px' }}>{task.unit || ''}</span>
+                      <button
+                        onClick={() => {
+                          if (numericInputValue) {
+                            onChallengeTaskComplete(task, parseInt(numericInputValue));
+                            setNumericInputTaskId(null);
+                            setNumericInputValue('');
+                          }
+                        }}
+                        disabled={!numericInputValue}
+                        style={{
+                          padding: '10px 16px',
+                          borderRadius: '12px',
+                          background: numericInputValue ? 'linear-gradient(135deg, #5D5FEF 0%, #8B5CF6 100%)' : '#E2E8F0',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          fontWeight: 700,
+                          fontSize: '14px',
+                          cursor: numericInputValue ? 'pointer' : 'default',
+                        }}
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => {
+                          setNumericInputTaskId(null);
+                          setNumericInputValue('');
+                        }}
+                        style={{
+                          padding: '10px',
+                          borderRadius: '12px',
+                          background: '#F1F5F9',
+                          color: '#64748B',
+                          border: 'none',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+                      </button>
+                    </div>
+                  )}
+                  
+                  {/* Progress bar for numeric tasks */}
+                  {task.type === 'numeric' && numericInputTaskId !== task.id && (
+                    <div style={{ marginTop: '12px' }}>
+                      <div style={{
+                        height: '6px',
+                        background: '#F1F5F9',
+                        borderRadius: '10px',
+                        overflow: 'hidden',
+                      }}>
+                        <div style={{
+                          height: '100%',
+                          width: `${Math.min(100, (task.currentValue / task.targetValue) * 100)}%`,
+                          background: task.isCompleted 
+                            ? 'linear-gradient(90deg, #10B981 0%, #059669 100%)'
+                            : 'linear-gradient(90deg, #5D5FEF 0%, #8B5CF6 100%)',
+                          borderRadius: '10px',
+                          transition: 'width 0.3s ease',
+                        }} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </>
           ) : (
             <EmptyState
-              icon="check_circle"
-              title="All caught up!"
-              description="You've completed all your tasks for today. Great job!"
-              actionLabel="Add Another Task"
-              onAction={onCreateTask}
-              illustration="tasks"
+              icon="emoji_events"
+              title="No challenge tasks yet"
+              description="Join a challenge to see your daily actions here!"
+              actionLabel="Explore Challenges"
+              onAction={onOpenDiscover}
+              illustration="challenges"
             />
           )}
         </div>
       </section>
-
-      {/* Floating Action Button */}
-      <button
-        onClick={onCreateTask}
-        style={{
-          position: 'fixed',
-          bottom: '100px',
-          right: '24px',
-          width: '56px',
-          height: '56px',
-          background: 'linear-gradient(135deg, #5D5FEF 0%, #8B5CF6 100%)',
-          color: '#FFFFFF',
-          border: 'none',
-          borderRadius: '18px',
-          boxShadow: '0 8px 30px rgba(93,95,239,0.4)',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 50,
-        }}
-      >
-        <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>add</span>
-      </button>
     </div>
   );
 };
@@ -344,6 +512,7 @@ const AppContent: React.FC = () => {
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [tasks, setTasks] = useState<UITask[]>([]);
   const [challenges, setChallenges] = useState<UIChallenge[]>([]);
+  const [challengeTasks, setChallengeTasks] = useState<ChallengeTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDiscover, setShowDiscover] = useState(false);
   const [selectedChallengeId, setSelectedChallengeId] = useState<number | null>(null);
@@ -362,20 +531,20 @@ const AppContent: React.FC = () => {
   }, []);
 
   const getTabFromPath = (path: string): Tab => {
-    if (path === '/') return 'active';
-    if (path === '/home') return 'home';
+    if (path === '/') return 'home';
+    if (path === '/active') return 'active';
     if (path === '/habits') return 'habits';
     if (path === '/social') return 'social';
     if (path === '/profile') return 'me';
-    return 'active';
+    return 'home';
   };
 
   const activeTab = getTabFromPath(location.pathname);
 
   const handleTabChange = (tab: Tab) => {
     switch (tab) {
-      case 'active': navigate('/'); break;
-      case 'home': navigate('/home'); break;
+      case 'active': navigate('/active'); break;
+      case 'home': navigate('/'); break;
       case 'habits': navigate('/habits'); break;
       case 'social': navigate('/social'); break;
       case 'me': navigate('/profile'); break;
@@ -383,22 +552,11 @@ const AppContent: React.FC = () => {
     }
   };
 
-  // Task Modal States
-  const [showCreateTask, setShowCreateTask] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<UITask | null>(null);
-  const [showEditTask, setShowEditTask] = useState(false);
-  
-  // Undo snackbar state
-  const [undoState, setUndoState] = useState<{
-    isVisible: boolean;
-    taskId: string;
-    previousState: boolean;
-    message: string;
-  }>({ isVisible: false, taskId: '', previousState: false, message: '' });
+
 
   // Check onboarding status when user logs in
   useEffect(() => {
-    if (user && !hasCompletedOnboarding()) {
+    if (user && user.id && !hasCompletedOnboarding(String(user.id))) {
       setShowOnboarding(true);
     }
   }, [user]);
@@ -409,13 +567,15 @@ const AppContent: React.FC = () => {
 
     setLoading(true);
     try {
-      const [taskData, challengeData] = await Promise.all([
+      const [taskData, challengeData, challengeTasksData] = await Promise.all([
         taskService.getTodayTasks().catch(() => ({ tasks: [] })),
-        challengeService.getActiveChallenges().catch(() => [])
+        challengeService.getActiveChallenges().catch(() => []),
+        challengeService.getAllChallengeTasks().catch(() => [])
       ]);
       
       setTasks((taskData.tasks || []).map(transformTask));
       setChallenges((challengeData || []).map(transformChallenge));
+      setChallengeTasks(challengeTasksData || []);
     } catch (err) {
       console.error('Failed to fetch data:', err);
     } finally {
@@ -427,113 +587,101 @@ const AppContent: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
-  const handleRefresh = async () => {
-    await fetchData();
-  };
+  // Handle challenge task completion from the home screen
+  const handleChallengeTaskComplete = useCallback(async (task: ChallengeTask, value?: number) => {
+    const previousValue = task.currentValue;
+    const previousCompleted = task.isCompleted;
+    
+    // For numeric tasks, use the provided value; for boolean tasks, toggle completion
+    const newValue = value !== undefined ? value : (task.isCompleted ? 0 : task.targetValue);
+    const newCompleted = newValue >= task.targetValue;
+    
+    // Optimistic update
+    setChallengeTasks(prev => 
+      prev.map(t => t.id === task.id 
+        ? { ...t, currentValue: newValue, isCompleted: newCompleted }
+        : t
+      )
+    );
+    
+    try {
+      await challengeService.logProgress(task.challengeId, {
+        completed: newCompleted,
+        taskId: task.id,
+        value: newValue
+      });
+      
+      // Refresh to get accurate data
+      const updatedTasks = await challengeService.getAllChallengeTasks();
+      setChallengeTasks(updatedTasks);
+    } catch (err) {
+      // Revert on error
+      setChallengeTasks(prev =>
+        prev.map(t => t.id === task.id
+          ? { ...t, currentValue: previousValue, isCompleted: previousCompleted }
+          : t
+        )
+      );
+      console.error('Failed to update challenge task:', err);
+    }
+  }, []);
 
-  const handleToggleTask = useCallback(async (id: string) => {
-    const task = tasks.find(t => t.id === id);
+  const handleToggleTask = useCallback(async (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
     if (!task) return;
 
-    const previousState = task.completed;
-    const newState = !previousState;
-
-    // Optimistic update
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: newState } : t))
-    );
-
-    // Show undo snackbar
-    setUndoState({
-      isVisible: true,
-      taskId: id,
-      previousState,
-      message: newState ? 'Task completed!' : 'Task marked incomplete'
-    });
+    const newCompleted = !task.completed;
+    const newStatus = newCompleted ? 'completed' : 'pending';
+    
+    setTasks(prev => prev.map(t => 
+      t.id === taskId ? { ...t, completed: newCompleted } : t
+    ));
 
     try {
-      const newStatus = previousState ? 'pending' : 'completed';
-      await taskService.updateTask(parseInt(id), newStatus as any);
+      await taskService.updateTask(taskId, newStatus as any);
+      const { tasks: updated } = await taskService.getTodayTasks();
+      setTasks(updated.map(transformTask));
     } catch (err) {
-      // Revert on error
-      setTasks((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, completed: previousState } : t))
-      );
-      setUndoState(prev => ({ ...prev, isVisible: false }));
-      console.error('Failed to update task:', err);
+      console.error('Toggle task failed', err);
+      setTasks(prev => prev.map(t => 
+        t.id === taskId ? task : t
+      ));
     }
   }, [tasks]);
 
-  const handleIncrementTask = useCallback(async (id: string) => {
-    const task = tasks.find(t => t.id === id);
-    if (!task || task.type !== 'counter') return;
-
-    const step = task.step || 1;
-    const previousValue = task.currentValue || 0;
-    const newValue = previousValue + step;
-    const newCompleted = task.goal ? newValue >= task.goal : false;
-
-    // Optimistic update
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, currentValue: newValue, completed: newCompleted } : t))
-    );
+  const handleIncrement = useCallback(async (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    
+    const newValue = (task.currentValue || 0) + (task.step || 1);
+    setTasks(prev => prev.map(t => 
+       t.id === taskId ? { ...t, currentValue: newValue } : t
+    ));
 
     try {
-      const newStatus = newCompleted ? 'completed' : 'pending';
-      await taskService.updateTask(parseInt(id), newStatus as any, newValue);
+      await taskService.updateTask(taskId, task.status as any, newValue);
     } catch (err) {
-      // Revert on error
-      setTasks((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, currentValue: previousValue, completed: task.completed } : t))
-      );
-      console.error('Failed to increment task:', err);
+       console.error(err);
+       setTasks(prev => prev.map(t => t.id === taskId ? task : t));
     }
   }, [tasks]);
 
-  const handleDecrementTask = useCallback(async (id: string) => {
-    const task = tasks.find(t => t.id === id);
-    if (!task || task.type !== 'counter') return;
-
-    const step = task.step || 1;
-    const previousValue = task.currentValue || 0;
-    const newValue = Math.max(0, previousValue - step);
-    const newCompleted = task.goal ? newValue >= task.goal : false;
-
-    // Optimistic update
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, currentValue: newValue, completed: newCompleted } : t))
-    );
+  const handleDecrement = useCallback(async (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    
+    const newValue = Math.max(0, (task.currentValue || 0) - (task.step || 1));
+    setTasks(prev => prev.map(t => 
+       t.id === taskId ? { ...t, currentValue: newValue } : t
+    ));
 
     try {
-      const newStatus = newCompleted ? 'completed' : 'pending';
-      await taskService.updateTask(parseInt(id), newStatus as any, newValue);
+      await taskService.updateTask(taskId, task.status as any, newValue);
     } catch (err) {
-      // Revert on error
-      setTasks((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, currentValue: previousValue, completed: task.completed } : t))
-      );
-      console.error('Failed to decrement task:', err);
+       console.error(err);
+       setTasks(prev => prev.map(t => t.id === taskId ? task : t));
     }
   }, [tasks]);
-
-  const handleUndo = useCallback(async () => {
-    const { taskId, previousState } = undoState;
-    
-    // Revert the task state
-    setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, completed: previousState } : t))
-    );
-    
-    // Update the backend
-    try {
-      const status = previousState ? 'completed' : 'pending';
-      await taskService.updateTask(parseInt(taskId), status as any);
-    } catch (err) {
-      console.error('Failed to undo task:', err);
-    }
-    
-    setUndoState(prev => ({ ...prev, isVisible: false }));
-  }, [undoState]);
 
   const handleLogout = async () => {
     await logout();
@@ -543,30 +691,19 @@ const AppContent: React.FC = () => {
     setSelectedChallengeId(parseInt(challengeId));
   };
 
-  const handleTaskClick = (task: UITask) => {
-    setSelectedTask(task);
-    setShowEditTask(true);
-  };
-
-  const handleTaskCreated = () => {
-    fetchData();
-  };
-
-  const handleTaskDeleted = () => {
-    setShowEditTask(false);
-    setSelectedTask(null);
-    fetchData();
-  };
-
   const handleOnboardingComplete = () => {
-    setOnboardingComplete();
+    if (user && user.id) {
+      setOnboardingComplete(String(user.id));
+    }
     setShowOnboarding(false);
     // Open discover view to help user get started
     setShowDiscover(true);
   };
 
   const handleOnboardingSkip = () => {
-    setOnboardingComplete();
+    if (user && user.id) {
+      setOnboardingComplete(String(user.id));
+    }
     setShowOnboarding(false);
   };
 
@@ -601,41 +738,32 @@ const AppContent: React.FC = () => {
     <>
       <Layout activeTab={activeTab} setActiveTab={handleTabChange} title={activeTab === 'active' ? 'My Progress' : undefined}>
         <Routes>
-          <Route path="/" element={
+          <Route path="/" element={<HomeView tasks={tasks} challengeTasks={challengeTasks} profile={profile} />} />
+          <Route path="/active" element={
             <ActiveView 
-              tasks={tasks} 
-              challenges={challenges} 
+              tasks={tasks}
+              challenges={challenges}
+              challengeTasks={challengeTasks}
               onToggle={handleToggleTask}
-              onTaskClick={handleTaskClick}
-              onIncrement={handleIncrementTask}
-              onDecrement={handleDecrementTask}
+              onTaskClick={() => {}} 
+              onIncrement={handleIncrement}
+              onDecrement={handleDecrement}
+              onChallengeTaskComplete={handleChallengeTaskComplete}
               loading={loading} 
               onOpenDiscover={() => setShowDiscover(true)} 
               onChallengeClick={handleChallengeClick}
-              onRefresh={handleRefresh}
-              onCreateTask={() => setShowCreateTask(true)}
             />
           } />
-          <Route path="/home" element={<HomeView tasks={tasks} profile={profile} />} />
           <Route path="/habits" element={<HabitView />} />
           <Route path="/social" element={<SocialView />} />
           <Route path="/profile" element={<ProfileView onLogout={handleLogout} profile={profile} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Layout>
-
-        {/* Undo Snackbar */}
-        <UndoSnackbar
-          message={undoState.message}
-          isVisible={undoState.isVisible}
-          onUndo={handleUndo}
-          onDismiss={() => setUndoState(prev => ({ ...prev, isVisible: false }))}
-          duration={5000}
-        />
         
         {/* Discover Modal */}
         {showDiscover && (
-          <div className="fixed inset-0 z-[100] bg-white dark:bg-slate-900 overflow-auto animate-in slide-in-from-bottom-5">
+          <div className="fixed inset-0 z-[100] bg-white dark:bg-slate-900 overflow-auto">
              <div className="mx-auto max-w-md bg-white dark:bg-slate-900 min-h-screen relative">
                 <div className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-4 flex items-center gap-4 border-b border-slate-100 dark:border-slate-800">
                   <button 
@@ -647,14 +775,18 @@ const AppContent: React.FC = () => {
                   </button>
                   <h1 className="text-xl font-bold">Discover Challenges</h1>
                 </div>
-                <DiscoverView onClose={() => setShowDiscover(false)} onJoin={fetchData} />
+                <DiscoverView 
+                  onClose={() => setShowDiscover(false)} 
+                  onJoin={fetchData} 
+                  onViewDetail={handleChallengeClick}
+                />
              </div>
           </div>
         )}
 
         {/* Challenge Detail Modal */}
         {selectedChallengeId && (
-          <div className="fixed inset-0 z-[100] bg-white dark:bg-slate-900 overflow-auto animate-in slide-in-from-right-5">
+          <div className="fixed inset-0 z-[100] bg-white dark:bg-slate-900 overflow-auto">
             <div className="mx-auto max-w-md bg-white dark:bg-slate-900 min-h-screen relative">
               <ChallengeDetailView 
                 challengeId={selectedChallengeId} 
@@ -663,25 +795,6 @@ const AppContent: React.FC = () => {
             </div>
           </div>
         )}
-
-        {/* Create Task Modal */}
-        <CreateTaskModal
-          isOpen={showCreateTask}
-          onClose={() => setShowCreateTask(false)}
-          onTaskCreated={handleTaskCreated}
-        />
-
-        {/* Edit Task Modal */}
-        <EditTaskModal
-          isOpen={showEditTask}
-          task={selectedTask}
-          onClose={() => {
-            setShowEditTask(false);
-            setSelectedTask(null);
-          }}
-          onTaskUpdated={handleTaskCreated}
-          onTaskDeleted={handleTaskDeleted}
-        />
     </>
   );
 };

@@ -67,6 +67,27 @@ const styles = {
   }),
 };
 
+// Helper function to transform participants to leaderboard entries
+const mapParticipantsToLeaderboard = (participants: ChallengeParticipant[]): LeaderboardEntry[] => {
+  // Deduplicate by userId and only use DB participants
+  const uniqueParticipants = (participants || [])
+    .filter((p, index, self) => 
+      index === self.findIndex(t => t.userId === p.userId)
+    );
+  
+  return uniqueParticipants
+    .sort((a, b) => (b.progress || 0) - (a.progress || 0))
+    .map((p, index) => ({
+      rank: index + 1,
+      userId: `user-${p.userId}`,
+      name: p.userName || 'Anonymous',
+      avatar: p.userAvatar || `https://i.pravatar.cc/150?u=${p.userId}`,
+      progress: p.progress || 0,
+      points: Math.round((p.progress || 0) * 10),
+      isCurrentUser: false
+    }));
+};
+
 const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, onBack }) => {
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [participants, setParticipants] = useState<ChallengeParticipant[]>([]);
@@ -74,8 +95,12 @@ const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, 
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [isJoined, setIsJoined] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'progress' | 'leaderboard'>('leaderboard');
+  const [activeTab, setActiveTab] = useState<'progress' | 'leaderboard'>('progress');
   const [joining, setJoining] = useState(false);
+  const [loggingProgress, setLoggingProgress] = useState<number | null>(null); // Track which task is being logged
+  const [completedTaskIds, setCompletedTaskIds] = useState<Set<number>>(new Set()); // Track completed tasks by ID
+  const [numericInputTaskId, setNumericInputTaskId] = useState<number | null>(null); // Track which numeric task has input open
+  const [numericInputValue, setNumericInputValue] = useState<string>(''); // Input value for numeric tasks
 
   useEffect(() => {
     const fetchChallengeDetails = async () => {
@@ -89,19 +114,19 @@ const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, 
             setCurrentUserProgress(data.currentUserProgress);
         }
 
-        // Map participants to leaderboard entries
-        const leaderboardData = (data.participants || [])
-          .sort((a, b) => b.progress - a.progress)
-          .map((p, index) => ({
-            rank: index + 1,
-            userId: String(p.userId),
-            name: p.userName || 'Anonymous',
-            avatar: p.userAvatar || `https://i.pravatar.cc/150?u=${p.userId}`,
-            progress: p.progress || 0,
-            points: Math.round((p.progress || 0) * 10), // Estimate points from progress
-            isCurrentUser: false // Will be determined by comparing with current user
-          }));
-        setLeaderboard(leaderboardData);
+        // Initialize completed tasks from the challenge tasks data
+        if (data.challenge?.tasks) {
+          const completed = new Set<number>();
+          data.challenge.tasks.forEach(task => {
+            if (task.current_value && task.current_value >= task.target_value) {
+              completed.add(task.id);
+            }
+          });
+          setCompletedTaskIds(completed);
+        }
+
+        // Map participants to leaderboard entries (from DB only)
+        setLeaderboard(mapParticipantsToLeaderboard(data.participants || []));
       } catch (err) {
         console.error('Failed to fetch challenge details:', err);
       }
@@ -121,19 +146,8 @@ const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, 
       setChallenge(data.challenge);
       setParticipants(data.participants || []);
       
-      // Update leaderboard with refreshed data
-      const leaderboardData = (data.participants || [])
-        .sort((a, b) => b.progress - a.progress)
-        .map((p, index) => ({
-          rank: index + 1,
-          userId: String(p.userId),
-          name: p.userName || 'Anonymous',
-          avatar: p.userAvatar || `https://i.pravatar.cc/150?u=${p.userId}`,
-          progress: p.progress || 0,
-          points: Math.round((p.progress || 0) * 10),
-          isCurrentUser: false
-        }));
-      setLeaderboard(leaderboardData);
+      // Update leaderboard with refreshed data from DB
+      setLeaderboard(mapParticipantsToLeaderboard(data.participants || []));
       
       // Update current user progress - should be initialized with 0 progress for new participant
       if (data.currentUserProgress) {
@@ -164,6 +178,151 @@ const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, 
     } catch (err) {
       console.error('Failed to leave challenge:', err);
     }
+  };
+
+  // Handle logging progress for a specific task (boolean tasks)
+  const handleLogTaskProgress = async (taskId: number, markComplete: boolean) => {
+    if (loggingProgress !== null) return; // Already logging
+    setLoggingProgress(taskId);
+    
+    try {
+      const result = await challengeService.logProgress(challengeId, { 
+        completed: markComplete, 
+        taskId,
+        value: markComplete ? 1 : 0 
+      });
+      
+      // Update completed tasks set
+      setCompletedTaskIds(prev => {
+        const newSet = new Set(prev);
+        if (markComplete) {
+          newSet.add(taskId);
+        } else {
+          newSet.delete(taskId);
+        }
+        return newSet;
+      });
+      
+      // Update local progress state
+      setCurrentUserProgress(prev => prev ? {
+        ...prev,
+        progress: result.progress,
+        completedDays: result.completedDays,
+      } : prev);
+      
+      // Refresh challenge data to get updated tasks and leaderboard
+      const data = await challengeService.getChallenge(challengeId);
+      setChallenge(data.challenge);
+      if (data.currentUserProgress) {
+        setCurrentUserProgress(data.currentUserProgress);
+      }
+      
+      // Update completed tasks from refreshed data
+      if (data.challenge?.tasks) {
+        const completed = new Set<number>();
+        data.challenge.tasks.forEach(task => {
+          if (task.current_value && task.current_value >= task.target_value) {
+            completed.add(task.id);
+          }
+        });
+        setCompletedTaskIds(completed);
+      }
+      
+      // Update leaderboard from DB
+      setLeaderboard(mapParticipantsToLeaderboard(data.participants || []));
+    } catch (err) {
+      console.error('Failed to log task progress:', err);
+    }
+    setLoggingProgress(null);
+  };
+
+  // Handle logging progress for numeric tasks (e.g., steps, water glasses)
+  const handleLogNumericTaskProgress = async (taskId: number, numericValue: number, targetValue: number) => {
+    if (loggingProgress !== null) return;
+    setLoggingProgress(taskId);
+    
+    try {
+      const isComplete = numericValue >= targetValue;
+      const result = await challengeService.logProgress(challengeId, { 
+        completed: isComplete, 
+        taskId,
+        value: numericValue
+      });
+      
+      // Update completed tasks set based on whether target is met
+      setCompletedTaskIds(prev => {
+        const newSet = new Set(prev);
+        if (isComplete) {
+          newSet.add(taskId);
+        } else {
+          newSet.delete(taskId);
+        }
+        return newSet;
+      });
+      
+      // Update local progress state
+      setCurrentUserProgress(prev => prev ? {
+        ...prev,
+        progress: result.progress,
+        completedDays: result.completedDays,
+      } : prev);
+      
+      // Refresh challenge data to get updated tasks and leaderboard
+      const data = await challengeService.getChallenge(challengeId);
+      setChallenge(data.challenge);
+      if (data.currentUserProgress) {
+        setCurrentUserProgress(data.currentUserProgress);
+      }
+      
+      // Update completed tasks from refreshed data
+      if (data.challenge?.tasks) {
+        const completed = new Set<number>();
+        data.challenge.tasks.forEach(task => {
+          if (task.current_value && task.current_value >= task.target_value) {
+            completed.add(task.id);
+          }
+        });
+        setCompletedTaskIds(completed);
+      }
+      
+      // Update leaderboard from DB
+      setLeaderboard(mapParticipantsToLeaderboard(data.participants || []));
+    } catch (err) {
+      console.error('Failed to log numeric task progress:', err);
+    }
+    setLoggingProgress(null);
+    setNumericInputTaskId(null);
+    setNumericInputValue('');
+  };
+
+  // Legacy handler for challenges without tasks (single daily action)
+  const handleLogProgress = async (markComplete?: boolean) => {
+    if (loggingProgress !== null) return;
+    setLoggingProgress(-1); // Use -1 to indicate legacy logging
+    
+    const newCompletedState = markComplete !== undefined ? markComplete : completedTaskIds.size === 0;
+    
+    try {
+      const result = await challengeService.logProgress(challengeId, { completed: newCompletedState });
+      
+      // Update local progress state
+      setCurrentUserProgress(prev => prev ? {
+        ...prev,
+        progress: result.progress,
+        completedDays: result.completedDays,
+      } : prev);
+      
+      // Refresh challenge data to get updated leaderboard
+      const data = await challengeService.getChallenge(challengeId);
+      if (data.currentUserProgress) {
+        setCurrentUserProgress(data.currentUserProgress);
+      }
+      // Update leaderboard from DB
+      setLeaderboard(mapParticipantsToLeaderboard(data.participants || []));
+    } catch (err) {
+      console.error('Failed to log progress:', err);
+    }
+    setLoggingProgress(null);
   };
 
   const getDaysRemaining = () => {
@@ -416,39 +575,66 @@ const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, 
             {isJoined ? (
               <>
                 <div style={{ ...styles.card, padding: spacing[5] }}>
-                  <h3 style={{ fontWeight: typography.fontWeight.bold, fontSize: typography.fontSize.sm, textTransform: 'uppercase', color: colors.gray[400], marginBottom: spacing[4] }}>Your Progress</h3>
+                  <h3 style={{ fontWeight: typography.fontWeight.bold, fontSize: typography.fontSize.sm, textTransform: 'uppercase', color: colors.gray[400], marginBottom: spacing[4] }}>
+                    {challenge.tasks && challenge.tasks.length > 0 ? "Today's Progress" : 'Your Progress'}
+                  </h3>
                   <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4] }}>
                     <div style={{ position: 'relative', width: '80px', height: '80px' }}>
-                      <svg style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
-                        <circle 
-                          fill="transparent" cx="40" cy="40" r="32" 
-                          stroke={colors.gray[100]} strokeWidth="8" 
-                        />
-                        <circle 
-                          fill="transparent" cx="40" cy="40" r="32" 
-                          stroke={colors.primary} strokeWidth="8" 
-                          strokeDasharray={2 * Math.PI * 32}
-                          strokeDashoffset={2 * Math.PI * 32 * (1 - ((currentUserProgress?.progress || 0) / 100))}
-                          strokeLinecap="round"
-                          style={{ transition: 'stroke-dashoffset 0.5s ease' }}
-                        />
-                      </svg>
-                      <span style={{
-                        position: 'absolute',
-                        inset: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: typography.fontSize.lg,
-                        fontWeight: typography.fontWeight.black,
-                        color: colors.primary,
-                      }}>
-                        {currentUserProgress?.progress || 0}%
-                      </span>
+                      {/* Calculate today's task progress for challenges with tasks */}
+                      {(() => {
+                        let displayProgress = currentUserProgress?.progress || 0;
+                        if (challenge.tasks && challenge.tasks.length > 0) {
+                          const completedCount = challenge.tasks.filter(t => 
+                            completedTaskIds.has(t.id) || (t.current_value !== undefined && t.current_value >= t.target_value)
+                          ).length;
+                          displayProgress = Math.round((completedCount / challenge.tasks.length) * 100);
+                        }
+                        return (
+                          <>
+                            <svg style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
+                              <circle 
+                                fill="transparent" cx="40" cy="40" r="32" 
+                                stroke={colors.gray[100]} strokeWidth="8" 
+                              />
+                              <circle 
+                                fill="transparent" cx="40" cy="40" r="32" 
+                                stroke={colors.primary} strokeWidth="8" 
+                                strokeDasharray={2 * Math.PI * 32}
+                                strokeDashoffset={2 * Math.PI * 32 * (1 - (displayProgress / 100))}
+                                strokeLinecap="round"
+                                style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+                              />
+                            </svg>
+                            <span style={{
+                              position: 'absolute',
+                              inset: 0,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: typography.fontSize.lg,
+                              fontWeight: typography.fontWeight.black,
+                              color: colors.primary,
+                            }}>
+                              {displayProgress}%
+                            </span>
+                          </>
+                        );
+                      })()}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.black, margin: 0, color: colors.text.primary }}>{currentUserProgress?.completedDays || 0} / {challenge.targetDays}</p>
-                      <p style={{ fontSize: typography.fontSize.sm, color: colors.gray[400], margin: 0 }}>Days Completed</p>
+                      {challenge.tasks && challenge.tasks.length > 0 ? (
+                        <>
+                          <p style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.black, margin: 0, color: colors.text.primary }}>
+                            {challenge.tasks.filter(t => completedTaskIds.has(t.id) || (t.current_value !== undefined && t.current_value >= t.target_value)).length} / {challenge.tasks.length}
+                          </p>
+                          <p style={{ fontSize: typography.fontSize.sm, color: colors.gray[400], margin: 0 }}>Tasks Done Today</p>
+                        </>
+                      ) : (
+                        <>
+                          <p style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.black, margin: 0, color: colors.text.primary }}>{currentUserProgress?.completedDays || 0} / {challenge.targetDays}</p>
+                          <p style={{ fontSize: typography.fontSize.sm, color: colors.gray[400], margin: 0 }}>Days Completed</p>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -471,60 +657,276 @@ const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({ challengeId, 
                   <h3 style={{ fontWeight: typography.fontWeight.bold, fontSize: typography.fontSize.sm, textTransform: 'uppercase', color: colors.gray[400], marginBottom: spacing[4] }}>Daily Tasks</h3>
                   {challenge.tasks && challenge.tasks.length > 0 ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[3] }}>
-                      {challenge.tasks.map(task => (
+                      {challenge.tasks.map(task => {
+                        // Check if this specific task is completed (from current_value or from our tracking set)
+                        const isCompleted = completedTaskIds.has(task.id) || (task.current_value !== undefined && task.current_value >= task.target_value);
+                        const isLogging = loggingProgress === task.id;
+                        const isNumericTask = task.type === 'numeric';
+                        const isInputOpen = numericInputTaskId === task.id;
+                        
+                        return (
                         <div key={task.id} style={{
                           display: 'flex',
-                          alignItems: 'center',
-                          gap: spacing[3],
+                          flexDirection: 'column',
+                          gap: spacing[2],
                           padding: spacing[3],
-                          backgroundColor: colors.gray[50],
+                          backgroundColor: isCompleted ? colors.successBg : colors.gray[50],
                           borderRadius: borderRadius.xl,
+                          transition: 'all 0.2s ease',
                         }}>
-                          <button style={{
-                            width: '24px',
-                            height: '24px',
-                            borderRadius: borderRadius.full,
-                            border: `2px solid ${task.current_value && task.current_value >= task.target_value ? colors.primary : colors.gray[300]}`,
+                          <div style={{ display: 'flex', alignItems: 'center', gap: spacing[3] }}>
+                            {/* Checkbox for boolean tasks, or progress indicator for numeric */}
+                            {!isNumericTask ? (
+                              <button 
+                                onClick={() => handleLogTaskProgress(task.id, !isCompleted)}
+                                disabled={loggingProgress !== null}
+                                style={{
+                                  width: '28px',
+                                  height: '28px',
+                                  borderRadius: borderRadius.full,
+                                  border: `2px solid ${isCompleted ? colors.success : colors.gray[300]}`,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  backgroundColor: isCompleted ? colors.success : 'transparent',
+                                  color: 'white',
+                                  cursor: loggingProgress !== null ? 'default' : 'pointer',
+                                  opacity: loggingProgress !== null && !isLogging ? 0.5 : 1,
+                                  transition: 'all 0.2s ease',
+                                }}
+                              >
+                                {isCompleted && !isLogging ? (
+                                  <span className="material-symbols-outlined" style={{ fontSize: '16px', fontWeight: 'bold' }}>check</span>
+                                ) : isLogging ? (
+                                  <span style={{ width: '12px', height: '12px', border: '2px solid', borderColor: `${colors.gray[300]} transparent`, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                                ) : null}
+                              </button>
+                            ) : (
+                              <div style={{
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: borderRadius.full,
+                                backgroundColor: isCompleted ? colors.success : colors.primary,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'white' }}>
+                                  {isCompleted ? 'check' : 'fitness_center'}
+                                </span>
+                              </div>
+                            )}
+                            
+                            <div style={{ flex: 1 }}>
+                              <p style={{ fontWeight: typography.fontWeight.bold, fontSize: typography.fontSize.sm, margin: 0, color: isCompleted ? colors.success : colors.text.primary }}>{task.title}</p>
+                              {task.description && <p style={{ fontSize: typography.fontSize.xs, color: colors.gray[400], margin: 0 }}>{task.description}</p>}
+                            </div>
+                            
+                            {/* Status badge */}
+                            <div style={{ 
+                              fontSize: typography.fontSize.xs, 
+                              fontWeight: typography.fontWeight.bold, 
+                              color: isCompleted ? colors.success : colors.gray[400],
+                              padding: `${spacing[1]} ${spacing[2]}`,
+                              backgroundColor: isCompleted ? colors.successBg : 'transparent',
+                              borderRadius: borderRadius.full,
+                            }}>
+                               {isNumericTask 
+                                  ? `${task.current_value || 0}/${task.target_value} ${task.unit || ''}`
+                                  : (isCompleted ? '✓ Done' : 'Tap to complete')
+                               }
+                            </div>
+                          </div>
+                          
+                          {/* Numeric input section for numeric tasks */}
+                          {isNumericTask && (
+                            <div style={{ marginTop: spacing[2] }}>
+                              {!isInputOpen ? (
+                                <button
+                                  onClick={() => {
+                                    setNumericInputTaskId(task.id);
+                                    setNumericInputValue(String(task.current_value || ''));
+                                  }}
+                                  disabled={loggingProgress !== null}
+                                  style={{
+                                    width: '100%',
+                                    padding: `${spacing[2]} ${spacing[3]}`,
+                                    borderRadius: borderRadius.lg,
+                                    border: `1px dashed ${colors.gray[300]}`,
+                                    backgroundColor: 'transparent',
+                                    color: colors.primary,
+                                    fontSize: typography.fontSize.sm,
+                                    fontWeight: typography.fontWeight.medium,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: spacing[2],
+                                  }}
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span>
+                                  Log your {task.unit || 'progress'}
+                                </button>
+                              ) : (
+                                <div style={{ display: 'flex', gap: spacing[2], alignItems: 'center' }}>
+                                  <input
+                                    type="number"
+                                    value={numericInputValue}
+                                    onChange={(e) => setNumericInputValue(e.target.value)}
+                                    placeholder={`Enter ${task.unit || 'value'}`}
+                                    autoFocus
+                                    style={{
+                                      flex: 1,
+                                      padding: `${spacing[2]} ${spacing[3]}`,
+                                      borderRadius: borderRadius.lg,
+                                      border: `1px solid ${colors.gray[200]}`,
+                                      fontSize: typography.fontSize.md,
+                                      fontWeight: typography.fontWeight.bold,
+                                      textAlign: 'center',
+                                      outline: 'none',
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter' && numericInputValue) {
+                                        handleLogNumericTaskProgress(task.id, parseInt(numericInputValue), task.target_value);
+                                      } else if (e.key === 'Escape') {
+                                        setNumericInputTaskId(null);
+                                        setNumericInputValue('');
+                                      }
+                                    }}
+                                  />
+                                  <span style={{ color: colors.gray[500], fontSize: typography.fontSize.sm }}>{task.unit || ''}</span>
+                                  <button
+                                    onClick={() => {
+                                      if (numericInputValue) {
+                                        handleLogNumericTaskProgress(task.id, parseInt(numericInputValue), task.target_value);
+                                      }
+                                    }}
+                                    disabled={!numericInputValue || loggingProgress !== null}
+                                    style={{
+                                      padding: `${spacing[2]} ${spacing[4]}`,
+                                      borderRadius: borderRadius.lg,
+                                      backgroundColor: numericInputValue ? colors.primary : colors.gray[200],
+                                      color: 'white',
+                                      border: 'none',
+                                      fontWeight: typography.fontWeight.bold,
+                                      fontSize: typography.fontSize.sm,
+                                      cursor: numericInputValue ? 'pointer' : 'default',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: spacing[1],
+                                    }}
+                                  >
+                                    {isLogging ? (
+                                      <span style={{ width: '14px', height: '14px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                                    ) : (
+                                      <>
+                                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check</span>
+                                        Save
+                                      </>
+                                    )}
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setNumericInputTaskId(null);
+                                      setNumericInputValue('');
+                                    }}
+                                    style={{
+                                      padding: spacing[2],
+                                      borderRadius: borderRadius.lg,
+                                      backgroundColor: colors.gray[100],
+                                      color: colors.gray[500],
+                                      border: 'none',
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+                                  </button>
+                                </div>
+                              )}
+                              
+                              {/* Progress bar for numeric tasks */}
+                              <div style={{ marginTop: spacing[2] }}>
+                                <div style={{
+                                  height: '6px',
+                                  backgroundColor: colors.gray[200],
+                                  borderRadius: borderRadius.full,
+                                  overflow: 'hidden',
+                                }}>
+                                  <div style={{
+                                    height: '100%',
+                                    width: `${Math.min(100, ((task.current_value || 0) / task.target_value) * 100)}%`,
+                                    backgroundColor: isCompleted ? colors.success : colors.primary,
+                                    borderRadius: borderRadius.full,
+                                    transition: 'width 0.3s ease',
+                                  }} />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );})}
+                    </div>
+                  ) : (
+                    <div style={{ padding: spacing[4] }}>
+                        {/* Daily Action Display - for challenges without specific tasks */}
+                        {challenge.dailyAction && (
+                            <div style={{
+                              marginBottom: spacing[4],
+                              padding: spacing[4],
+                              backgroundColor: (currentUserProgress?.progress || 0) >= 100 ? colors.successBg : colors.primaryAlpha(0.05),
+                              borderRadius: borderRadius.xl,
+                              color: (currentUserProgress?.progress || 0) >= 100 ? colors.success : colors.primary,
+                              fontWeight: typography.fontWeight.medium,
+                              fontSize: typography.fontSize.sm,
+                              textAlign: 'center',
+                            }}>
+                                <p style={{ margin: 0, marginBottom: spacing[2] }}>
+                                  {(currentUserProgress?.progress || 0) >= 100 ? "✓ Completed Today!" : "Today's Goal:"}
+                                </p>
+                                <p style={{ margin: 0, fontSize: typography.fontSize.lg, fontWeight: typography.fontWeight.bold }}>{challenge.dailyAction}</p>
+                            </div>
+                        )}
+                        
+                        {/* Mark Complete / Undo Button */}
+                        <button
+                          onClick={() => handleLogProgress((currentUserProgress?.progress || 0) < 100)}
+                          disabled={loggingProgress !== null}
+                          style={{
+                            width: '100%',
+                            padding: spacing[4],
+                            borderRadius: borderRadius['2xl'],
+                            backgroundColor: (currentUserProgress?.progress || 0) >= 100 ? colors.gray[200] : colors.success,
+                            color: (currentUserProgress?.progress || 0) >= 100 ? colors.gray[600] : 'white',
+                            border: 'none',
+                            fontSize: typography.fontSize.md,
+                            fontWeight: typography.fontWeight.bold,
+                            cursor: loggingProgress !== null ? 'default' : 'pointer',
+                            opacity: loggingProgress !== null ? 0.7 : 1,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            backgroundColor: task.current_value && task.current_value >= task.target_value ? colors.primary : 'transparent',
-                            color: 'white',
-                            cursor: 'pointer',
-                          }}>
-                            {(task.current_value && task.current_value >= task.target_value) && (
-                              <span className="material-symbols-outlined" style={{ fontSize: '14px', fontWeight: 'bold' }}>check</span>
-                            )}
-                          </button>
-                          <div style={{ flex: 1 }}>
-                            <p style={{ fontWeight: typography.fontWeight.bold, fontSize: typography.fontSize.sm, margin: 0, color: colors.text.primary }}>{task.title}</p>
-                            {task.description && <p style={{ fontSize: typography.fontSize.xs, color: colors.gray[400], margin: 0 }}>{task.description}</p>}
-                          </div>
-                          <div style={{ fontSize: typography.fontSize.xs, fontWeight: typography.fontWeight.medium, color: colors.gray[400] }}>
-                             {task.type === 'numeric' 
-                                ? `${task.current_value || 0}/${task.target_value} ${task.unit || ''}`
-                                : (task.current_value ? 'Completed' : 'Pending')
-                             }
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div style={{ textAlign: 'center', padding: spacing[4] }}>
-                        <p style={{ color: colors.gray[400], fontSize: typography.fontSize.sm }}>No specific tasks defined.</p>
-                        {challenge.dailyAction && (
-                            <div style={{
-                              marginTop: spacing[2],
-                              padding: spacing[3],
-                              backgroundColor: colors.primaryAlpha(0.05),
-                              borderRadius: borderRadius.xl,
-                              color: colors.primary,
-                              fontWeight: typography.fontWeight.medium,
-                              fontSize: typography.fontSize.sm,
-                            }}>
-                                {challenge.dailyAction}
-                            </div>
-                        )}
+                            gap: spacing[2],
+                            boxShadow: (currentUserProgress?.progress || 0) >= 100 ? 'none' : shadows.md,
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          {loggingProgress === -1 ? (
+                            <>
+                              <span style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: (currentUserProgress?.progress || 0) >= 100 ? colors.gray[600] : 'white', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                              {(currentUserProgress?.progress || 0) >= 100 ? 'Undoing...' : 'Logging...'}
+                            </>
+                          ) : (currentUserProgress?.progress || 0) >= 100 ? (
+                            <>
+                              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>undo</span>
+                              Undo Today's Completion
+                            </>
+                          ) : (
+                            <>
+                              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>check_circle</span>
+                              Mark Today as Complete
+                            </>
+                          )}
+                        </button>
                     </div>
                   )}
                 </div>

@@ -69,9 +69,10 @@ const HabitCard: React.FC<{
   };
   
   return (
-    <div style={cardStyle}>
+    <div style={cardStyle} data-testid={`habit-card-${habit.id}`}>
       <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4] }}>
         <button
+          data-testid="habit-toggle-btn"
           onClick={(e) => { e.stopPropagation(); onToggle(habit.id); }}
           disabled={loading}
           style={toggleBtnStyle}
@@ -520,7 +521,7 @@ const HabitDetailView: React.FC<{
     categoryIcon: {
       width: '80px',
       height: '80px',
-      backgroundColor: category.colorValue,
+      backgroundColor: category.color,
       borderRadius: borderRadius['3xl'],
       display: 'flex',
       alignItems: 'center',

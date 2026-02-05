@@ -19,7 +19,6 @@ const Skeleton: React.FC<SkeletonProps> = ({
   const getBaseStyle = (): React.CSSProperties => {
     const base: React.CSSProperties = {
       backgroundColor: colors.gray[200],
-      animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
     };
 
     switch (variant) {
@@ -44,7 +43,7 @@ const Skeleton: React.FC<SkeletonProps> = ({
   const items = Array.from({ length: count }, (_, i) => (
     <div
       key={i}
-      className={className}
+      className={`animate-pulse ${className}`}
       style={style}
       role="progressbar"
       aria-label="Loading..."

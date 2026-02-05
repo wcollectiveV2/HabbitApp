@@ -52,6 +52,21 @@ export interface ChallengeParticipant {
   progress: number;
   completedDays: number;
   currentStreak: number;
+  todayCompleted?: boolean;
+}
+
+export interface ChallengeTask {
+  id: number;
+  challengeId: number;
+  challengeTitle: string;
+  challengeIcon?: string;
+  title: string;
+  description?: string;
+  type: 'boolean' | 'numeric';
+  targetValue: number;
+  unit?: string;
+  currentValue: number;
+  isCompleted: boolean;
 }
 
 export interface ChallengeProgress {
@@ -69,6 +84,10 @@ export interface ChallengeProgress {
 export const challengeService = {
   async getActiveChallenges(): Promise<Challenge[]> {
     return api.get<Challenge[]>('/api/challenges/active');
+  },
+
+  async getAllChallengeTasks(): Promise<ChallengeTask[]> {
+    return api.get<ChallengeTask[]>('/api/challenges/all-tasks');
   },
 
   async discoverChallenges(filters?: {
@@ -110,10 +129,12 @@ export const challengeService = {
     return api.get(`/api/challenges/${challengeId}/progress`);
   },
 
-  async logProgress(challengeId: number, data: { completed: boolean; value?: number }): Promise<{
+  async logProgress(challengeId: number, data: { completed: boolean; value?: number; taskId?: number }): Promise<{
     success: boolean;
     progress: number;
     completedDays: number;
+    todayCompleted: boolean;
+    taskCompleted?: boolean;
   }> {
     return api.post(`/api/challenges/${challengeId}/log`, data);
   },
