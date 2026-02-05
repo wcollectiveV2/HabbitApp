@@ -326,6 +326,7 @@ export const components = {
   // Input fields
   input: {
     backgroundColor: colors.gray[50],
+    color: colors.text.primary,
     borderRadius: borderRadius.xl,
     padding: `${spacing[4]} ${spacing[4]} ${spacing[4]} ${spacing[12]}`,
     fontSize: typography.fontSize.md,
