@@ -72,6 +72,7 @@ const styles = {
   codeInput: {
     width: '100%',
     backgroundColor: colors.gray[50],
+    color: colors.text.primary,
     border: 'none',
     borderRadius: borderRadius.xl,
     padding: spacing[4],

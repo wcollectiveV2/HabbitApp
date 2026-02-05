@@ -103,6 +103,7 @@ const styles = {
   input: {
     flex: 1,
     backgroundColor: colors.gray[50],
+    color: colors.text.primary,
     borderRadius: borderRadius['2xl'],
     padding: `${spacing[3]} ${spacing[4]}`,
     fontWeight: typography.fontWeight.semibold,
@@ -113,6 +114,7 @@ const styles = {
   textarea: {
     width: '100%',
     backgroundColor: colors.gray[50],
+    color: colors.text.primary,
     borderRadius: borderRadius['2xl'],
     padding: `${spacing[3]} ${spacing[4]}`,
     fontWeight: typography.fontWeight.medium,
